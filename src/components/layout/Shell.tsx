@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, MessageSquare, Plus, Menu, X, Landmark, FileDown, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquare, Plus, Menu, X, Landmark, FileUp, Sparkles } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -95,7 +95,7 @@ export function Shell({
             onClick={onImportGroups}
             className="w-full flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold py-3 rounded-xl transition-all active:scale-95"
           >
-            <FileDown className="w-5 h-5 text-gray-400" />
+            <FileUp className="w-5 h-5 text-gray-400" />
             Importar Grupos
           </button>
           <button 
@@ -182,7 +182,7 @@ export function Shell({
                 }}
                 className="w-full flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-600 font-bold py-4 rounded-xl shadow-sm"
               >
-                <FileDown className="w-5 h-5 text-gray-400" />
+                <FileUp className="w-5 h-5 text-gray-400" />
                 Importar Grupos
               </button>
               <button 

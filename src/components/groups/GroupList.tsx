@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Group } from '@/src/types';
-import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown } from 'lucide-react';
-import { cn, formatNumber, formatCurrency } from '@/src/lib/utils';
+import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download } from 'lucide-react';
+import { cn, formatNumber, formatCurrency, exportToCSV } from '@/src/lib/utils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -131,6 +131,14 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
               {renters.map(r => <option key={r} value={r}>Locatário: {r}</option>)}
             </select>
           </div>
+          <button 
+            onClick={() => exportToCSV(filteredGroups, `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`)}
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm text-xs font-bold text-gray-600 hover:bg-gray-50 active:scale-95 transition-all whitespace-nowrap"
+            title="Download da lista atual em CSV"
+          >
+            <Download className="w-4 h-4 text-green-600" />
+            Exportar CSV
+          </button>
         </div>
       </div>
 
