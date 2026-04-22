@@ -61,126 +61,91 @@ export function parseMembers(str: string): number {
 }
 
 export function parseBulkText(text: string): ParsedGroup[] {
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
   const results: ParsedGroup[] = [];
-  let currentNicho = '';
 
-  let currentGroup: Partial<ParsedGroup> | null = null;
+  const blocks = text
+    .split(/\n\s*\n/)
+    .map(block => block.trim())
+    .filter(Boolean);
 
-  for (let line of lines) {
-    // 1. Check for Niche line
-    const nichoMatch = line.match(nichoRegex);
-    if (nichoMatch) {
-      if (currentGroup) finalizeGroup(currentGroup as ParsedGroup);
-      currentGroup = null;
-      currentNicho = nichoMatch[1].trim();
-      continue;
-    }
+  for (const block of blocks) {
+    const lines = block
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean);
 
-    // 2. Identify if this line looks like a NEW group start
-    const hasNumbering = numberingRegex.test(line);
-    const hasLink = linkRegex.test(line);
-    
-    // Heuristic for "is this a new group?"
-    // - Has numbering (e.g. "1. Group Name")
-    // - OR we have no group yet
-    // - OR (We have a group but it already has a link AND this line has a new potential name/id)
-    
-    let isNewGroup = false;
-    if (hasNumbering) {
-      isNewGroup = true;
-    } else if (!currentGroup) {
-      isNewGroup = true;
-    } else if (currentGroup.link_grupo && !hasLink && !line.match(labels.membros)) {
-       // If current group already has a link and this new line doesn't seem like a follow-up value,
-       // it might be a new group start.
-       isNewGroup = true;
-    }
+    let nome_grupo = '';
+    let link_grupo = '';
+    let group_id = '';
+    let nicho = '';
+    let quantidade_membros: number | null = null;
+    let observacoes = '';
 
-    if (isNewGroup && currentGroup) {
-      finalizeGroup(currentGroup as ParsedGroup);
-      currentGroup = null;
-    }
+    for (const line of lines) {
+      const lower = line.toLowerCase();
 
-    if (!currentGroup) {
-      currentGroup = {
-        nome_grupo: '',
-        link_grupo: '',
-        group_id: '',
-        quantidade_membros: 0,
-        observacoes: '',
-        nicho: currentNicho,
-        id_temp: Math.random().toString(36).substr(2, 9)
-      };
-    }
-
-    // 3. Extract components from the line
-    let remainingLine = line;
-
-    // Link
-    const linkMatch = remainingLine.match(linkRegex);
-    if (linkMatch) {
-      const link = linkMatch[1];
-      if (!currentGroup.link_grupo) {
-        currentGroup.link_grupo = link;
-        currentGroup.group_id = extractGroupId(link);
+      if (lower.startsWith('nome:')) {
+        nome_grupo = cleanGroupName(line.replace(/^nome:\s*/i, ''));
+        continue;
       }
-      remainingLine = remainingLine.replace(link, '').replace(labels.link, '').trim();
-    }
 
-    // Members (Extract all potential member patterns)
-    const matches = Array.from(remainingLine.matchAll(membersRegex));
-    if (matches.length > 0) {
-      // Find the best match (usually the one with 'mil' or at the end of the line)
-      const bestMatch = matches.find(m => m[2]) || matches[matches.length - 1];
-      if (bestMatch) {
-         const val = parseMembers(bestMatch[0]);
-         if (currentGroup.quantidade_membros === 0) {
-           currentGroup.quantidade_membros = val;
-         }
-         // Remove this specific match from the name string
-         remainingLine = remainingLine.replace(bestMatch[0], '').trim();
+      if (lower.startsWith('membros:') || lower.startsWith('quantidade:')) {
+        const valor = line.replace(/^(membros|quantidade):\s*/i, '').trim();
+        const parsed = parseMembers(valor);
+        quantidade_membros = parsed > 0 ? parsed : null;
+        continue;
       }
-    }
 
-    // Cleaning remaining text
-    remainingLine = remainingLine
-      .replace(numberingRegex, '')
-      .replace(labels.nome, '')
-      .replace(labels.obs, '')
-      .replace(labels.membros, '')
-      .trim();
-
-    if (remainingLine) {
-      if (!currentGroup.nome_grupo) {
-        currentGroup.nome_grupo = cleanGroupName(remainingLine);
-      } else {
-        currentGroup.observacoes = (currentGroup.observacoes ? currentGroup.observacoes + ' ' : '') + remainingLine;
+      if (lower.startsWith('nicho:')) {
+        nicho = line.replace(/^nicho:\s*/i, '').trim();
+        continue;
       }
+
+      if (lower.startsWith('link:')) {
+        const valor = line.replace(/^link:\s*/i, '').trim();
+        link_grupo = valor;
+        group_id = extractGroupId(valor);
+        continue;
+      }
+
+      if (line.includes('facebook.com/groups')) {
+        link_grupo = line.trim();
+        group_id = extractGroupId(link_grupo);
+        continue;
+      }
+
+      if (lower.startsWith('obs:') || lower.startsWith('observações:') || lower.startsWith('observacoes:')) {
+        observacoes = line.replace(/^(obs|observações|observacoes):\s*/i, '').trim();
+        continue;
+      }
+
+      if (!nome_grupo && !line.includes('facebook.com/groups')) {
+        nome_grupo = cleanGroupName(line);
+        continue;
+      }
+
+      observacoes = observacoes ? `${observacoes} ${line}` : line;
     }
-  }
 
-  if (currentGroup) finalizeGroup(currentGroup as ParsedGroup);
+    const erros: string[] = [];
+    if (!nome_grupo) erros.push('Nome ausente');
+    if (!link_grupo) erros.push('Link ausente');
+    if (link_grupo && !group_id) erros.push('ID não encontrado');
 
-  function finalizeGroup(group: ParsedGroup) {
-    // Final clean of group name in case it was built iteratively
-    group.nome_grupo = cleanGroupName(group.nome_grupo);
-    
-    // If it's just garbage, ignore
-    if (!group.nome_grupo && !group.link_grupo && !group.quantidade_membros) return;
+    const status_analise: 'OK' | 'Incompleto' | 'Revisar' =
+      erros.length === 0 ? 'OK' : 'Revisar';
 
-    if (!group.id_temp) group.id_temp = Math.random().toString(36).substr(2, 9);
-    if (!group.nicho) group.nicho = currentNicho || 'Sem Nicho';
-    
-    const errors: string[] = [];
-    if (!group.nome_grupo) errors.push('Nome ausente');
-    if (!group.link_grupo) errors.push('Link ausente');
-    if (!group.quantidade_membros) errors.push('Membros zerados');
-
-    group.status_analise = errors.length === 0 ? 'OK' : (errors.length > 1 ? 'Revisar' : 'Incompleto');
-    group.erros = errors;
-    
-    results.push(group);
+    results.push({
+      id_temp: Math.random().toString(36).substr(2, 9),
+      group_id,
+      nome_grupo,
+      link_grupo,
+      nicho: nicho || 'Sem Nicho',
+      quantidade_membros: quantidade_membros ?? 0,
+      observacoes,
+      status_analise,
+      erros
+    });
   }
 
   return results;
