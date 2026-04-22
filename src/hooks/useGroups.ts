@@ -1,55 +1,92 @@
 import { useState, useEffect } from 'react';
 import { Group } from '../types';
 import { extractGroupId } from '../lib/groupParser';
-
-const STORAGE_KEY = 'fb_rental_manager_groups';
+import {
+  collection,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
+  query,
+  orderBy,
+} from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export function useGroups() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        setGroups(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to load groups from localStorage', e);
+    const q = query(collection(db, 'grupos'), orderBy('updatedAt', 'desc'));
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data: Group[] = snapshot.docs.map((document) => {
+          const raw = document.data() as any;
+
+          return {
+            id: document.id,
+            nome_grupo: raw.nome_grupo || '',
+            link_grupo: raw.link_grupo || '',
+            group_id: raw.group_id || '',
+            nicho: raw.nicho || 'Sem Nicho',
+            quantidade_membros: raw.quantidade_membros || 0,
+            observacoes: raw.observacoes || '',
+            status: raw.status || 'Disponível',
+            locatario: raw.locatario || '',
+            whatsapp: raw.whatsapp || '',
+            data_inicio: raw.data_inicio || '',
+            data_vencimento: raw.data_vencimento || '',
+            valor: raw.valor || 0,
+            updatedAt:
+              raw.updatedAt?.toDate?.()?.toISOString?.() ||
+              raw.updatedAt ||
+              new Date().toISOString(),
+          };
+        });
+
+        setGroups(data);
+        setIsLoaded(true);
+      },
+      (error) => {
+        console.error('Erro ao carregar grupos do Firebase:', error);
+        setIsLoaded(true);
       }
-    }
-    setIsLoaded(true);
+    );
+
+    return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(groups));
-    }
-  }, [groups, isLoaded]);
+  const addGroup = async (group: Omit<Group, 'id' | 'group_id' | 'updatedAt'>) => {
+    const group_id = extractGroupId(group.link_grupo);
 
-  const addGroup = (group: Omit<Group, 'id' | 'group_id' | 'updatedAt'>) => {
-    const newGroup: Group = {
+    await addDoc(collection(db, 'grupos'), {
       ...group,
-      group_id: extractGroupId(group.link_grupo),
-      id: crypto.randomUUID(),
-      updatedAt: new Date().toISOString(),
-    };
-    setGroups((prev) => [...prev, newGroup]);
+      group_id,
+      updatedAt: serverTimestamp(),
+    });
   };
 
-  const updateGroup = (id: string, updates: Partial<Group>) => {
-    setGroups((prev) =>
-      prev.map((g) => {
-        if (g.id === id) {
-          const newGroupId = updates.link_grupo ? extractGroupId(updates.link_grupo) : g.group_id;
-          return { ...g, ...updates, group_id: newGroupId, updatedAt: new Date().toISOString() };
-        }
-        return g;
-      })
-    );
+  const updateGroup = async (id: string, updates: Partial<Group>) => {
+    const ref = doc(db, 'grupos', id);
+
+    const newGroupId = updates.link_grupo
+      ? extractGroupId(updates.link_grupo)
+      : updates.group_id;
+
+    await updateDoc(ref, {
+      ...updates,
+      ...(updates.link_grupo ? { group_id: newGroupId } : {}),
+      updatedAt: serverTimestamp(),
+    });
   };
 
-  const deleteGroup = (id: string) => {
-    setGroups((prev) => prev.filter((g) => g.id !== id));
+  const deleteGroup = async (id: string) => {
+    const ref = doc(db, 'grupos', id);
+    await deleteDoc(ref);
   };
 
   return { groups, addGroup, updateGroup, deleteGroup, isLoaded };
