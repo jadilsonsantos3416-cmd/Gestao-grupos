@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Group } from '../types';
 import { extractGroupId } from '../lib/groupParser';
+
 import {
   collection,
   onSnapshot,
@@ -8,86 +9,62 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  serverTimestamp,
-  query,
-  orderBy,
+  serverTimestamp
 } from 'firebase/firestore';
+
 import { db } from '../lib/firebase';
 
 export function useGroups() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // 🔥 ESCUTA EM TEMPO REAL (WEB + APK SINCRONIZADOS)
   useEffect(() => {
-    const q = query(collection(db, 'grupos'), orderBy('updatedAt', 'desc'));
+    const unsubscribe = onSnapshot(collection(db, 'grupos'), (snapshot) => {
+      const data = snapshot.docs.map((docItem) => ({
+        id: docItem.id,
+        ...docItem.data()
+      })) as Group[];
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const data: Group[] = snapshot.docs.map((document) => {
-          const raw = document.data() as any;
-
-          return {
-            id: document.id,
-            nome_grupo: raw.nome_grupo || '',
-            link_grupo: raw.link_grupo || '',
-            group_id: raw.group_id || '',
-            nicho: raw.nicho || 'Sem Nicho',
-            quantidade_membros: raw.quantidade_membros || 0,
-            observacoes: raw.observacoes || '',
-            status: raw.status || 'Disponível',
-            locatario: raw.locatario || '',
-            whatsapp: raw.whatsapp || '',
-            data_inicio: raw.data_inicio || '',
-            data_vencimento: raw.data_vencimento || '',
-            valor: raw.valor || 0,
-            updatedAt:
-              raw.updatedAt?.toDate?.()?.toISOString?.() ||
-              raw.updatedAt ||
-              new Date().toISOString(),
-          };
-        });
-
-        setGroups(data);
-        setIsLoaded(true);
-      },
-      (error) => {
-        console.error('Erro ao carregar grupos do Firebase:', error);
-        setIsLoaded(true);
-      }
-    );
+      setGroups(data);
+      setIsLoaded(true);
+    });
 
     return () => unsubscribe();
   }, []);
 
+  // ➕ ADICIONAR GRUPO
   const addGroup = async (group: Omit<Group, 'id' | 'group_id' | 'updatedAt'>) => {
-    const group_id = extractGroupId(group.link_grupo);
-
     await addDoc(collection(db, 'grupos'), {
       ...group,
-      group_id,
-      updatedAt: serverTimestamp(),
+      group_id: extractGroupId(group.link_grupo),
+      updatedAt: serverTimestamp()
     });
   };
 
+  // ✏️ ATUALIZAR GRUPO
   const updateGroup = async (id: string, updates: Partial<Group>) => {
     const ref = doc(db, 'grupos', id);
 
-    const newGroupId = updates.link_grupo
-      ? extractGroupId(updates.link_grupo)
-      : updates.group_id;
-
     await updateDoc(ref, {
       ...updates,
-      ...(updates.link_grupo ? { group_id: newGroupId } : {}),
-      updatedAt: serverTimestamp(),
+      group_id: updates.link_grupo
+        ? extractGroupId(updates.link_grupo)
+        : updates.group_id,
+      updatedAt: serverTimestamp()
     });
   };
 
+  // 🗑️ DELETAR GRUPO
   const deleteGroup = async (id: string) => {
-    const ref = doc(db, 'grupos', id);
-    await deleteDoc(ref);
+    await deleteDoc(doc(db, 'grupos', id));
   };
 
-  return { groups, addGroup, updateGroup, deleteGroup, isLoaded };
+  return {
+    groups,
+    addGroup,
+    updateGroup,
+    deleteGroup,
+    isLoaded
+  };
 }
