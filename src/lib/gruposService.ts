@@ -24,6 +24,7 @@ export type GrupoData = {
   data_inicio?: string;
   status: string;
   perfil_compartilhando?: string;
+  uso_shopee?: string;
   valor: number;
   link_grupo?: string;
   observacoes?: string;
@@ -105,6 +106,7 @@ export async function adicionarGrupo(grupo: GrupoData) {
     data_vencimento: grupo.data_vencimento || "",
     status: grupo.status || "Disponível",
     perfil_compartilhando: grupo.perfil_compartilhando || "Inativo",
+    uso_shopee: grupo.uso_shopee || "Inativo",
     valor: Number(grupo.valor) || 0,
     link_grupo: linkLimpo || "",
     group_id: extractGroupId(linkLimpo),
@@ -143,6 +145,7 @@ export async function atualizarGrupo(id: string, grupo: GrupoData) {
     data_inicio: grupo.data_inicio || "",
     status: grupo.status || "Disponível",
     perfil_compartilhando: grupo.perfil_compartilhando || "Inativo",
+    uso_shopee: grupo.uso_shopee || "Inativo",
     valor: Number(grupo.valor) || 0,
     link_grupo: linkLimpo || "",
     group_id: extractGroupId(linkLimpo),

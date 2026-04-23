@@ -5,6 +5,7 @@
 
 export type GroupStatus = 'Disponível' | 'Alugado';
 export type PerfilStatus = 'Ativo' | 'Inativo';
+export type ShopeeStatus = 'Ativo' | 'Inativo';
 
 export interface Group {
   id: string;
@@ -14,6 +15,7 @@ export interface Group {
   nicho: string;
   status: GroupStatus;
   perfil_compartilhando: PerfilStatus;
+  uso_shopee: ShopeeStatus;
   locatario: string;
   whatsapp: string;
   data_inicio: string;
@@ -38,3 +40,5 @@ export interface NicheStats {
   alugados: number;
   totalMembros: number;
 }
+
+export type QuickFilter = 'all' | 'perfil_ativo' | 'perfil_inativo' | 'shopee_ativo' | 'shopee_inativo' | 'ready_shopee';

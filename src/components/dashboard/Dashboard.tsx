@@ -20,6 +20,8 @@ export function Dashboard({ groups }: DashboardProps) {
     totalMembros: groups.reduce((acc, g) => acc + (g.quantidade_membros || 0), 0),
     perfilAtivo: groups.filter(g => g.perfil_compartilhando === 'Ativo').length,
     perfilInativo: groups.filter(g => g.perfil_compartilhando === 'Inativo' || !g.perfil_compartilhando).length,
+    shopeeAtivo: groups.filter(g => g.uso_shopee === 'Ativo').length,
+    shopeeInativo: groups.filter(g => g.uso_shopee === 'Inativo' || !g.uso_shopee).length,
   };
 
   const alertItems = [
@@ -93,8 +95,8 @@ export function Dashboard({ groups }: DashboardProps) {
         />
       </div>
 
-      {/* Perfil Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      {/* Perfil & Shopee Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <StatCard 
           label="Perfil Ativo" 
           value={stats.perfilAtivo} 
@@ -108,6 +110,20 @@ export function Dashboard({ groups }: DashboardProps) {
           icon={ShieldAlert} 
           color="red" 
           subValue="Ação necessária"
+        />
+        <StatCard 
+          label="Shopee Ativo" 
+          value={stats.shopeeAtivo} 
+          icon={TrendingUp} 
+          color="green" 
+          subValue="Postando links shopee"
+        />
+        <StatCard 
+          label="Shopee Inativo" 
+          value={stats.shopeeInativo} 
+          icon={AlertCircle} 
+          color="gray" 
+          subValue="Sem uso para shopee"
         />
       </div>
 
@@ -128,9 +144,19 @@ export function Dashboard({ groups }: DashboardProps) {
               description="Perfis que não estão compartilhando no momento."
             />
             <ChecklistItem 
+              title={`${stats.shopeeAtivo} grupos usando Shopee`}
+              status="info"
+              description="Monitoramento de posts de produtos Shopee."
+            />
+            <ChecklistItem 
               title={`${stats.vencidos} grupos com aluguel vencido`}
               status={stats.vencidos > 0 ? 'error' : 'success'}
               description="Contatar locatários para renovação ou liberação."
+            />
+            <ChecklistItem 
+              title={`${groups.filter(g => g.perfil_compartilhando === 'Ativo' && g.uso_shopee === 'Ativo').length} grupos prontos para Shopee`}
+              status="success"
+              description="Perfil Ativo + Uso Shopee Ativo."
             />
           </div>
           

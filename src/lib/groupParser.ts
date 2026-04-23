@@ -9,7 +9,8 @@ export interface ParsedGroup {
   link_grupo: string;
   nicho: string;
   quantidade_membros: number | null;
-  perfil_compartilhando?: 'Ativo' | 'Inativo' | 'Pendente';
+  perfil_compartilhando?: 'Ativo' | 'Inativo';
+  uso_shopee?: 'Ativo' | 'Inativo';
   observacoes: string;
   status_analise: 'OK' | 'Incompleto' | 'Revisar';
   erros: string[];
@@ -35,6 +36,7 @@ const labels = {
   membros: /^(membros|quantidade):\s*/i,
   link: /^link:\s*/i,
   perfil: /^perfil\s*compartilhando:\s*/i,
+  shopee: /^uso\s*shopee:\s*/i,
   obs: /^(obs|observações|observacoes):\s*/i
 };
 
@@ -83,6 +85,7 @@ export function parseBulkText(text: string): ParsedGroup[] {
       nicho: '',
       quantidade_membros: null,
       perfil_compartilhando: 'Inativo',
+      uso_shopee: 'Inativo',
       observacoes: '',
       status_analise: 'Revisar',
       erros: []
@@ -133,6 +136,14 @@ export function parseBulkText(text: string): ParsedGroup[] {
         const val = line.replace(labels.perfil, '').trim().toLowerCase();
         if (val.includes('ativo')) group.perfil_compartilhando = 'Ativo';
         else group.perfil_compartilhando = 'Inativo';
+        continue;
+      }
+
+      // Uso Shopee
+      if (line.match(labels.shopee)) {
+        const val = line.replace(labels.shopee, '').trim().toLowerCase();
+        if (val.includes('ativo')) group.uso_shopee = 'Ativo';
+        else group.uso_shopee = 'Inativo';
         continue;
       }
 

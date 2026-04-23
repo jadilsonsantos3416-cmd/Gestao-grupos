@@ -7,11 +7,12 @@ import { WhatsAppTab } from '@/src/components/whatsapp/WhatsAppTab';
 import { BulkImporter } from '@/src/components/importer/BulkImporter';
 import { DataCleanupModal } from '@/src/components/groups/DataCleanupModal';
 import { useGroups } from '@/src/hooks/useGroups';
-import { Group } from '@/src/types';
+import { Group, QuickFilter } from '@/src/types';
 import { AnimatePresence } from 'motion/react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeFilter, setActiveFilter] = useState<QuickFilter>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImporterOpen, setIsImporterOpen] = useState(false);
   const [isCleanupOpen, setIsCleanupOpen] = useState(false);
@@ -43,6 +44,7 @@ export default function App() {
         nicho: item.nicho,
         quantidade_membros: item.quantidade_membros,
         perfil_compartilhando: item.perfil_compartilhando || 'Inativo',
+        uso_shopee: item.uso_shopee || 'Inativo',
         observacoes: item.observacoes,
         status: 'Disponível' as const,
         locatario: '',
@@ -83,6 +85,8 @@ export default function App() {
     <Shell 
       activeTab={activeTab} 
       setActiveTab={setActiveTab}
+      activeFilter={activeFilter}
+      setActiveFilter={setActiveFilter}
       onAddGroup={openNewGroupForm}
       onImportGroups={() => setIsImporterOpen(true)}
       onCleanupData={() => setIsCleanupOpen(true)}
@@ -96,6 +100,8 @@ export default function App() {
             groups={groups} 
             onEdit={handleEdit} 
             onDelete={deleteGroup} 
+            activeQuickFilter={activeFilter}
+            onQuickFilterChange={setActiveFilter}
           />
         )}
         {activeTab === 'whatsapp' && (

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Group } from '@/src/types';
+import React, { useState, useEffect } from 'react';
+import { Group, QuickFilter } from '@/src/types';
 import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, exportToCSV } from '@/src/lib/utils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -9,16 +9,20 @@ interface GroupListProps {
   groups: Group[];
   onEdit: (group: Group) => void;
   onDelete: (id: string) => void;
+  activeQuickFilter?: QuickFilter;
+  onQuickFilterChange?: (filter: QuickFilter) => void;
 }
 
 type SortField = 'data_vencimento' | 'quantidade_membros' | 'nome_grupo';
 
-export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
+export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuickFilterChange }: GroupListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [renterSearch, setRenterSearch] = useState('');
   const [nichoFilter, setNichoFilter] = useState('Todos');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [perfilFilter, setPerfilFilter] = useState('Todos');
+  const [shopeeFilter, setShopeeFilter] = useState('Todos');
+  const [onlyReadyForShopee, setOnlyReadyForShopee] = useState(false);
   const [sortField, setSortField] = useState<SortField>('data_vencimento');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -27,8 +31,52 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
   const statuses = ['Todos', 'Alugado', 'Disponível'];
   const renters = ['Todos', ...Array.from(new Set(groups.filter(g => g.locatario).map(g => g.locatario)))].sort();
   const perfis = ['Todos', 'Ativo', 'Inativo'];
+  const shopees = ['Todos', 'Ativo', 'Inativo'];
 
   const [renterFilter, setRenterFilter] = useState('Todos');
+
+  // Handle Quick Filters from Sidebar
+  useEffect(() => {
+    if (!activeQuickFilter || activeQuickFilter === 'all') {
+      if (activeQuickFilter === 'all') {
+        setNichoFilter('Todos');
+        setStatusFilter('Todos');
+        setPerfilFilter('Todos');
+        setShopeeFilter('Todos');
+        setRenterFilter('Todos');
+        setOnlyReadyForShopee(false);
+        setSearchTerm('');
+        setRenterSearch('');
+      }
+      return;
+    }
+
+    // Reset standard filters
+    setNichoFilter('Todos');
+    setStatusFilter('Todos');
+    setPerfilFilter('Todos');
+    setShopeeFilter('Todos');
+    setRenterFilter('Todos');
+    setOnlyReadyForShopee(false);
+    setSearchTerm('');
+    setRenterSearch('');
+
+    switch (activeQuickFilter) {
+      case 'perfil_ativo': setPerfilFilter('Ativo'); break;
+      case 'perfil_inativo': setPerfilFilter('Inativo'); break;
+      case 'shopee_ativo': setShopeeFilter('Ativo'); break;
+      case 'shopee_inativo': setShopeeFilter('Inativo'); break;
+      case 'ready_shopee': setOnlyReadyForShopee(true); break;
+    }
+  }, [activeQuickFilter]);
+
+  // If user changes a filter manually, we might want to clear the "Quick Filter" highight in sidebar
+  const handleFilterChange = (setter: (val: any) => void, val: any) => {
+    setter(val);
+    if (onQuickFilterChange && activeQuickFilter !== 'all') {
+      onQuickFilterChange('all');
+    }
+  };
 
   const filteredGroups = groups
     .filter(g => 
@@ -37,7 +85,9 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
       (nichoFilter === 'Todos' || g.nicho === nichoFilter) &&
       (statusFilter === 'Todos' || g.status === statusFilter) &&
       (perfilFilter === 'Todos' || g.perfil_compartilhando === perfilFilter) &&
-      (renterFilter === 'Todos' || g.locatario === renterFilter)
+      (shopeeFilter === 'Todos' || g.uso_shopee === shopeeFilter) &&
+      (renterFilter === 'Todos' || g.locatario === renterFilter) &&
+      (!onlyReadyForShopee || (g.perfil_compartilhando === 'Ativo' && g.uso_shopee === 'Ativo'))
     )
     .sort((a, b) => {
       // Primary sort: Nicho (case insensitive)
@@ -102,56 +152,82 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
             />
           </div>
         </div>
-        
-        <div className="flex gap-2 shrink-0 overflow-x-auto pb-2 md:pb-0">
-          <div className="relative">
-            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-            <select
-              className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px] capitalize"
-              value={nichoFilter}
-              onChange={e => setNichoFilter(e.target.value)}
-            >
-              {niches.map(n => <option key={n} value={n} className="capitalize">Nicho: {n}</option>)}
-            </select>
+
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex gap-2 shrink-0 overflow-x-auto pb-2 md:pb-0">
+            <div className="relative">
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              <select
+                className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px] capitalize"
+                value={nichoFilter}
+                onChange={e => handleFilterChange(setNichoFilter, e.target.value)}
+              >
+                {niches.map(n => <option key={n} value={n} className="capitalize">Nicho: {n}</option>)}
+              </select>
+            </div>
+            <div className="relative">
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              <select
+                className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
+                value={statusFilter}
+                onChange={e => handleFilterChange(setStatusFilter, e.target.value)}
+              >
+                {statuses.map(s => <option key={s} value={s}>Status: {s}</option>)}
+              </select>
+            </div>
+            <div className="relative">
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              <select
+                className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
+                value={perfilFilter}
+                onChange={e => handleFilterChange(setPerfilFilter, e.target.value)}
+              >
+                {perfis.map(p => <option key={p} value={p}>Perfil: {p}</option>)}
+              </select>
+            </div>
+            <div className="relative">
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              <select
+                className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
+                value={shopeeFilter}
+                onChange={e => handleFilterChange(setShopeeFilter, e.target.value)}
+              >
+                {shopees.map(s => <option key={s} value={s}>Shopee: {s}</option>)}
+              </select>
+            </div>
+            <div className="relative">
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              <select
+                className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
+                value={renterFilter}
+                onChange={e => handleFilterChange(setRenterFilter, e.target.value)}
+              >
+                {renters.map(r => <option key={r} value={r}>Locatário: {r}</option>)}
+              </select>
+            </div>
           </div>
-          <div className="relative">
-            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-            <select
-              className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
+
+          <div className="flex gap-2">
+            <button 
+              onClick={() => handleFilterChange(setOnlyReadyForShopee, !onlyReadyForShopee)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-3 rounded-2xl border-2 font-bold text-[10px] uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap",
+                onlyReadyForShopee 
+                  ? "bg-orange-600 border-orange-600 text-white shadow-lg shadow-orange-100" 
+                  : "bg-white border-gray-100 text-gray-400 hover:border-orange-200 hover:text-orange-600"
+              )}
             >
-              {statuses.map(s => <option key={s} value={s}>Status: {s}</option>)}
-            </select>
-          </div>
-          <div className="relative">
-            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-            <select
-              className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
-              value={perfilFilter}
-              onChange={e => setPerfilFilter(e.target.value)}
+              🔥 Prontos Para Shopee
+            </button>
+            <button 
+              onClick={() => exportToCSV(filteredGroups, `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`)}
+              className="flex items-center gap-2 px-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm text-xs font-bold text-gray-600 hover:bg-gray-50 active:scale-95 transition-all whitespace-nowrap"
+              title="Download da lista atual em CSV"
             >
-              {perfis.map(p => <option key={p} value={p}>Perfil: {p}</option>)}
-            </select>
+              <Download className="w-4 h-4 text-green-600" />
+              CSV
+            </button>
           </div>
-          <div className="relative">
-            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-            <select
-              className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
-              value={renterFilter}
-              onChange={e => setRenterFilter(e.target.value)}
-            >
-              {renters.map(r => <option key={r} value={r}>Locatário: {r}</option>)}
-            </select>
-          </div>
-          <button 
-            onClick={() => exportToCSV(filteredGroups, `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`)}
-            className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm text-xs font-bold text-gray-600 hover:bg-gray-50 active:scale-95 transition-all whitespace-nowrap"
-            title="Download da lista atual em CSV"
-          >
-            <Download className="w-4 h-4 text-green-600" />
-            Exportar CSV
-          </button>
         </div>
       </div>
 
@@ -172,6 +248,7 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
                 <div className="flex items-center gap-2">Vencimento <ArrowUpDown className="w-3 h-3" /></div>
               </th>
               <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Perfil</th>
+              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Shopee</th>
               <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
               <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Valor</th>
               <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Ações</th>
@@ -244,6 +321,14 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
                         group.perfil_compartilhando === 'Ativo' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                       )}>
                         {group.perfil_compartilhando === 'Ativo' ? 'Perfil Ativo' : 'Perfil Inativo'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={cn(
+                        "text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg inline-block",
+                        group.uso_shopee === 'Ativo' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
+                      )}>
+                        {group.uso_shopee === 'Ativo' ? 'Shopee Ativo' : 'Shopee Inativo'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -348,6 +433,15 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
                           group.perfil_compartilhando === 'Ativo' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                         )}>
                           {group.perfil_compartilhando === 'Ativo' ? 'Perfil Ativo' : 'Perfil Inativo'}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Shopee</p>
+                        <span className={cn(
+                          "text-[10px] font-black uppercase px-2 py-0.5 rounded-full inline-block",
+                          group.uso_shopee === 'Ativo' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
+                        )}>
+                          {group.uso_shopee === 'Ativo' ? 'Shopee Ativo' : 'Shopee Inativo'}
                         </span>
                       </div>
                    </div>

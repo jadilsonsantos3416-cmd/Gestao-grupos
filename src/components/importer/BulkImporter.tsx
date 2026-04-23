@@ -205,6 +205,7 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Membros</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Nicho</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Perfil</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Shopee</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Link</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Obs</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Ações</th>
@@ -313,6 +314,25 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                                 item.perfil_compartilhando === 'Ativo' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                               )}>
                                 {item.perfil_compartilhando === 'Ativo' ? 'Perfil Ativo' : 'Perfil Inativo'}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            {editingId === item.id_temp ? (
+                               <select 
+                                 value={item.uso_shopee || 'Inativo'}
+                                 onChange={e => updateItem(item.id_temp, { uso_shopee: e.target.value as any })}
+                                 className="w-full min-w-[90px] bg-white border border-green-200 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none ring-2 ring-green-50"
+                               >
+                                 <option value="Ativo">Ativo</option>
+                                 <option value="Inativo">Inativo</option>
+                               </select>
+                            ) : (
+                              <span className={cn(
+                                "text-[10px] font-black uppercase px-2 py-0.5 rounded-full inline-block",
+                                item.uso_shopee === 'Ativo' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
+                              )}>
+                                {item.uso_shopee === 'Ativo' ? 'Shopee Ativo' : 'Shopee Inativo'}
                               </span>
                             )}
                           </td>

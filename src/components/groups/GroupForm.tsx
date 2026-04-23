@@ -30,6 +30,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
     valor: 0,
     quantidade_membros: 0,
     perfil_compartilhando: 'Inativo',
+    uso_shopee: 'Inativo',
     observacoes: '',
   });
 
@@ -336,6 +337,28 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                       className={cn(
                         "flex-1 py-1.5 rounded-xl border-2 text-[11px] font-bold transition-all",
                         formData.perfil_compartilhando === s 
+                          ? (s === 'Ativo' ? "bg-green-600 border-green-600 text-white shadow-lg shadow-green-100" :
+                             "bg-red-600 border-red-600 text-white shadow-lg shadow-red-100")
+                          : "border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-200"
+                      )}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Uso Para Shopee</label>
+                <div className="flex gap-2">
+                  {(['Ativo', 'Inativo'] as const).map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setFormData({...formData, uso_shopee: s})}
+                      className={cn(
+                        "flex-1 py-1.5 rounded-xl border-2 text-[11px] font-bold transition-all",
+                        formData.uso_shopee === s 
                           ? (s === 'Ativo' ? "bg-green-600 border-green-600 text-white shadow-lg shadow-green-100" :
                              "bg-red-600 border-red-600 text-white shadow-lg shadow-red-100")
                           : "border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-200"
