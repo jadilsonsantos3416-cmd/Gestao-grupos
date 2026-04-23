@@ -4,6 +4,7 @@
  */
 
 export type GroupStatus = 'Disponível' | 'Alugado';
+export type PerfilStatus = 'Ativo' | 'Inativo';
 
 export interface Group {
   id: string;
@@ -12,12 +13,13 @@ export interface Group {
   link_grupo: string;
   nicho: string;
   status: GroupStatus;
+  perfil_compartilhando: PerfilStatus;
   locatario: string;
   whatsapp: string;
   data_inicio: string;
   data_vencimento: string;
   valor: number;
-  quantidade_membros: number;
+  quantidade_membros: number | null;
   observacoes: string;
   updatedAt: string;
 }

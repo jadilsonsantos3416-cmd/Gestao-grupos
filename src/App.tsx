@@ -18,11 +18,11 @@ export default function App() {
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const { groups, addGroup, updateGroup, deleteGroup, isLoaded } = useGroups();
 
-  const handleSaveGroup = (groupData: any) => {
+  const handleSaveGroup = async (groupData: any) => {
     if (editingGroup) {
-      updateGroup(editingGroup.id, groupData);
+      await updateGroup(editingGroup.id, groupData);
     } else {
-      addGroup(groupData);
+      await addGroup(groupData);
     }
   };
 
@@ -42,6 +42,7 @@ export default function App() {
         link_grupo: item.link_grupo,
         nicho: item.nicho,
         quantidade_membros: item.quantidade_membros,
+        perfil_compartilhando: item.perfil_compartilhando || 'Inativo',
         observacoes: item.observacoes,
         status: 'Disponível' as const,
         locatario: '',

@@ -18,6 +18,7 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
   const [renterSearch, setRenterSearch] = useState('');
   const [nichoFilter, setNichoFilter] = useState('Todos');
   const [statusFilter, setStatusFilter] = useState('Todos');
+  const [perfilFilter, setPerfilFilter] = useState('Todos');
   const [sortField, setSortField] = useState<SortField>('data_vencimento');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -25,6 +26,7 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
   const niches = ['Todos', ...Array.from(new Set(groups.map(g => g.nicho)))].sort();
   const statuses = ['Todos', 'Alugado', 'Disponível'];
   const renters = ['Todos', ...Array.from(new Set(groups.filter(g => g.locatario).map(g => g.locatario)))].sort();
+  const perfis = ['Todos', 'Ativo', 'Inativo'];
 
   const [renterFilter, setRenterFilter] = useState('Todos');
 
@@ -34,6 +36,7 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
       g.locatario.toLowerCase().includes(renterSearch.toLowerCase()) &&
       (nichoFilter === 'Todos' || g.nicho === nichoFilter) &&
       (statusFilter === 'Todos' || g.status === statusFilter) &&
+      (perfilFilter === 'Todos' || g.perfil_compartilhando === perfilFilter) &&
       (renterFilter === 'Todos' || g.locatario === renterFilter)
     )
     .sort((a, b) => {
@@ -104,11 +107,11 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
           <div className="relative">
             <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
             <select
-              className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
+              className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px] capitalize"
               value={nichoFilter}
               onChange={e => setNichoFilter(e.target.value)}
             >
-              {niches.map(n => <option key={n} value={n}>Nicho: {n}</option>)}
+              {niches.map(n => <option key={n} value={n} className="capitalize">Nicho: {n}</option>)}
             </select>
           </div>
           <div className="relative">
@@ -119,6 +122,16 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
               onChange={e => setStatusFilter(e.target.value)}
             >
               {statuses.map(s => <option key={s} value={s}>Status: {s}</option>)}
+            </select>
+          </div>
+          <div className="relative">
+            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+            <select
+              className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
+              value={perfilFilter}
+              onChange={e => setPerfilFilter(e.target.value)}
+            >
+              {perfis.map(p => <option key={p} value={p}>Perfil: {p}</option>)}
             </select>
           </div>
           <div className="relative">
@@ -158,6 +171,7 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
               <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-900" onClick={() => toggleSort('data_vencimento')}>
                 <div className="flex items-center gap-2">Vencimento <ArrowUpDown className="w-3 h-3" /></div>
               </th>
+              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Perfil</th>
               <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
               <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Valor</th>
               <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Ações</th>
@@ -168,13 +182,16 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
               <React.Fragment key={nicho}>
                 <tr className="bg-gray-100/50">
                   <td colSpan={8} className="px-6 py-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-green-700 bg-green-100/50 px-3 py-1 rounded-full">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-green-700 bg-green-100/50 px-3 py-1 rounded-full capitalize">
                       📂 Nicho: {nicho}
                     </span>
                   </td>
                 </tr>
                 {groupedGroups[nicho].map(group => (
-                  <tr key={group.id} className="hover:bg-gray-50/50 transition-colors group">
+                  <tr key={group.id} className={cn(
+                    "hover:bg-gray-50/50 transition-colors group",
+                    group.perfil_compartilhando === 'Inativo' && "border-l-4 border-l-red-500 bg-red-50/10"
+                  )}>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="font-bold text-gray-900">{group.nome_grupo}</span>
@@ -204,7 +221,7 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-xs font-bold px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg uppercase tracking-wider">
+                      <span className="text-xs font-bold px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg uppercase tracking-wider capitalize">
                         {group.nicho}
                       </span>
                     </td>
@@ -220,6 +237,14 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
                     </td>
                     <td className="px-6 py-4">
                       <ExpiryBadge dareStr={group.data_vencimento} status={group.status} />
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={cn(
+                        "text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg inline-block",
+                        group.perfil_compartilhando === 'Ativo' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                      )}>
+                        {group.perfil_compartilhando === 'Ativo' ? 'Perfil Ativo' : 'Perfil Inativo'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={cn(
@@ -271,17 +296,20 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
             </h3>
             <div className="space-y-4">
               {groupedGroups[nicho].map(group => (
-                <div key={group.id} className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden">
+                <div key={group.id} className={cn(
+                  "bg-white p-5 rounded-[2rem] border shadow-sm relative overflow-hidden",
+                  group.perfil_compartilhando === 'Inativo' ? "border-red-200" : "border-gray-100"
+                )}>
                    {/* Status Bar */}
                    <div className={cn(
                      "absolute left-0 top-0 bottom-0 w-1.5",
-                     group.status === 'Alugado' ? "bg-green-500" : "bg-gray-200"
+                     group.perfil_compartilhando === 'Ativo' ? "bg-green-500" : "bg-red-500"
                    )} />
 
                    <div className="flex justify-between items-start mb-4">
                      <div>
                         <h4 className="font-bold text-gray-900">{group.nome_grupo}</h4>
-                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">{group.nicho} • {formatNumber(group.quantidade_membros)} memb.</p>
+                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1 capitalize">{group.nicho} • {formatNumber(group.quantidade_membros)} memb.</p>
                      </div>
                      <div className="flex gap-1">
                         <button onClick={() => onEdit(group)} className="p-2 text-gray-400 bg-gray-50 rounded-xl"><Edit2 className="w-4 h-4" /></button>
@@ -311,6 +339,15 @@ export function GroupList({ groups, onEdit, onDelete }: GroupListProps) {
                           group.status === 'Alugado' ? "border-green-200 text-green-600 bg-green-50" : "border-gray-200 text-gray-400 bg-gray-50"
                         )}>
                           {group.status}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Perfil</p>
+                        <span className={cn(
+                          "text-[10px] font-black uppercase px-2 py-0.5 rounded-full inline-block",
+                          group.perfil_compartilhando === 'Ativo' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                        )}>
+                          {group.perfil_compartilhando === 'Ativo' ? 'Perfil Ativo' : 'Perfil Inativo'}
                         </span>
                       </div>
                    </div>

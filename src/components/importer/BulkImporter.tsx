@@ -47,11 +47,14 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
         if (updates.link_grupo) {
           newItem.group_id = extractGroupId(updates.link_grupo);
         }
+        
         // Recalculate status
         const errors = [];
-        if (!newItem.nome_grupo) errors.push('Nome ausente');
-        if (!newItem.link_grupo) errors.push('Link ausente');
-        newItem.status_analise = errors.length === 0 ? 'OK' : (errors.length > 1 ? 'Revisar' : 'Incompleto');
+        if (!newItem.nome_grupo) errors.push('Nome não identificado');
+        if (!newItem.link_grupo) errors.push('Link não identificado');
+        if (newItem.link_grupo && !newItem.group_id) errors.push('ID não encontrado');
+        
+        newItem.status_analise = (newItem.nome_grupo && newItem.link_grupo && newItem.group_id) ? 'OK' : 'Revisar';
         newItem.erros = errors;
         return newItem;
       }
@@ -201,6 +204,7 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Nome do Grupo</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Membros</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Nicho</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Perfil</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Link</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Obs</th>
                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Ações</th>
@@ -235,8 +239,15 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                                   <CheckCircle className="w-4 h-4" /> OK
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-1 text-orange-500 font-bold text-[10px] uppercase tracking-wider" title={item.erros.join(', ')}>
-                                  <AlertCircle className="w-4 h-4" /> Revisar
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-1 text-orange-500 font-bold text-[10px] uppercase tracking-wider">
+                                    <AlertCircle className="w-4 h-4" /> Revisar
+                                  </div>
+                                  {item.erros.map((err, i) => (
+                                    <span key={i} className="text-[9px] text-orange-400 font-medium italic leading-tight">
+                                      {err}
+                                    </span>
+                                  ))}
                                 </div>
                               )}
                             </td>
@@ -258,14 +269,21 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {editingId === item.id_temp ? (
-                              <input 
-                                type="number"
-                                value={item.quantidade_membros}
-                                onChange={e => updateItem(item.id_temp, { quantidade_membros: parseInt(e.target.value) || 0 })}
-                                className="w-24 bg-white border border-green-200 rounded-lg px-3 py-1.5 text-sm font-medium outline-none ring-2 ring-green-50"
-                              />
+                                <input 
+                                  type="number"
+                                  value={item.quantidade_membros === null ? '' : item.quantidade_membros}
+                                  onChange={e => updateItem(item.id_temp, { quantidade_membros: e.target.value === '' ? null : parseInt(e.target.value) || 0 })}
+                                  className="w-24 bg-white border border-green-200 rounded-lg px-3 py-1.5 text-sm font-medium outline-none ring-2 ring-green-50"
+                                />
                             ) : (
-                              <span className="text-sm font-mono text-gray-600">{(item.quantidade_membros / 1000).toFixed(1)}k</span>
+                              <span className="text-sm font-mono text-gray-600">
+                                {item.quantidade_membros !== null ? 
+                                  (item.quantidade_membros >= 1000 ? 
+                                    `${(item.quantidade_membros / 1000).toFixed(1)}k` : 
+                                    item.quantidade_membros
+                                  ) : '-'
+                                }
+                              </span>
                             )}
                           </td>
                           <td className="px-6 py-4">
@@ -273,10 +291,29 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                               <input 
                                 value={item.nicho}
                                 onChange={e => updateItem(item.id_temp, { nicho: e.target.value })}
-                                className="w-full bg-white border border-green-200 rounded-lg px-3 py-1.5 text-sm font-medium outline-none ring-2 ring-green-50"
+                                className="w-full bg-white border border-green-200 rounded-lg px-3 py-1.5 text-sm font-medium outline-none ring-2 ring-green-50 capitalize"
                               />
                             ) : (
-                              <span className="text-xs font-black uppercase tracking-widest text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{item.nicho}</span>
+                              <span className="text-xs font-black uppercase tracking-widest text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full capitalize">{item.nicho}</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            {editingId === item.id_temp ? (
+                               <select 
+                                 value={item.perfil_compartilhando || 'Inativo'}
+                                 onChange={e => updateItem(item.id_temp, { perfil_compartilhando: e.target.value as any })}
+                                 className="w-full min-w-[90px] bg-white border border-green-200 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none ring-2 ring-green-50"
+                               >
+                                 <option value="Ativo">Ativo</option>
+                                 <option value="Inativo">Inativo</option>
+                               </select>
+                            ) : (
+                              <span className={cn(
+                                "text-[10px] font-black uppercase px-2 py-0.5 rounded-full inline-block",
+                                item.perfil_compartilhando === 'Ativo' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                              )}>
+                                {item.perfil_compartilhando === 'Ativo' ? 'Perfil Ativo' : 'Perfil Inativo'}
+                              </span>
                             )}
                           </td>
                           <td className="px-6 py-4">

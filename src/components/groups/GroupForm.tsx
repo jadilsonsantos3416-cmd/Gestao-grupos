@@ -8,12 +8,15 @@ import { extractGroupId } from '@/src/lib/groupParser';
 
 interface GroupFormProps {
   onClose: () => void;
-  onSave: (group: any) => void;
+  onSave: (group: any) => Promise<void>;
   editingGroup?: Group | null;
   existingGroups: Group[];
 }
 
 export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: GroupFormProps) {
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  
   const [formData, setFormData] = useState<Partial<Group>>({
     nome_grupo: '',
     link_grupo: '',
@@ -26,13 +29,30 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
     data_vencimento: format(addMonths(new Date(), 1), 'yyyy-MM-dd'),
     valor: 0,
     quantidade_membros: 0,
+    perfil_compartilhando: 'Inativo',
     observacoes: '',
   });
 
   const duplicateGroup = React.useMemo(() => {
-    if (!formData.group_id) return null;
-    return existingGroups.find(g => g.group_id === formData.group_id && g.id !== editingGroup?.id);
-  }, [formData.group_id, existingGroups, editingGroup]);
+    if (!formData.link_grupo) return null;
+    
+    const currentId = formData.group_id;
+    const currentLink = formData.link_grupo.trim().toLowerCase();
+
+    return existingGroups.find(g => {
+      // Ignorar se for o próprio grupo sendo editado
+      if (editingGroup?.id && g.id === editingGroup.id) return false;
+
+      // Se ambos tiverem ID numérico do Facebook, comparar por ele
+      if (currentId && g.group_id === currentId) return true;
+
+      // Caso contrário, comparar pelo link exato (removendo barras finais)
+      const gLink = (g.link_grupo || "").trim().toLowerCase().split('?')[0].replace(/\/$/, "");
+      const fLink = currentLink.split('?')[0].replace(/\/$/, "");
+      
+      return gLink === fLink && fLink !== "";
+    });
+  }, [formData.group_id, formData.link_grupo, existingGroups, editingGroup]);
 
   const [renterSearch, setRenterSearch] = useState('');
   const [showRenterSuggestions, setShowRenterSuggestions] = useState(false);
@@ -93,23 +113,38 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
     }
   }, [editingGroup]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Normalize nicho before saving
-    const normalizedNicho = niches.find(n => n.toLowerCase() === nichoSearch.trim().toLowerCase()) || nichoSearch.trim();
-    
-    // Normalize locatario name if it matches an existing one (same phone or same name ignoring case)
-    let finalLocatario = renterSearch.trim();
-    const existingRenter = renters.find(r => 
-      r.nome.toLowerCase() === finalLocatario.toLowerCase() || 
-      r.whatsapp.replace(/\D/g, '') === formData.whatsapp?.replace(/\D/g, '')
-    );
-    if (existingRenter) {
-      finalLocatario = existingRenter.nome;
+  const handleSubmit = async (e: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (isSaving) return;
+
+    // Validação simples de duplicidade antes de salvar
+    if (duplicateGroup) {
+      setError(`Link já cadastrado no grupo: ${duplicateGroup.nome_grupo}`);
+      return;
     }
 
-    onSave({ ...formData, nicho: normalizedNicho, locatario: finalLocatario });
-    onClose();
+    setError(null);
+    setIsSaving(true);
+    
+    try {
+      // Validação de campos obrigatórios
+      if (!formData.nome_grupo?.trim()) {
+        throw new Error("O nome do grupo é obrigatório.");
+      }
+      
+      const normalizedNicho = niches.find(n => n.toLowerCase() === nichoSearch.trim().toLowerCase()) || nichoSearch.trim();
+      let finalLocatario = renterSearch.trim();
+
+      const finalData = { ...formData, nicho: normalizedNicho, locatario: finalLocatario };
+      
+      await onSave(finalData);
+      onClose();
+    } catch (err: any) {
+      console.error("Erro ao salvar:", err);
+      setError(err.message || "Erro ao salvar o grupo. Tente novamente.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const selectRenter = (renter: Renter) => {
@@ -163,7 +198,14 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <form id="group-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 animate-shake">
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+              <p className="text-sm font-bold text-red-800">{error}</p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Group Info */}
             <div className="space-y-4">
@@ -200,7 +242,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                 </div>
               )}
 
-              {duplicateGroup && (
+              {!isSaving && duplicateGroup && (
                 <div className="px-4 py-3 bg-orange-50 border border-orange-100 rounded-2xl flex gap-3 animate-pulse">
                   <AlertCircle className="w-5 h-5 text-orange-600 shrink-0" />
                   <div className="text-[10px]">
@@ -223,7 +265,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                         setShowNichoSuggestions(true);
                       }}
                       onFocus={() => setShowNichoSuggestions(true)}
-                      className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-medium"
+                      className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-medium capitalize"
                       placeholder="Ex: Empregos"
                     />
                   </FormField>
@@ -241,7 +283,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                             key={idx}
                             type="button"
                             onClick={() => selectNicho(nicho)}
-                            className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-50 last:border-0 flex flex-col"
+                            className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-50 last:border-0 flex flex-col capitalize"
                           >
                             <span className="text-sm font-bold text-gray-800">{nicho}</span>
                           </button>
@@ -274,6 +316,28 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                         "flex-1 py-2 rounded-xl border-2 text-sm font-bold transition-all",
                         formData.status === s 
                           ? "bg-green-600 border-green-600 text-white shadow-lg shadow-green-100" 
+                          : "border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-200"
+                      )}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Perfil Compartilhando</label>
+                <div className="flex gap-2">
+                  {(['Ativo', 'Inativo'] as const).map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setFormData({...formData, perfil_compartilhando: s})}
+                      className={cn(
+                        "flex-1 py-1.5 rounded-xl border-2 text-[11px] font-bold transition-all",
+                        formData.perfil_compartilhando === s 
+                          ? (s === 'Ativo' ? "bg-green-600 border-green-600 text-white shadow-lg shadow-green-100" :
+                             "bg-red-600 border-red-600 text-white shadow-lg shadow-red-100")
                           : "border-gray-100 bg-gray-50 text-gray-400 hover:border-gray-200"
                       )}
                     >
@@ -422,15 +486,28 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
           <button 
             type="button"
             onClick={onClose}
-            className="flex-1 py-3 px-4 bg-white border border-gray-200 text-gray-600 font-bold rounded-2xl hover:bg-gray-100 transition-colors"
+            disabled={isSaving}
+            className="flex-1 py-3 px-4 bg-white border border-gray-200 text-gray-600 font-bold rounded-2xl hover:bg-gray-100 transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
           <button 
-            onClick={handleSubmit}
-            className="flex-[2] py-3 px-4 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 shadow-lg shadow-green-100 transition-all active:scale-95"
+            type="submit"
+            form="group-form"
+            disabled={isSaving}
+            className={cn(
+              "flex-[2] py-3 px-4 text-white font-bold rounded-2xl shadow-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2",
+              isSaving ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 shadow-green-100"
+            )}
           >
-            Salvar Alterações
+            {isSaving ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              'Salvar Alterações'
+            )}
           </button>
         </div>
       </motion.div>

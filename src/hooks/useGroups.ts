@@ -1,70 +1,52 @@
 import { useState, useEffect } from 'react';
 import { Group } from '../types';
-import { extractGroupId } from '../lib/groupParser';
-
-import {
-  collection,
-  onSnapshot,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  serverTimestamp
-} from 'firebase/firestore';
-
 import { db } from '../lib/firebase';
+import { 
+  collection, 
+  onSnapshot, 
+  query, 
+  orderBy
+} from 'firebase/firestore';
+import * as gruposService from '../lib/gruposService';
 
 export function useGroups() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // 🔥 ESCUTA EM TEMPO REAL (WEB + APK SINCRONIZADOS)
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'grupos'), (snapshot) => {
-      const data = snapshot.docs.map((docItem) => ({
-        id: docItem.id,
-        ...docItem.data()
-      })) as Group[];
-
-      setGroups(data);
+    const q = query(collection(db, 'grupos'), orderBy('updatedAt', 'desc'));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const groupsData: Group[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        groupsData.push({
+          ...data,
+          id: doc.id,
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt || new Date().toISOString(),
+        } as Group);
+      });
+      setGroups(groupsData);
+      setIsLoaded(true);
+    }, (error) => {
+      console.error("Erro ao carregar grupos do Firestore:", error);
       setIsLoaded(true);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // ➕ ADICIONAR GRUPO
-  const addGroup = async (group: Omit<Group, 'id' | 'group_id' | 'updatedAt'>) => {
-    await addDoc(collection(db, 'grupos'), {
-      ...group,
-      group_id: extractGroupId(group.link_grupo),
-      updatedAt: serverTimestamp()
-    });
+  const addGroup = async (groupData: Omit<Group, 'id' | 'group_id' | 'updatedAt'>) => {
+    return await gruposService.adicionarGrupo(groupData as any);
   };
 
-  // ✏️ ATUALIZAR GRUPO
   const updateGroup = async (id: string, updates: Partial<Group>) => {
-    const ref = doc(db, 'grupos', id);
-
-    await updateDoc(ref, {
-      ...updates,
-      group_id: updates.link_grupo
-        ? extractGroupId(updates.link_grupo)
-        : updates.group_id,
-      updatedAt: serverTimestamp()
-    });
+    return await gruposService.atualizarGrupo(id, updates as any);
   };
 
-  // 🗑️ DELETAR GRUPO
   const deleteGroup = async (id: string) => {
-    await deleteDoc(doc(db, 'grupos', id));
+    return await gruposService.deletarGrupo(id);
   };
 
-  return {
-    groups,
-    addGroup,
-    updateGroup,
-    deleteGroup,
-    isLoaded
-  };
+  return { groups, addGroup, updateGroup, deleteGroup, isLoaded };
 }

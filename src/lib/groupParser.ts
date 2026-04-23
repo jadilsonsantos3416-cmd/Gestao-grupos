@@ -8,7 +8,8 @@ export interface ParsedGroup {
   nome_grupo: string;
   link_grupo: string;
   nicho: string;
-  quantidade_membros: number;
+  quantidade_membros: number | null;
+  perfil_compartilhando?: 'Ativo' | 'Inativo' | 'Pendente';
   observacoes: string;
   status_analise: 'OK' | 'Incompleto' | 'Revisar';
   erros: string[];
@@ -33,6 +34,7 @@ const labels = {
   nome: /^nome:\s*/i,
   membros: /^(membros|quantidade):\s*/i,
   link: /^link:\s*/i,
+  perfil: /^perfil\s*compartilhando:\s*/i,
   obs: /^(obs|observações|observacoes):\s*/i
 };
 
@@ -40,112 +42,142 @@ export function cleanGroupName(name: string): string {
   if (!name) return '';
   return name
     .replace(/^[\s. \-)—]+/, '') // Remove leading garbage
+    .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Remove emojis
+    .replace(/[✅✔️☑️]/gu, '') // Specific check symbols
     .replace(/\s+/g, ' ')        // Normalize spaces
     .trim();
 }
 
-export function parseMembers(str: string): number {
-  if (!str) return 0;
-  const match = str.match(/(\d+(?:[.,]\d+)?)\s*(mil)?/i);
-  if (!match) return 0;
+export function parseMembers(str: string): number | null {
+  if (!str) return null;
+  // Clean string from non-digits but keep decimal point/comma
+  const match = str.match(/(\d+(?:[.,]\d+)?)\s*(mil|k)?/i);
+  if (!match) return null;
 
   const valStr = match[1].replace(',', '.');
   const isMil = !!match[2];
   let val = parseFloat(valStr);
 
-  // Heuristic: if it's a small number with decimal or has "mil", it's thousands
-  if (isMil || (val < 1000 && valStr.includes('.'))) {
+  if (isNaN(val)) return null;
+
+  // If it clearly has 'mil' or 'k', or if it's a decimal < 1000, treat as thousands
+  if (isMil || (valStr.includes('.') && val < 500)) {
     val = Math.round(val * 1000);
   }
   return val;
 }
 
 export function parseBulkText(text: string): ParsedGroup[] {
+  // 1. Split text into chunks separated by blank lines (double newlines)
+  const chunks = text.split(/\n\s*\n/).map(chunk => chunk.trim()).filter(chunk => chunk.length > 0);
   const results: ParsedGroup[] = [];
 
-  const blocks = text
-    .split(/\n\s*\n/)
-    .map(block => block.trim())
-    .filter(Boolean);
+  for (const chunk of chunks) {
+    const lines = chunk.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    
+    let group: ParsedGroup = {
+      id_temp: Math.random().toString(36).substr(2, 9),
+      group_id: '',
+      nome_grupo: '',
+      link_grupo: '',
+      nicho: '',
+      quantidade_membros: null,
+      perfil_compartilhando: 'Inativo',
+      observacoes: '',
+      status_analise: 'Revisar',
+      erros: []
+    };
 
-  for (const block of blocks) {
-    const lines = block
-      .split('\n')
-      .map(l => l.trim())
-      .filter(Boolean);
-
-    let nome_grupo = '';
-    let link_grupo = '';
-    let group_id = '';
-    let nicho = '';
-    let quantidade_membros: number | null = null;
-    let observacoes = '';
+    let hasNomeTag = false;
+    let hasMembrosTag = false;
+    let hasNichoTag = false;
 
     for (const line of lines) {
-      const lower = line.toLowerCase();
-
-      if (lower.startsWith('nome:')) {
-        nome_grupo = cleanGroupName(line.replace(/^nome:\s*/i, ''));
+      // Nome
+      if (line.match(labels.nome)) {
+        group.nome_grupo = cleanGroupName(line.replace(labels.nome, ''));
+        hasNomeTag = true;
         continue;
       }
 
-      if (lower.startsWith('membros:') || lower.startsWith('quantidade:')) {
-        const valor = line.replace(/^(membros|quantidade):\s*/i, '').trim();
-        const parsed = parseMembers(valor);
-        quantidade_membros = parsed > 0 ? parsed : null;
+      // Membros
+      if (line.match(labels.membros)) {
+        const valStr = line.replace(labels.membros, '').trim();
+        group.quantidade_membros = parseMembers(valStr);
+        hasMembrosTag = true;
         continue;
       }
 
-      if (lower.startsWith('nicho:')) {
-        nicho = line.replace(/^nicho:\s*/i, '').trim();
+      // Nicho
+      if (line.match(labels.obs) || line.match(nichoRegex)) {
+        const nichoMatch = line.match(nichoRegex);
+        if (nichoMatch) {
+          group.nicho = nichoMatch[1].trim();
+        } else {
+          group.nicho = line.replace(labels.obs, '').trim();
+        }
+        hasNichoTag = true;
         continue;
       }
 
-      if (lower.startsWith('link:')) {
-        const valor = line.replace(/^link:\s*/i, '').trim();
-        link_grupo = valor;
-        group_id = extractGroupId(valor);
+      // Link (matches anywhere in line)
+      const linkMatch = line.match(linkRegex);
+      if (linkMatch) {
+        group.link_grupo = linkMatch[1];
+        group.group_id = extractGroupId(group.link_grupo);
         continue;
       }
 
-      if (line.includes('facebook.com/groups')) {
-        link_grupo = line.trim();
-        group_id = extractGroupId(link_grupo);
+      // Perfil Compartilhando
+      if (line.match(labels.perfil)) {
+        const val = line.replace(labels.perfil, '').trim().toLowerCase();
+        if (val.includes('ativo')) group.perfil_compartilhando = 'Ativo';
+        else group.perfil_compartilhando = 'Inativo';
         continue;
       }
 
-      if (lower.startsWith('obs:') || lower.startsWith('observações:') || lower.startsWith('observacoes:')) {
-        observacoes = line.replace(/^(obs|observações|observacoes):\s*/i, '').trim();
-        continue;
+      // Heuristic: Check if line contains member info but no tag (e.g. "67.900 mil membros")
+      if (!hasMembrosTag) {
+        const potentialMembers = parseMembers(line);
+        if (potentialMembers !== null && (line.toLowerCase().includes('membros') || line.toLowerCase().includes('mil') || line.toLowerCase().includes('k'))) {
+          group.quantidade_membros = potentialMembers;
+          hasMembrosTag = true;
+          continue;
+        }
       }
 
-      if (!nome_grupo && !line.includes('facebook.com/groups')) {
-        nome_grupo = cleanGroupName(line);
-        continue;
+      // Heuristic: If we don't have a name yet and this looks like a name (not a tag)
+      if (!group.nome_grupo && !line.includes(':') && line.length > 3) {
+        group.nome_grupo = cleanGroupName(line);
+      } else if (group.nome_grupo && !line.includes(':')) {
+        // Append to observations if it's additional text
+        group.observacoes = (group.observacoes ? group.observacoes + ' ' : '') + line;
       }
-
-      observacoes = observacoes ? `${observacoes} ${line}` : line;
     }
 
-    const erros: string[] = [];
-    if (!nome_grupo) erros.push('Nome ausente');
-    if (!link_grupo) erros.push('Link ausente');
-    if (link_grupo && !group_id) erros.push('ID não encontrado');
+    // Membros
+    const errors: string[] = [];
+    if (group.nome_grupo && group.link_grupo) {
+      group.status_analise = 'OK';
+    } else {
+      if (!group.nome_grupo) errors.push('Nome não identificado');
+      if (!group.link_grupo) errors.push('Link não identificado');
+      group.status_analise = 'Revisar';
+    }
 
-    const status_analise: 'OK' | 'Incompleto' | 'Revisar' =
-      erros.length === 0 ? 'OK' : 'Revisar';
+    if (group.link_grupo && !group.group_id) {
+       errors.push('ID não encontrado');
+       group.status_analise = 'Revisar';
+    }
+    
+    group.erros = errors;
 
-    results.push({
-      id_temp: Math.random().toString(36).substr(2, 9),
-      group_id,
-      nome_grupo,
-      link_grupo,
-      nicho: nicho || 'Sem Nicho',
-      quantidade_membros: quantidade_membros ?? 0,
-      observacoes,
-      status_analise,
-      erros
-    });
+    // Use default nicho if missing
+    if (!group.nicho) {
+      group.nicho = 'Sem Nicho';
+    }
+
+    results.push(group);
   }
 
   return results;

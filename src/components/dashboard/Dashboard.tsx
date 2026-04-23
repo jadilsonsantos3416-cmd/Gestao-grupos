@@ -1,6 +1,6 @@
 import React from 'react';
 import { Group } from '@/src/types';
-import { Users, CheckCircle2, XCircle, Clock, AlertCircle, TrendingUp } from 'lucide-react';
+import { Users, CheckCircle2, XCircle, Clock, AlertCircle, TrendingUp, ListChecks, ShieldCheck, ShieldAlert, ShieldQuestion } from 'lucide-react';
 import { isToday, isTomorrow, isPast, parseISO } from 'date-fns';
 import { cn, formatNumber } from '@/src/lib/utils';
 import { motion } from 'motion/react';
@@ -17,13 +17,16 @@ export function Dashboard({ groups }: DashboardProps) {
     vencemHoje: groups.filter(g => g.status === 'Alugado' && isToday(parseISO(g.data_vencimento))).length,
     vencemAmanha: groups.filter(g => g.status === 'Alugado' && isTomorrow(parseISO(g.data_vencimento))).length,
     vencidos: groups.filter(g => g.status === 'Alugado' && isPast(parseISO(g.data_vencimento)) && !isToday(parseISO(g.data_vencimento))).length,
-    totalMembros: groups.reduce((acc, g) => acc + g.quantidade_membros, 0),
+    totalMembros: groups.reduce((acc, g) => acc + (g.quantidade_membros || 0), 0),
+    perfilAtivo: groups.filter(g => g.perfil_compartilhando === 'Ativo').length,
+    perfilInativo: groups.filter(g => g.perfil_compartilhando === 'Inativo' || !g.perfil_compartilhando).length,
   };
 
   const alertItems = [
     { count: stats.vencemHoje, label: 'grupos vencem hoje', type: 'error', icon: AlertCircle, emoji: '⚠️' },
     { count: stats.vencemAmanha, label: 'grupos vencem amanhã', type: 'warning', icon: Clock, emoji: '⏰' },
     { count: stats.vencidos, label: 'grupos estão vencidos', type: 'error', icon: AlertCircle, emoji: '❌' },
+    { count: stats.perfilInativo, label: 'grupos sem perfil ativo', type: 'error', icon: ShieldAlert, emoji: '🚨' },
   ].filter(item => item.count > 0);
 
   return (
@@ -90,6 +93,62 @@ export function Dashboard({ groups }: DashboardProps) {
         />
       </div>
 
+      {/* Perfil Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <StatCard 
+          label="Perfil Ativo" 
+          value={stats.perfilAtivo} 
+          icon={ShieldCheck} 
+          color="green" 
+          subValue="Compartilhamento normal"
+        />
+        <StatCard 
+          label="Perfil Inativo" 
+          value={stats.perfilInativo} 
+          icon={ShieldAlert} 
+          color="red" 
+          subValue="Ação necessária"
+        />
+      </div>
+
+      {/* Checklist Diário Section */}
+      <section className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="text-lg font-bold flex items-center gap-2">
+            <ListChecks className="w-5 h-5 text-green-600" />
+            Checklist Diário
+          </h3>
+          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Dinamismo baseado nos status</span>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ChecklistItem 
+              title={`${stats.perfilInativo} grupos inativos para ativar`}
+              status={stats.perfilInativo > 0 ? 'error' : 'success'}
+              description="Perfis que não estão compartilhando no momento."
+            />
+            <ChecklistItem 
+              title={`${stats.vencidos} grupos com aluguel vencido`}
+              status={stats.vencidos > 0 ? 'error' : 'success'}
+              description="Contatar locatários para renovação ou liberação."
+            />
+          </div>
+          
+          <div className="pt-4 border-t border-gray-50 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ChecklistItem 
+              title="0 grupos sem atividade para revisar"
+              status="success"
+              description="Monitoramento automático de posts recentes."
+            />
+            <ChecklistItem 
+              title={`${stats.vencemHoje + stats.vencemAmanha} avisos de vencimento logo`}
+              status="info"
+              description="Vencimentos previstos para as próximas 48h."
+            />
+          </div>
+        </div>
+      </section>
+
       {/* Niche Summary */}
       <section>
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
@@ -108,6 +167,8 @@ function StatCard({ label, value, icon: Icon, color, subValue }: any) {
     blue: "bg-blue-50 text-blue-600 border-blue-100",
     gray: "bg-gray-50 text-gray-600 border-gray-100",
     orange: "bg-orange-50 text-orange-600 border-orange-100",
+    red: "bg-red-50 text-red-600 border-red-100",
+    yellow: "bg-yellow-50 text-yellow-600 border-yellow-100",
   };
 
   return (
@@ -129,6 +190,27 @@ function StatCard({ label, value, icon: Icon, color, subValue }: any) {
   );
 }
 
+function ChecklistItem({ title, status, description }: { title: string, status: 'success' | 'warning' | 'error' | 'info', description: string }) {
+  const styles = {
+    success: "border-green-100 bg-green-50/30 text-green-700",
+    warning: "border-yellow-100 bg-yellow-50/30 text-yellow-700",
+    error: "border-red-100 bg-red-50/30 text-red-700",
+    info: "border-blue-100 bg-blue-50/30 text-blue-700",
+  };
+
+  const Icon = status === 'success' ? CheckCircle2 : status === 'error' ? AlertCircle : status === 'warning' ? ShieldQuestion : Clock;
+
+  return (
+    <div className={cn("p-4 rounded-2xl border flex items-start gap-3 transition-all", styles[status])}>
+      <Icon className="w-5 h-5 shrink-0 mt-0.5" />
+      <div>
+        <h4 className="text-sm font-bold leading-tight">{title}</h4>
+        <p className="text-[10px] opacity-70 mt-1 font-medium">{description}</p>
+      </div>
+    </div>
+  );
+}
+
 function NicheGrid({ groups }: { groups: Group[] }) {
   const niches = Array.from(new Set(groups.map(g => g.nicho)));
   const nicheStats = niches.map(nicho => {
@@ -137,7 +219,7 @@ function NicheGrid({ groups }: { groups: Group[] }) {
       nicho,
       total: nicheGroups.length,
       alugados: nicheGroups.filter(g => g.status === 'Alugado').length,
-      membros: nicheGroups.reduce((acc, g) => acc + g.quantidade_membros, 0),
+      membros: nicheGroups.reduce((acc, g) => acc + (g.quantidade_membros || 0), 0),
     };
   });
 
@@ -150,7 +232,7 @@ function NicheGrid({ groups }: { groups: Group[] }) {
       {nicheStats.map((stat, idx) => (
         <div key={idx} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <span className="font-bold text-gray-800">{stat.nicho}</span>
+            <span className="font-bold text-gray-800 capitalize">{stat.nicho}</span>
             <span className="text-xs font-bold px-2 py-1 bg-gray-50 rounded-lg text-gray-500 uppercase tracking-widest">
               {stat.total} {stat.total === 1 ? 'Grupo' : 'Grupos'}
             </span>
