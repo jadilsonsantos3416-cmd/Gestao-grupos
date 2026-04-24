@@ -59,55 +59,58 @@ export function CampaignForm({ onClose, onSave, editingCampaign, groups }: Campa
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[60] flex items-center justify-center p-4">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-100"
       >
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
-          <h2 className="text-xl font-bold text-gray-800">
-            {editingCampaign ? 'Editar Campanha' : 'Nova Campanha'}
-          </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <X className="w-6 h-6 text-gray-400" />
+        <div className="px-6 md:px-10 py-4 md:py-6 border-b border-slate-50 flex items-center justify-between bg-white sticky top-0 z-10">
+          <div>
+            <h2 className="text-lg md:text-2xl font-black text-slate-900 leading-none">
+              {editingCampaign ? 'Editar Campanha' : 'Nova Campanha'}
+            </h2>
+            <p className="text-[8px] md:text-[10px] font-black text-slate-300 uppercase tracking-widest mt-1 md:mt-2">Configure seu link redirecionador</p>
+          </div>
+          <button onClick={onClose} className="p-2 md:p-3 hover:bg-slate-50 rounded-2xl transition-colors group">
+            <X className="w-5 h-5 md:w-6 md:h-6 text-slate-300 group-hover:text-slate-600" />
           </button>
         </div>
 
-        <form id="campaign-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <form id="campaign-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 md:p-10 space-y-6 md:space-y-8 no-scrollbar">
           {error && (
-            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-              <p className="text-sm font-bold text-red-800">{error}</p>
+            <div className="p-4 md:p-5 bg-rose-50 border border-rose-100 rounded-[1.25rem] md:rounded-[1.5rem] flex items-center gap-3 md:gap-4 animate-shake">
+              <AlertCircle className="w-4 h-4 md:w-5 h-5 text-rose-600 shrink-0" />
+              <p className="text-[10px] md:text-[11px] font-black uppercase tracking-widest text-rose-800 leading-relaxed">{error}</p>
             </div>
           )}
 
-          <div className="space-y-6">
+          <div className="space-y-6 md:space-y-8">
             <FormField label="Nome da Campanha" icon={Type}>
               <input 
                 type="text" 
                 required
                 value={formData.nome_campanha || ''}
                 onChange={e => setFormData({...formData, nome_campanha: e.target.value})}
-                className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-medium"
-                placeholder="Ex: Ofertas de Verão - Smartwatch"
+                className="w-full bg-transparent border-0 focus:ring-0 p-0 text-xs md:text-sm font-black text-slate-700 placeholder:text-slate-300 placeholder:font-bold"
+                placeholder="Ex: Ofertas de Verão"
               />
             </FormField>
 
-            <FormField label="Link Original (Destino)" icon={Link}>
+            <FormField label="URL Original" icon={Link}>
               <input 
                 type="url" 
                 required
                 value={formData.link_original || ''}
                 onChange={e => setFormData({...formData, link_original: e.target.value})}
-                className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-medium"
-                placeholder="https://shopee.com.br/produto/..."
+                className="w-full bg-transparent border-0 focus:ring-0 p-0 text-[10px] md:text-xs font-bold text-blue-600 placeholder:text-slate-300"
+                placeholder="https://shopee.com.br/..."
               />
             </FormField>
 
-            <div className="grid grid-cols-2 gap-4">
-               <div className="space-y-2">
-                 <label className="text-xs font-bold text-gray-500 uppercase ml-1">Origem</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="space-y-3">
+                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Origem do Link</label>
                  <div className="grid grid-cols-2 gap-2">
                    {origins.map(origin => (
                      <button
@@ -115,31 +118,31 @@ export function CampaignForm({ onClose, onSave, editingCampaign, groups }: Campa
                        type="button"
                        onClick={() => setFormData({...formData, origem: origin.value})}
                        className={cn(
-                         "flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-[10px] font-bold uppercase",
+                         "flex items-center gap-2 px-2.5 py-2 md:px-3 md:py-2.5 rounded-xl border transition-all text-[8px] md:text-[9px] font-black uppercase tracking-tighter",
                          formData.origem === origin.value 
-                           ? "bg-green-600 border-green-600 text-white shadow-lg shadow-green-100" 
-                           : "bg-gray-50 border-gray-100 text-gray-500 hover:border-gray-200"
+                           ? "bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-200" 
+                           : "bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-200"
                        )}
                      >
-                       <origin.icon className="w-3.5 h-3.5" />
-                       {origin.value}
+                       <origin.icon className="w-3 h-3" />
+                       <span className="truncate">{origin.value}</span>
                      </button>
                    ))}
                  </div>
                </div>
 
-               <div className="space-y-2">
-                 <label className="text-xs font-bold text-gray-500 uppercase ml-1">Grupo Relacionado</label>
+               <div className="space-y-3">
+                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Vincular Grupo</label>
                  <div className="relative">
-                   <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl border border-gray-100">
-                     <Briefcase className="w-4 h-4 text-gray-400" />
+                   <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 md:py-3 bg-slate-50 rounded-xl border border-slate-100">
+                     <Briefcase className="w-3.5 h-3.5 md:w-4 md:h-4 text-slate-300" />
                      <select 
                        value={formData.grupo_id}
                        onChange={e => {
                          const group = groups.find(g => g.id === e.target.value);
                          setFormData({...formData, grupo_id: e.target.value, grupo_nome: group?.nome_grupo || ''});
                        }}
-                       className="w-full bg-transparent border-0 focus:ring-0 p-0 text-[10px] font-bold uppercase text-gray-700"
+                       className="w-full bg-transparent border-0 focus:ring-0 p-0 text-[9px] md:text-[10px] font-black uppercase tracking-wider text-slate-600 cursor-pointer"
                      >
                        <option value="">Nenhum</option>
                        {groups.map(g => (
@@ -151,9 +154,9 @@ export function CampaignForm({ onClose, onSave, editingCampaign, groups }: Campa
                </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Status</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Status</label>
                 <div className="flex gap-2">
                   {(['Ativa', 'Inativa'] as CampaignStatus[]).map(s => (
                     <button
@@ -161,10 +164,10 @@ export function CampaignForm({ onClose, onSave, editingCampaign, groups }: Campa
                       type="button"
                       onClick={() => setFormData({...formData, status: s})}
                       className={cn(
-                        "flex-1 py-2 rounded-xl border transition-all text-[10px] font-bold uppercase",
+                        "flex-1 py-2.5 md:py-3 rounded-xl border font-black text-[8px] md:text-[9px] uppercase tracking-widest transition-all",
                         formData.status === s 
-                          ? (s === 'Ativa' ? "bg-green-600 border-green-600 text-white shadow-md shadow-green-100" : "bg-red-600 border-red-600 text-white shadow-md shadow-red-100")
-                          : "bg-gray-50 border-gray-100 text-gray-400 hover:border-gray-200"
+                          ? (s === 'Ativa' ? "bg-emerald-600 border-emerald-600 text-white shadow-xl shadow-emerald-50" : "bg-rose-600 border-rose-600 text-white shadow-xl shadow-rose-50")
+                          : "bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-200"
                       )}
                     >
                       {s}
@@ -172,48 +175,49 @@ export function CampaignForm({ onClose, onSave, editingCampaign, groups }: Campa
                   ))}
                 </div>
               </div>
-              <FormField label="Slug Personalizado (Opcional)" icon={Zap}>
+              <FormField label="URL Curta" icon={Zap}>
                  <input 
                    type="text" 
                    value={formData.slug || ''}
                    readOnly={!!editingCampaign}
                    onChange={e => setFormData({...formData, slug: e.target.value.replace(/[^a-zA-Z0-9]/g, '')})}
-                   className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-medium"
-                   placeholder={editingCampaign ? formData.slug : "Aleatório"}
+                   className="w-full bg-transparent border-0 focus:ring-0 p-0 text-[10px] md:text-[11px] font-black uppercase tracking-widest text-emerald-600 placeholder:text-slate-200"
+                   placeholder={editingCampaign ? formData.slug : "Automático"}
                  />
               </FormField>
             </div>
 
-            <FormField label="Observações" icon={FileText}>
+
+            <FormField label="Observações de Copy" icon={FileText}>
               <textarea 
                 rows={3}
                 value={formData.observacoes || ''}
                 onChange={e => setFormData({...formData, observacoes: e.target.value})}
-                className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-medium resize-none uppercase"
-                placeholder="Detalhes adicionais da campanha..."
+                className="w-full bg-transparent border-0 focus:ring-0 p-0 text-xs font-bold text-slate-600 resize-none placeholder:text-slate-200"
+                placeholder="Ex: Preço promocional até domingo..."
               />
             </FormField>
           </div>
         </form>
 
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex gap-3">
+        <div className="px-6 md:px-10 py-5 md:py-8 border-t border-slate-50 bg-slate-50 flex gap-4">
           <button 
             type="button"
             onClick={onClose}
-            className="flex-1 py-3 px-4 bg-white border border-gray-200 text-gray-600 font-bold rounded-2xl hover:bg-gray-100 transition-colors"
+            className="flex-1 py-3.5 md:py-5 px-4 md:px-6 bg-white border border-slate-200 text-slate-400 font-black text-[9px] md:text-[10px] uppercase tracking-widest rounded-[2rem] hover:bg-slate-50 hover:text-slate-600 transition-all"
           >
-            Cancelar
+            Voltar
           </button>
           <button 
             type="submit"
             form="campaign-form"
             disabled={isSaving}
             className={cn(
-              "flex-[2] py-3 px-4 text-white font-bold rounded-2xl shadow-lg transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2",
-              isSaving ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 shadow-green-100 shadow-lg"
+              "flex-[2] py-3.5 md:py-5 px-4 md:px-6 text-white font-black text-[9px] md:text-[10px] uppercase tracking-widest rounded-[2rem] shadow-2xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 md:gap-3",
+              isSaving ? "bg-slate-300 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200"
             )}
           >
-            {isSaving ? "Salvando..." : editingCampaign ? "Atualizar Campanha" : "Criar Campanha Neutra"}
+            {isSaving ? "Gravando..." : editingCampaign ? "Atualizar" : "Criar"}
           </button>
         </div>
       </motion.div>
@@ -224,14 +228,14 @@ export function CampaignForm({ onClose, onSave, editingCampaign, groups }: Campa
 function FormField({ label, icon: Icon, children, readOnly }: any) {
   return (
     <div className="relative group">
-      <label className="text-xs font-bold text-gray-500 uppercase ml-1 mb-1 block transition-colors group-focus-within:text-green-600">
+      <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 md:mb-1.5 block transition-colors group-focus-within:text-emerald-600">
         {label}
       </label>
       <div className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all group-focus-within:border-green-100 group-focus-within:bg-white",
-        readOnly ? "bg-gray-100 border-transparent opacity-70" : "bg-gray-50 border-transparent"
+        "flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3 md:py-4 rounded-xl md:rounded-2xl border-2 transition-all group-focus-within:border-emerald-100 group-focus-within:bg-white group-focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+        readOnly ? "bg-slate-100 border-transparent opacity-70" : "bg-slate-50/50 border-transparent"
       )}>
-        <Icon className={cn("w-5 h-5", readOnly ? "text-gray-300" : "text-gray-400")} />
+        <Icon className={cn("w-4 h-4 md:w-5 md:h-5 transition-colors", readOnly ? "text-slate-200" : "text-slate-300 group-focus-within:text-emerald-500")} />
         <div className="flex-1">
           {children}
         </div>

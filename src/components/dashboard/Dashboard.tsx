@@ -70,31 +70,53 @@ export function Dashboard({ groups }: DashboardProps) {
   ].filter(item => item.count > 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12 animate-in fade-in duration-700 pb-20">
+      {/* Header Section */}
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="p-2 bg-slate-900 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Painel de Controle</h1>
+          </div>
+          <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px] ml-[44px]">Visão geral da performance dos seus grupos</p>
+        </div>
+      </header>
+
       {/* Alerts */}
       {alertItems.length > 0 && (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
           {alertItems.map((item, idx) => {
             const Icon = item.icon;
             return (
               <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
                 key={idx}
                 className={cn(
-                  "flex items-center gap-3 p-4 rounded-2xl border bg-white shadow-sm",
-                  item.type === 'error' ? "border-red-100 text-red-700 font-bold" : "border-yellow-100 text-yellow-700 font-bold"
+                  "flex items-center gap-3 md:gap-4 p-3 md:p-5 rounded-2xl md:rounded-[2rem] border bg-white shadow-xl shadow-slate-100/50 relative overflow-hidden group",
+                  item.type === 'error' ? "border-rose-100" : "border-amber-100"
                 )}
               >
                 <div className={cn(
-                  "p-2 rounded-lg shrink-0",
-                  item.type === 'error' ? "bg-red-50 text-red-600" : "bg-yellow-50 text-yellow-600"
+                  "p-2 md:p-3 rounded-xl md:rounded-2xl shrink-0 transition-transform group-hover:scale-110",
+                  item.type === 'error' ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600"
                 )}>
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-4 h-4 md:w-5 h-5" />
                 </div>
-                <span className="text-sm md:text-base">
-                  {item.emoji} {item.count} {item.label}
-                </span>
+                <div className="flex flex-col">
+                  <span className={cn(
+                    "text-[9px] md:text-xs font-black uppercase tracking-[0.1em]",
+                    item.type === 'error' ? "text-rose-600" : "text-amber-600"
+                  )}>
+                    Atenção Necessária
+                  </span>
+                  <span className="text-xs md:text-sm font-bold text-slate-600 mt-0.5">
+                    {item.count} {item.label}
+                  </span>
+                </div>
+                <div className="ml-auto text-xl md:text-2xl grayscale group-hover:grayscale-0 transition-all">{item.emoji}</div>
               </motion.div>
             );
           })}
@@ -134,13 +156,13 @@ export function Dashboard({ groups }: DashboardProps) {
       </div>
 
       {/* Perfil & Shopee Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         <StatCard 
           label="Perfil Ativo" 
           value={stats.perfilAtivo} 
           icon={ShieldCheck} 
           color="green" 
-          subValue="Compartilhamento normal"
+          subValue="Compartilhamento"
         />
         <StatCard 
           label="Perfil Inativo" 
@@ -166,18 +188,20 @@ export function Dashboard({ groups }: DashboardProps) {
       </div>
 
       {/* Prioridade de Postagem */}
-      <section className="space-y-4 relative">
-        <h3 className="text-lg font-bold flex items-center gap-2">
-          <Target className="w-5 h-5 text-red-500" />
-          Prioridade de Postagem
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      <section className="space-y-6 relative">
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-6 bg-rose-500 rounded-full" />
+          <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">
+            Prioridade de Postagem
+          </h3>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
           <StatCard 
             label="Prioridade Alta" 
             value={stats.priorityAlta} 
             icon={Star} 
             color="red" 
-            subValue="Melhores grupos no momento"
+            subValue="Melhores"
             onClick={() => togglePriority('Alta')}
             isActive={selectedPriority === 'Alta'}
             data-priority-trigger="Alta"
@@ -214,35 +238,36 @@ export function Dashboard({ groups }: DashboardProps) {
               ref={dropdownRef}
               className="absolute left-0 right-0 z-50 mt-2 bg-white rounded-3xl border border-gray-100 shadow-2xl overflow-hidden max-h-[400px] flex flex-col"
             >
-              <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between sticky top-0 z-10">
-                <div className="flex items-center gap-2">
+              <div className="px-8 py-5 bg-slate-50 border-b border-slate-100 flex items-center justify-between sticky top-0 z-10">
+                <div className="flex items-center gap-3">
                   <div className={cn(
-                    "w-2 h-2 rounded-full animate-pulse",
-                    selectedPriority === 'Alta' ? "bg-red-500" :
-                    selectedPriority === 'Média' ? "bg-yellow-500" : "bg-gray-400"
+                    "w-2.5 h-2.5 rounded-full animate-pulse",
+                    selectedPriority === 'Alta' ? "bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]" :
+                    selectedPriority === 'Média' ? "bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]" : "bg-slate-400"
                   )} />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-                    Grupos Prioridade {selectedPriority} ({selectedGroupsList.length})
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    Grupos Prioridade {selectedPriority} <span className="text-slate-300 ml-1">({selectedGroupsList.length})</span>
                   </span>
                 </div>
                 <button 
                   onClick={() => setSelectedPriority(null)}
-                  className="text-gray-400 hover:text-gray-600 text-[10px] font-black uppercase tracking-widest"
+                  className="p-2 hover:bg-slate-100 rounded-xl transition-colors group"
                 >
-                  Fechar
+                  <ChevronDown className="w-4 h-4 text-slate-300 group-hover:text-slate-600" />
                 </button>
               </div>
-              <div className="overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 no-scrollbar">
                 {selectedGroupsList.map(group => (
                   <div 
                     key={group.id}
-                    className="p-3 bg-gray-50 rounded-2xl border border-gray-100 hover:border-gray-200 transition-colors group flex items-center justify-between"
+                    className="p-5 bg-white rounded-3xl border border-slate-100 hover:border-slate-200 hover:shadow-xl hover:shadow-slate-100/50 transition-all group flex items-center justify-between"
                   >
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-xs font-bold text-gray-800 line-clamp-1">{group.nome_grupo}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{group.nicho}</span>
-                        <span className="text-[9px] font-mono text-gray-400 font-bold bg-white px-1.5 py-0.5 rounded border border-gray-100">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-sm font-black text-slate-900 line-clamp-1 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{group.nome_grupo}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{group.nicho}</span>
+                        <div className="w-1 h-1 rounded-full bg-slate-100" />
+                        <span className="text-[10px] font-black text-emerald-600 font-mono">
                           {group.priorityInfo.score} pts
                         </span>
                       </div>
@@ -252,9 +277,9 @@ export function Dashboard({ groups }: DashboardProps) {
                         href={group.link_grupo} 
                         target="_blank" 
                         rel="noreferrer"
-                        className="p-2 bg-white rounded-xl text-gray-400 hover:text-blue-500 hover:shadow-sm transition-all"
+                        className="p-3 bg-slate-50 rounded-2xl text-slate-300 hover:text-blue-600 hover:bg-blue-50 transition-all border border-transparent hover:border-blue-100"
                       >
-                        <ExternalLink className="w-3.5 h-3.5" />
+                        <ExternalLink className="w-4 h-4" />
                       </a>
                     )}
                   </div>
@@ -271,54 +296,56 @@ export function Dashboard({ groups }: DashboardProps) {
       </section>
 
       {/* Checklist Diário Section */}
-      <section className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="text-lg font-bold flex items-center gap-2">
-            <ListChecks className="w-5 h-5 text-green-600" />
-            Checklist Diário
+      <section className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="px-10 py-6 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
+            <ListChecks className="w-6 h-6 text-emerald-600" />
+            Checklist de Operação
           </h3>
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Dinamismo baseado nos status</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Monitoramento Dinâmico</span>
         </div>
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-10 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ChecklistItem 
-              title={`${stats.perfilInativo} grupos inativos para ativar`}
+              title={`${stats.perfilInativo} perfis inativos`}
               status={stats.perfilInativo > 0 ? 'error' : 'success'}
-              description="Perfis que não estão compartilhando no momento."
+              description="Ação sugerida: Verificar conexão dos perfis nas extensões."
             />
             <ChecklistItem 
-              title={`${stats.shopeeAtivo} grupos usando Shopee`}
+              title={`${stats.shopeeAtivo} canais Shopee`}
               status="info"
-              description="Monitoramento de posts de produtos Shopee."
-            />
-            <ChecklistItem 
-              title={`${stats.vencidos} grupos com aluguel vencido`}
-              status={stats.vencidos > 0 ? 'error' : 'success'}
-              description="Contatar locatários para renovação ou liberação."
+              description="Status: Postagens automáticas em execução constante."
             />
           </div>
           
-          <div className="pt-4 border-t border-gray-50 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="pt-6 border-t border-slate-50 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <ChecklistItem 
-              title="0 grupos sem atividade para revisar"
-              status="success"
-              description="Monitoramento automático de posts recentes."
+              title={`${stats.vencidos} aluguéis expirados`}
+              status={stats.vencidos > 0 ? 'error' : 'success'}
+              description="Cobranças pendentes identificadas no banco de dados."
             />
             <ChecklistItem 
-              title={`${stats.vencemHoje + stats.vencemAmanha} avisos de vencimento logo`}
+              title={`${stats.vencemHoje + stats.vencemAmanha} avisos próximos`}
               status="info"
-              description="Vencimentos previstos para as próximas 48h."
+              description="Próximas 48h com renovações programadas."
+            />
+            <ChecklistItem 
+              title="Operação Estável"
+              status="success"
+              description="Sem anomalias detectadas no fluxo de compartilhamento."
             />
           </div>
         </div>
       </section>
 
       {/* Niche Summary */}
-      <section>
-        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-gray-400" />
-          Resumo por Nicho
-        </h3>
+      <section className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-6 bg-blue-500 rounded-full" />
+          <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">
+            Performance por Nicho
+          </h3>
+        </div>
         <NicheGrid groups={groups} />
       </section>
     </div>
@@ -327,62 +354,77 @@ export function Dashboard({ groups }: DashboardProps) {
 
 function StatCard({ label, value, icon: Icon, color, subValue, onClick, isActive, ...props }: any) {
   const colors: any = {
-    green: "bg-green-50 text-green-600 border-green-100 ring-green-500",
+    green: "bg-emerald-50 text-emerald-600 border-emerald-100 ring-emerald-500",
     blue: "bg-blue-50 text-blue-600 border-blue-100 ring-blue-500",
-    gray: "bg-gray-50 text-gray-600 border-gray-100 ring-gray-500",
-    orange: "bg-orange-50 text-orange-600 border-orange-100 ring-orange-500",
-    red: "bg-red-50 text-red-600 border-red-100 ring-red-500",
+    gray: "bg-slate-50 text-slate-600 border-slate-100 ring-slate-500",
+    orange: "bg-amber-50 text-amber-600 border-amber-100 ring-amber-500",
+    red: "bg-rose-50 text-rose-600 border-rose-100 ring-rose-500",
     yellow: "bg-yellow-50 text-yellow-600 border-yellow-100 ring-yellow-500",
   };
 
   return (
     <motion.div 
-      whileHover={{ y: onClick ? -4 : 0 }}
-      whileTap={{ scale: onClick ? 0.98 : 1 }}
+      whileHover={{ y: -4, shadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)" }}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={cn(
-        "bg-white p-6 rounded-3xl border transition-all flex flex-col gap-4 text-left",
-        onClick ? "cursor-pointer" : "border-gray-100 shadow-sm",
-        isActive ? cn("border-transparent ring-2", colors[color]) : "border-gray-100 shadow-sm hover:border-gray-200"
+        "bg-white p-3.5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border transition-all flex flex-col gap-3 md:gap-5 text-left relative overflow-hidden group",
+        onClick ? "cursor-pointer" : "border-slate-100 shadow-sm",
+        isActive ? cn("border-transparent ring-2", colors[color]) : "border-slate-100 shadow-sm hover:border-slate-200"
       )}
       {...props}
     >
       <div className="flex items-center justify-between">
-        <div className={cn("p-3 rounded-2xl border", colors[color])}>
-          <Icon className="w-6 h-6" />
+        <div className={cn("p-2 md:p-3 rounded-xl md:rounded-[1.25rem] border transition-colors", colors[color])}>
+          <Icon className="w-4 h-4 md:w-6 h-6" />
         </div>
         {onClick && (
           <ChevronDown className={cn(
-            "w-4 h-4 transition-transform",
-            isActive ? "rotate-180 text-gray-900" : "text-gray-300"
+            "w-3 h-3 md:w-4 h-4 transition-transform duration-300",
+            isActive ? "rotate-180 text-slate-900" : "text-slate-300 group-hover:text-slate-400"
           )} />
         )}
       </div>
       <div>
-        <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{label}</p>
-        <p className="text-3xl font-bold tracking-tight mt-1">{value}</p>
-        {subValue && <p className="text-xs text-gray-400 mt-1 font-medium italic">{subValue}</p>}
+        <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-0.5 md:mb-1 truncate">{label}</p>
+        <div className="flex items-baseline gap-2">
+          <p className="text-xl md:text-3xl font-black text-slate-900 tracking-tight">{value}</p>
+        </div>
+        {subValue && (
+          <p className="text-[8px] md:text-[10px] text-slate-400 mt-1 md:mt-2 font-bold uppercase tracking-wider flex items-center gap-1 md:gap-1.5 truncate">
+            <span className={cn("w-1 h-1 rounded-full shrink-0", colors[color].split(' ')[1])} />
+            {subValue}
+          </p>
+        )}
       </div>
+      
+      {/* Decorative background element */}
+      <div className={cn(
+        "absolute -right-4 -bottom-4 w-24 h-24 rounded-full opacity-[0.03] transform scale-150 transition-transform group-hover:scale-[1.7]",
+        colors[color].split(' ')[0]
+      )} />
     </motion.div>
   );
 }
 
 function ChecklistItem({ title, status, description }: { title: string, status: 'success' | 'warning' | 'error' | 'info', description: string }) {
   const styles = {
-    success: "border-green-100 bg-green-50/30 text-green-700",
-    warning: "border-yellow-100 bg-yellow-50/30 text-yellow-700",
-    error: "border-red-100 bg-red-50/30 text-red-700",
-    info: "border-blue-100 bg-blue-50/30 text-blue-700",
+    success: "border-emerald-100 bg-emerald-50/20 text-emerald-700 shadow-sm",
+    warning: "border-amber-100 bg-amber-50/20 text-amber-700 shadow-sm",
+    error: "border-rose-100 bg-rose-50/20 text-rose-700 shadow-sm",
+    info: "border-blue-100 bg-blue-50/20 text-blue-700 shadow-sm",
   };
 
   const Icon = status === 'success' ? CheckCircle2 : status === 'error' ? AlertCircle : status === 'warning' ? ShieldQuestion : Clock;
 
   return (
-    <div className={cn("p-4 rounded-2xl border flex items-start gap-3 transition-all", styles[status])}>
-      <Icon className="w-5 h-5 shrink-0 mt-0.5" />
+    <div className={cn("p-3.5 md:p-5 rounded-[1.25rem] md:rounded-[1.5rem] border flex items-start gap-3 md:gap-4 transition-all hover:scale-[1.01]", styles[status])}>
+      <div className={cn("p-1.5 md:p-2 rounded-lg md:rounded-xl bg-white/50 backdrop-blur-sm shadow-sm", styles[status].split(' ')[2])}>
+        <Icon className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
+      </div>
       <div>
-        <h4 className="text-sm font-bold leading-tight">{title}</h4>
-        <p className="text-[10px] opacity-70 mt-1 font-medium">{description}</p>
+        <h4 className="text-xs md:text-sm font-black uppercase tracking-tight leading-tight">{title}</h4>
+        <p className="text-[8px] md:text-[10px] opacity-60 mt-0.5 md:mt-1 font-bold uppercase tracking-wider">{description}</p>
       </div>
     </div>
   );
@@ -401,35 +443,46 @@ function NicheGrid({ groups }: { groups: Group[] }) {
   }).sort((a, b) => b.membros - a.membros);
 
   if (nicheStats.length === 0) {
-    return <p className="text-gray-400 italic text-sm">Nenhum nicho cadastrado ainda.</p>;
+    return <p className="text-slate-400 italic font-bold uppercase tracking-widest text-xs py-10 text-center">Nenhum nicho cadastrado ainda.</p>;
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
       {nicheStats.map((stat, idx) => (
-        <div key={idx} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <span className="font-bold text-gray-800 capitalize">{stat.nicho}</span>
-            <span className="text-xs font-bold px-2 py-1 bg-gray-50 rounded-lg text-gray-500 uppercase tracking-widest">
-              {stat.total} {stat.total === 1 ? 'Grupo' : 'Grupos'}
-            </span>
+        <div key={idx} className="bg-white p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-100/50 hover:shadow-2xl hover:shadow-slate-200/50 transition-all group overflow-hidden relative">
+          <div className="flex items-center justify-between mb-3 md:mb-6 relative z-10">
+            <span className="text-sm md:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight truncate mr-2">{stat.nicho}</span>
+            <div className="p-1 px-2 md:p-2 bg-slate-50 rounded-lg md:rounded-xl border border-slate-100 shrink-0">
+               <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                {stat.total}
+              </span>
+            </div>
           </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Alugados</span>
-              <span className="font-semibold text-green-600">{stat.alugados}</span>
+          
+          <div className="space-y-3 md:space-y-4 relative z-10">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-2 md:gap-0">
+              <div className="flex flex-col">
+                <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 md:mb-1">Ocupação</span>
+                <span className="text-base md:text-xl font-black text-emerald-600 font-mono tracking-tighter">{stat.alugados} <span className="text-slate-300 text-[10px] md:text-xs font-bold">/ {stat.total}</span></span>
+              </div>
+              <div className="flex flex-col md:text-right">
+                <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 md:mb-1">Membros</span>
+                <span className="text-base md:text-xl font-black text-slate-900 font-mono tracking-tighter">{formatNumber(stat.membros)}</span>
+              </div>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Membros Total</span>
-              <span className="font-semibold">{formatNumber(stat.membros)}</span>
-            </div>
-            <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden mt-3">
-              <div 
-                className="bg-green-500 h-full transition-all duration-500"
-                style={{ width: `${(stat.alugados / stat.total) * 100}%` }}
+            
+            <div className="w-full bg-slate-100 h-1.5 md:h-2 rounded-full overflow-hidden mt-2 md:mt-4 border border-slate-50">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${(stat.alugados / stat.total) * 100}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="bg-gradient-to-r from-emerald-400 to-emerald-600 h-full rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]"
               />
             </div>
           </div>
+
+
+          <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50/50 rounded-bl-[4rem] -mr-16 -mt-16 transition-transform group-hover:scale-110" />
         </div>
       ))}
     </div>

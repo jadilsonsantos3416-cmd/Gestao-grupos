@@ -11,10 +11,23 @@ interface RankingPageProps {
 }
 
 export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPageProps) {
-  const [jsonInput, setJsonInput] = useState('');
-  const [results, setResults] = useState<RankingResult | null>(null);
+  const TEST_DATA = [
+    {
+      "nome": "Grupo Evangélico Deus É Poderoso",
+      "membros": 119000,
+      "link": "https://www.facebook.com/groups/455224999619545/",
+      "nicho": "Evangélico",
+      "prioridade": "ALTA",
+      "hot": true,
+      "score": 6
+    }
+  ];
+
+  const [jsonInput, setJsonInput] = useState(JSON.stringify(TEST_DATA, null, 2));
+  const [results, setResults] = useState<RankingResult | null>(analyzeGroups(TEST_DATA as any));
   const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const filterGroups = (groupsToFilter: Group[]) => {
     if (activeFilter === 'all') return groupsToFilter;
@@ -46,34 +59,53 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
   const handleAnalyzeJson = () => {
     try {
       setError(null);
+      setIsAnalyzing(true);
       if (!jsonInput.trim()) {
         setError("Por favor, cole o JSON dos grupos.");
+        setIsAnalyzing(false);
         return;
       }
-      const data = JSON.parse(jsonInput);
-      if (!Array.isArray(data)) {
-        setError("O formato deve ser uma lista de grupos (Array).");
-        return;
-      }
-      const result = analyzeGroups(data);
-      setResults(result);
+      setTimeout(() => {
+        try {
+          const data = JSON.parse(jsonInput);
+          if (!Array.isArray(data)) {
+            setError("O formato deve ser uma lista de grupos (Array).");
+            setIsAnalyzing(false);
+            return;
+          }
+          const result = analyzeGroups(data);
+          setResults(result);
+          setIsAnalyzing(false);
+        } catch (err) {
+          setError("JSON inválido. Verifique o formato.");
+          setIsAnalyzing(false);
+        }
+      }, 800);
     } catch (err) {
-      setError("JSON inválido. Verifique o formato.");
+      setError("Erro inesperado.");
+      setIsAnalyzing(false);
     }
   };
 
   const handleAnalyzeMyGroups = (onlyFiltered: boolean = false) => {
     setError(null);
-    const groupsToAnalyze = onlyFiltered ? filterGroups(groups) : groups;
+    setIsAnalyzing(true);
     
-    if (groupsToAnalyze.length === 0) {
-      setError(onlyFiltered ? "Nenhum grupo encontrado com os filtros atuais." : "Você ainda não cadastrou nenhum grupo.");
-      return;
-    }
+    // Simulate thinking/fetching time for better UX as requested
+    setTimeout(() => {
+      const groupsToAnalyze = onlyFiltered ? filterGroups(groups) : groups;
+      
+      if (groupsToAnalyze.length === 0) {
+        setError(onlyFiltered ? "Nenhum grupo encontrado com os filtros atuais." : "Você ainda não cadastrou nenhum grupo.");
+        setIsAnalyzing(false);
+        return;
+      }
 
-    const inputData = mapGroupsToRankingInput(groupsToAnalyze);
-    const result = analyzeGroups(inputData);
-    setResults(result);
+      const inputData = mapGroupsToRankingInput(groupsToAnalyze);
+      const result = analyzeGroups(inputData);
+      setResults(result);
+      setIsAnalyzing(false);
+    }, 1200);
   };
 
   const copyToClipboard = () => {
@@ -114,13 +146,24 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
 
             <div className="mt-auto space-y-3">
               <button
+                disabled={isAnalyzing}
                 onClick={() => handleAnalyzeMyGroups(false)}
-                className="w-full flex items-center justify-center gap-3 bg-gray-900 hover:bg-gray-800 text-white font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl shadow-xl transition-all active:scale-95"
+                className={cn(
+                  "w-full flex items-center justify-center gap-3 bg-gray-900 hover:bg-gray-800 text-white font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl shadow-xl transition-all active:scale-95",
+                  isAnalyzing && "opacity-50 cursor-not-allowed"
+                )}
               >
-                Analisar Meus Grupos ({groups.length})
+                {isAnalyzing ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    Analisando...
+                  </div>
+                ) : (
+                  `Analisar Meus Grupos (${groups.length})`
+                )}
               </button>
               <button
-                disabled={activeFilter === 'all'}
+                disabled={activeFilter === 'all' || isAnalyzing}
                 onClick={() => handleAnalyzeMyGroups(true)}
                 className={cn(
                   "w-full flex items-center justify-center gap-3 font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl transition-all active:scale-95 border-2",
@@ -198,30 +241,33 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
               <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                   <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Total Analisado</h3>
-                  <p className="text-3xl font-black text-gray-900">{results.total_unicos} grupos encontrados</p>
+                  <p className="text-3xl font-black text-slate-900">{results.total_unicos} grupos mapeados</p>
                 </div>
-                <button
-                  onClick={copyToClipboard}
-                  className={cn(
-                    "flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md active:scale-95",
-                    isCopied ? "bg-green-600 text-white shadow-green-100" : "bg-gray-900 text-white hover:bg-gray-800"
-                  )}
-                >
-                  {isCopied ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                  {isCopied ? 'Copiado!' : 'Copiar JSON Final'}
-                </button>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Ações Rápidas:</span>
+                  <button
+                    onClick={copyToClipboard}
+                    className={cn(
+                      "flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md active:scale-95",
+                      isCopied ? "bg-emerald-600 text-white shadow-emerald-100" : "bg-slate-900 text-white hover:bg-slate-800"
+                    )}
+                  >
+                    {isCopied ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                    {isCopied ? 'Exportar' : 'Copiar JSON'}
+                  </button>
+                </div>
               </div>
 
               <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl overflow-hidden relative">
                 <div className="px-10 py-8 bg-gray-50/80 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h4 className="font-black text-lg text-gray-900 tracking-tight flex items-center gap-3 uppercase">
-                       Top 10 Melhores Oportunidades
+                    <h4 className="font-black text-xl text-slate-900 tracking-tight flex items-center gap-3 uppercase">
+                       🔥 TOP GRUPOS PARA POSTAR
                     </h4>
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Baseado em volume de membros e engajamento do nicho</p>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Classificação baseada em alcance real e engajamento</p>
                   </div>
-                  <span className="shrink-0 self-start sm:self-center text-[10px] font-black bg-yellow-400 text-yellow-900 px-6 py-2 rounded-full uppercase tracking-widest shadow-lg shadow-yellow-100">
-                    🏆 Ranking Premium
+                  <span className="shrink-0 self-start sm:self-center text-[10px] font-black bg-emerald-600 text-white px-6 py-2 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-100">
+                    🏆 Ranking Automático
                   </span>
                 </div>
                 
@@ -229,62 +275,67 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-white">
-                        <th className="px-10 py-6 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">Pos</th>
-                        <th className="px-6 py-6 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">Nome do Grupo</th>
-                        <th className="px-6 py-6 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">Membros</th>
-                        <th className="px-6 py-6 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">Nicho</th>
-                        <th className="px-6 py-6 text-[10px] font-black uppercase text-gray-400 tracking-widest text-center border-b border-gray-50">Score</th>
-                        <th className="px-6 py-6 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">Prioridade</th>
-                        <th className="px-10 py-6 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right border-b border-gray-50">Link</th>
+                        <th className="px-10 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">Pos</th>
+                        <th className="px-6 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">Nome do Grupo</th>
+                        <th className="px-6 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">Membros</th>
+                        <th className="px-6 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">Nicho</th>
+                        <th className="px-6 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center border-b border-slate-50">Score</th>
+                        <th className="px-6 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">Prioridade</th>
+                        <th className="px-10 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right border-b border-slate-50">Ação</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50">
+                    <tbody className="divide-y divide-slate-50">
                       {results.top_grupos.map((group, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
+                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                           <td className="px-10 py-6">
                             <span className={cn(
                               "w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm",
-                              idx === 0 ? "bg-yellow-400 text-yellow-900 shadow-lg shadow-yellow-100" :
+                              idx === 0 ? "bg-amber-400 text-amber-900 shadow-lg shadow-amber-100" :
                               idx === 1 ? "bg-slate-200 text-slate-700" :
-                              idx === 2 ? "bg-orange-200 text-orange-800" : "bg-gray-100 text-gray-400"
+                              idx === 2 ? "bg-orange-200 text-orange-800" : "bg-slate-100 text-slate-400"
                             )}>
                               {idx + 1}
                             </span>
                           </td>
                           <td className="px-6 py-6">
                             <div className="flex flex-col">
-                              <span className="font-black text-gray-900 truncate max-w-[200px] uppercase text-sm">{group.nome}</span>
+                              <span className="font-black text-slate-900 truncate max-w-[200px] uppercase text-sm">{group.nome}</span>
                               {group.hot && (
-                                <span className="text-[8px] font-black uppercase tracking-widest text-red-600 bg-red-50 px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1 w-fit border border-red-100">
+                                <span className="text-[8px] font-black uppercase tracking-widest text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1 w-fit border border-rose-100">
                                   🔥 Super Hot
                                 </span>
                               )}
                             </div>
                           </td>
                           <td className="px-6 py-6">
-                            <span className="text-sm font-black text-gray-900 font-mono italic">{formatNumber(group.membros)}</span>
+                            <span className="text-sm font-black text-slate-900 font-mono italic">{formatNumber(group.membros)}</span>
                           </td>
                           <td className="px-6 py-6">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 bg-gray-50 border border-gray-100 px-3 py-1 rounded-lg inline-block capitalize">{group.nicho}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-50 border border-slate-100 px-3 py-1 rounded-lg inline-block capitalize">{group.nicho}</span>
                           </td>
-                          <td className="px-6 py-6 border-x border-gray-50 text-center">
-                            <span className="text-xl font-black text-gray-900 font-mono tracking-tighter">
+                          <td className="px-6 py-6 border-x border-slate-50 text-center">
+                            <span className="text-xl font-black text-slate-900 font-mono tracking-tighter">
                               {group.score}
-                              <span className="text-[8px] ml-1 text-gray-400 uppercase">pts</span>
+                              <span className="text-[8px] ml-1 text-slate-400 uppercase">pts</span>
                             </span>
                           </td>
                           <td className="px-6 py-6">
                             <span className={cn(
-                              "text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full inline-block shadow-sm",
-                              group.prioridade === 'ALTA' ? "bg-green-500 text-white" :
-                              group.prioridade === 'MÉDIA' ? "bg-blue-500 text-white" : "bg-gray-400 text-white"
+                              "text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full inline-block shadow-sm ring-1 ring-white",
+                              group.prioridade === 'ALTA' ? "bg-emerald-500 text-white" :
+                              group.prioridade === 'MÉDIA' ? "bg-amber-400 text-amber-900" : "bg-slate-400 text-white"
                             )}>
                               {group.prioridade}
                             </span>
                           </td>
                           <td className="px-10 py-6 text-right">
-                            <a href={ensureAbsoluteUrl(group.link)} target="_blank" rel="noreferrer" className="p-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all inline-block shadow-lg shadow-blue-100 active:scale-95">
-                              <ExternalLink className="w-5 h-5" />
+                            <a 
+                              href={ensureAbsoluteUrl(group.link)} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="px-6 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all inline-flex items-center gap-2 shadow-lg shadow-blue-100 active:scale-95 font-black text-[10px] uppercase tracking-widest"
+                            >
+                              👉 POSTAR AQUI <ExternalLink className="w-3.5 h-3.5" />
                             </a>
                           </td>
                         </tr>

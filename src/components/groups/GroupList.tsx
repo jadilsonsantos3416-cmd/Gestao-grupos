@@ -4,6 +4,7 @@ import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download } fr
 import { cn, formatNumber, formatCurrency, exportToCSV, ensureAbsoluteUrl } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
+import { motion, AnimatePresence } from 'motion/react';
 import { ptBR } from 'date-fns/locale';
 
 interface GroupListProps {
@@ -188,378 +189,331 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Controls */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <div className="flex-1 relative group">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 w-4 h-4 md:w-5 md:h-5 transition-colors" />
             <input 
               type="text" 
-              placeholder="Pesquisar Grupo..."
-              className="w-full bg-white border border-gray-100 pl-12 pr-4 py-4 rounded-3xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-medium"
+              placeholder="Pesquisar por nome do grupo..."
+              className="w-full bg-white border border-slate-100 pl-12 md:pl-14 pr-6 py-3.5 md:py-5 rounded-2xl md:rounded-[2.5rem] shadow-sm focus:ring-4 focus:ring-emerald-50 focus:border-emerald-200 outline-none font-bold text-xs md:text-sm text-slate-600 placeholder:text-slate-300 transition-all"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <div className="flex-1 relative group">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 w-4 h-4 md:w-5 md:h-5 transition-colors" />
             <input 
               type="text" 
-              placeholder="Pesquisar Locatário..."
-              className="w-full bg-white border border-gray-100 pl-12 pr-4 py-4 rounded-3xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-medium"
+              placeholder="Pesquisar por locatário..."
+              className="w-full bg-white border border-slate-100 pl-12 md:pl-14 pr-6 py-3.5 md:py-5 rounded-2xl md:rounded-[2.5rem] shadow-sm focus:ring-4 focus:ring-blue-50 focus:border-blue-200 outline-none font-bold text-xs md:text-sm text-slate-600 placeholder:text-slate-300 transition-all"
               value={renterSearch}
               onChange={e => setRenterSearch(e.target.value)}
             />
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex gap-2 shrink-0 overflow-x-auto pb-2 md:pb-0">
-            <div className="relative">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-              <select
-                className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px] capitalize"
-                value={nichoFilter}
-                onChange={e => handleFilterChange(setNichoFilter, e.target.value)}
-              >
-                {niches.map(n => <option key={n} value={n} className="capitalize">Nicho: {n}</option>)}
-              </select>
-            </div>
-            <div className="relative">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-              <select
-                className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
-                value={statusFilter}
-                onChange={e => handleFilterChange(setStatusFilter, e.target.value)}
-              >
-                {statuses.map(s => <option key={s} value={s}>Status: {s}</option>)}
-              </select>
-            </div>
-            <div className="relative">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-              <select
-                className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
-                value={perfilFilter}
-                onChange={e => handleFilterChange(setPerfilFilter, e.target.value)}
-              >
-                {perfis.map(p => <option key={p} value={p}>Perfil: {p}</option>)}
-              </select>
-            </div>
-            <div className="relative">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-              <select
-                className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
-                value={shopeeFilter}
-                onChange={e => handleFilterChange(setShopeeFilter, e.target.value)}
-              >
-                {shopees.map(s => <option key={s} value={s}>Shopee: {s}</option>)}
-              </select>
-            </div>
-            <div className="relative">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-              <select
-                className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
-                value={priorityFilter}
-                onChange={e => handleFilterChange(setPriorityFilter, e.target.value)}
-              >
-                {priorities.map(p => <option key={p} value={p}>Prioridade: {p}</option>)}
-              </select>
-            </div>
-            <div className="relative">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-              <select
-                className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
-                value={renterFilter}
-                onChange={e => handleFilterChange(setRenterFilter, e.target.value)}
-              >
-                {renters.map(r => <option key={r} value={r}>Locatário: {r}</option>)}
-              </select>
-            </div>
+        <div className="flex flex-col xl:flex-row items-center justify-between gap-6 pb-2">
+          <div className="flex gap-3 overflow-x-auto pb-4 xl:pb-0 w-full xl:w-auto no-scrollbar">
+            <FilterBadge 
+              label="Nicho" 
+              value={nichoFilter} 
+              options={niches} 
+              onChange={v => handleFilterChange(setNichoFilter, v)} 
+              isCapitalize
+            />
+            <FilterBadge 
+              label="Status" 
+              value={statusFilter} 
+              options={statuses} 
+              onChange={v => handleFilterChange(setStatusFilter, v)} 
+            />
+            <FilterBadge 
+              label="Perfil" 
+              value={perfilFilter} 
+              options={perfis} 
+              onChange={v => handleFilterChange(setPerfilFilter, v)} 
+            />
+            <FilterBadge 
+              label="Shopee" 
+              value={shopeeFilter} 
+              options={shopees} 
+              onChange={v => handleFilterChange(setShopeeFilter, v)} 
+            />
+            <FilterBadge 
+              label="Prioridade" 
+              value={priorityFilter} 
+              options={priorities} 
+              onChange={v => handleFilterChange(setPriorityFilter, v)} 
+            />
           </div>
 
-          <div className="flex gap-2">
-            <button 
-              onClick={() => exportToCSV(filteredGroups, `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`)}
-              className="flex items-center gap-2 px-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm text-xs font-bold text-gray-600 hover:bg-gray-50 active:scale-95 transition-all whitespace-nowrap"
-              title="Download da lista atual em CSV"
-            >
-              <Download className="w-4 h-4 text-green-600" />
-              CSV
-            </button>
-          </div>
+          <button 
+            onClick={() => exportToCSV(filteredGroups, `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`)}
+            className="w-full xl:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-white border border-slate-100 rounded-[2rem] shadow-sm text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:border-slate-200 active:scale-95 transition-all"
+          >
+            <Download className="w-4 h-4 text-emerald-600" />
+            Exportar CSV
+          </button>
         </div>
       </div>
 
       {/* Desktop Table Content */}
-      <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden hidden md:block">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="bg-gray-50/50">
-              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-900" onClick={() => toggleSort('nome_grupo')}>
-                <div className="flex items-center gap-2">Grupo <ArrowUpDown className="w-3 h-3" /></div>
-              </th>
-              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-900" onClick={() => toggleSort('quantidade_membros')}>
-                <div className="flex items-center gap-2">Membros <ArrowUpDown className="w-3 h-3" /></div>
-              </th>
-              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-900" onClick={() => toggleSort('prioridade')}>
-                <div className="flex items-center gap-2">Prioridade <ArrowUpDown className="w-3 h-3" /></div>
-              </th>
-              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-900" onClick={() => toggleSort('score')}>
-                <div className="flex items-center gap-2">Score <ArrowUpDown className="w-3 h-3" /></div>
-              </th>
-              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Nicho</th>
-              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Locatário</th>
-              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-900" onClick={() => toggleSort('data_vencimento')}>
-                <div className="flex items-center gap-2">Vencimento <ArrowUpDown className="w-3 h-3" /></div>
-              </th>
-              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Perfil</th>
-              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Shopee</th>
-              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
-              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Valor</th>
-              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {sortedNiches.map(nicho => (
-              <React.Fragment key={nicho}>
-                <tr className="bg-gray-100/50">
-                  <td colSpan={8} className="px-6 py-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-green-700 bg-green-100/50 px-3 py-1 rounded-full capitalize">
-                      📂 Nicho: {nicho}
-                    </span>
-                  </td>
-                </tr>
-                {groupedGroups[nicho].map(group => (
-                  <tr key={group.id} className={cn(
-                    "hover:bg-gray-50/50 transition-colors group",
-                    group.perfil_compartilhando === 'Inativo' && "border-l-4 border-l-red-500 bg-red-50/10"
-                  )}>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-gray-900">{group.nome_grupo}</span>
-                        <div className="flex items-center gap-3 mt-1">
-                          {group.link_grupo && (
-                            <a 
-                              href={ensureAbsoluteUrl(group.link_grupo)} 
-                              target="_blank" 
-                              rel="noreferrer"
-                              className="text-[10px] text-blue-500 hover:underline flex items-center gap-1 font-mono uppercase tracking-widest"
-                            >
-                              Ver link <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                          )}
-                          <button 
-                            onClick={() => onEdit(group)}
-                            className="text-[10px] text-green-600 hover:underline flex items-center gap-1 font-mono uppercase tracking-widest"
-                          >
-                            Editar <Edit2 className="w-2.5 h-2.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-bold text-gray-600 font-mono">
-                        {formatNumber(group.quantidade_membros)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={cn(
-                        "text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg inline-block",
-                        group.priorityInfo.prioridade === 'Alta' ? "bg-red-100 text-red-700 shadow-sm" :
-                        group.priorityInfo.prioridade === 'Média' ? "bg-yellow-100 text-yellow-700" :
-                        "bg-gray-100 text-gray-400"
-                      )}>
-                        {group.priorityInfo.prioridade}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Score</span>
-                        <span className="text-xs font-bold text-gray-700 font-mono">
-                          {group.priorityInfo.score} pts
+      <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden hidden lg:block">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100">
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
+                  <div className="flex items-center gap-2">Grupo <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
+                </th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('quantidade_membros')}>
+                  <div className="flex items-center gap-2 text-center justify-center w-full">Membros <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
+                </th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('prioridade')}>
+                  <div className="flex items-center gap-2 text-center justify-center w-full">Prioridade <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
+                </th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Configuração</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Locatário / Info</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-slate-900 transition-colors text-right" onClick={() => toggleSort('data_vencimento')}>
+                  <div className="flex items-center gap-2 justify-end">Vencimento <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
+                </th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50 font-medium">
+              {sortedNiches.map(nicho => (
+                <React.Fragment key={nicho}>
+                  <tr className="bg-slate-50/50">
+                    <td colSpan={7} className="px-8 py-3">
+                      <div className="flex items-center gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 capitalize">
+                          Nicho: {nicho}
                         </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-xs font-bold px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg uppercase tracking-wider capitalize">
-                        {group.nicho}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      {group.locatario ? (
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-gray-900">{group.locatario}</span>
-                          <span className="text-xs text-gray-400 font-medium">{group.whatsapp}</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm italic text-gray-300">Nenhum</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <ExpiryBadge dareStr={group.data_vencimento} status={group.status} />
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <div className={cn("w-2 h-2 rounded-full", group.perfil_compartilhando === 'Ativo' ? "bg-emerald-500" : "bg-rose-400")} />
-                        <span className={cn(
-                          "text-[9px] font-bold uppercase tracking-wider",
-                          group.perfil_compartilhando === 'Ativo' ? "text-emerald-700" : "text-rose-600"
-                        )}>
-                          {group.perfil_compartilhando === 'Ativo' ? 'Ativo' : 'Inativo'}
+                        <span className="text-[9px] font-bold text-slate-300 ml-auto uppercase tracking-widest">
+                          {groupedGroups[nicho].length} Grupos
                         </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <div className={cn("w-2 h-2 rounded-full", group.uso_shopee === 'Ativo' ? "bg-blue-500" : "bg-slate-300")} />
-                        <span className={cn(
-                          "text-[9px] font-bold uppercase tracking-wider",
-                          group.uso_shopee === 'Ativo' ? "text-blue-700" : "text-slate-400"
-                        )}>
-                          {group.uso_shopee === 'Ativo' ? 'Shopee' : 'Inativo'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={cn(
-                        "text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full inline-block",
-                        group.status === 'Alugado' 
-                          ? "bg-green-100 text-green-700" 
-                          : "bg-gray-100 text-gray-400"
-                      )}>
-                        {group.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-bold font-mono text-gray-900">
-                        {formatCurrency(group.valor)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <button 
-                          onClick={() => onEdit(group)}
-                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
-                          title="Editar Grupo"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => setConfirmDeleteId(group.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                          title="Excluir Grupo"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
                     </td>
                   </tr>
-                ))}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile Card Layout */}
-      <div className="md:hidden space-y-8">
-        {sortedNiches.map(nicho => (
-          <div key={nicho} className="space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-widest text-green-700 bg-green-50 px-4 py-2 rounded-xl sticky top-20 z-10 shadow-sm border border-green-100">
-               📂 Nicho: {nicho}
-            </h3>
-            <div className="space-y-4">
-              {groupedGroups[nicho].map(group => (
-                <div key={group.id} className={cn(
-                  "bg-white p-5 rounded-[2rem] border shadow-sm relative overflow-hidden",
-                  group.perfil_compartilhando === 'Inativo' ? "border-red-200" : "border-gray-100"
-                )}>
-                   {/* Status Bar */}
-                   <div className={cn(
-                     "absolute left-0 top-0 bottom-0 w-1.5",
-                     group.priorityInfo.prioridade === 'Alta' ? "bg-red-500" : 
-                     group.priorityInfo.prioridade === 'Média' ? "bg-yellow-500" : "bg-gray-300"
-                   )} />
-
-                   <div className="flex justify-between items-start mb-4">
-                     <div>
-                        <div className="flex items-center gap-2 mb-1">
+                  {groupedGroups[nicho].map(group => (
+                    <motion.tr 
+                      layout
+                      key={group.id} 
+                      className={cn(
+                        "hover:bg-slate-50/50 transition-colors group relative",
+                        group.perfil_compartilhando === 'Inativo' && "bg-rose-50/20"
+                      )}
+                    >
+                      <td className="px-8 py-8 relative">
+                        {group.perfil_compartilhando === 'Inativo' && (
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500" />
+                        )}
+                        <div className="flex flex-col max-w-[250px]">
+                          <span className="font-black text-slate-900 group-hover:text-emerald-600 transition-colors text-base truncate" title={group.nome_grupo}>
+                            {group.nome_grupo}
+                          </span>
+                          <div className="flex items-center gap-4 mt-2">
+                             {group.link_grupo && (
+                              <a 
+                                href={ensureAbsoluteUrl(group.link_grupo)} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="text-[10px] text-blue-500 hover:text-blue-700 flex items-center gap-1.5 font-black uppercase tracking-widest transition-colors"
+                              >
+                                Link <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
+                            <div className="flex items-center gap-1.5">
+                               <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{group.nicho}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-8 text-center">
+                        <div className="flex flex-col items-center">
+                          <span className="text-xl font-black text-slate-900 font-mono tracking-tighter">
+                            {formatNumber(group.quantidade_membros)}
+                          </span>
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Membros</span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-8 text-center">
+                        <div className="flex flex-col items-center gap-2">
                           <span className={cn(
-                            "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md",
-                            group.priorityInfo.prioridade === 'Alta' ? "bg-red-600 text-white" :
-                            group.priorityInfo.prioridade === 'Média' ? "bg-yellow-500 text-white" :
-                            "bg-gray-200 text-gray-500"
+                            "text-[9px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full border shadow-sm transition-all",
+                            group.priorityInfo.prioridade === 'Alta' ? "bg-rose-50 text-rose-600 border-rose-100 shadow-rose-50" :
+                            group.priorityInfo.prioridade === 'Média' ? "bg-amber-50 text-amber-600 border-amber-100 shadow-amber-50" :
+                            "bg-slate-50 text-slate-400 border-slate-100 shadow-slate-50"
                           )}>
                             {group.priorityInfo.prioridade}
                           </span>
-                          <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
-                             Score: {group.priorityInfo.score}
+                          <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest font-mono">
+                            {group.priorityInfo.score} pts
                           </span>
                         </div>
-                        <h4 className="font-bold text-gray-900">{group.nome_grupo}</h4>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-                          <p className="text-xs text-gray-400 font-bold uppercase tracking-widest capitalize">{group.nicho} • {formatNumber(group.quantidade_membros)} memb.</p>
-                          {group.link_grupo && (
-                            <a 
-                              href={ensureAbsoluteUrl(group.link_grupo)} 
-                              target="_blank" 
-                              rel="noreferrer"
-                              className="text-[10px] text-blue-500 hover:underline flex items-center gap-1 font-mono uppercase tracking-widest"
-                            >
-                              Ver link <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
+                      </td>
+                      <td className="px-8 py-8">
+                        <div className="flex flex-col gap-2.5 items-center justify-center">
+                           <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 w-full max-w-[120px] justify-between">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Post</span>
+                              <div className={cn("w-2 h-2 rounded-full", group.perfil_compartilhando === 'Ativo' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-rose-400")} />
+                           </div>
+                           <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 w-full max-w-[120px] justify-between">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Shop</span>
+                              <div className={cn("w-2 h-2 rounded-full", group.uso_shopee === 'Ativo' ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" : "bg-slate-200")} />
+                           </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-8">
+                        <div className="flex flex-col">
+                          {group.locatario ? (
+                            <>
+                              <span className="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{group.locatario}</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                 <span className="text-[10px] text-slate-400 font-bold font-mono">{group.whatsapp}</span>
+                                 <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                 <span className="text-[10px] font-black text-emerald-600 font-mono">{formatCurrency(group.valor)}</span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                               <div className="w-2 h-2 rounded-full bg-emerald-100 animate-pulse" />
+                               <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] italic">Disponível</span>
+                            </div>
                           )}
                         </div>
-                     </div>
-                     <div className="flex gap-1">
-                        <button onClick={() => onEdit(group)} className="p-2 text-gray-400 bg-gray-50 rounded-xl"><Edit2 className="w-4 h-4" /></button>
-                        <button onClick={() => setConfirmDeleteId(group.id)} className="p-2 text-gray-400 bg-gray-50 rounded-xl"><Trash2 className="w-4 h-4" /></button>
-                     </div>
-                   </div>
+                      </td>
+                      <td className="px-8 py-8 text-right">
+                        <ExpiryBadge dareStr={group.data_vencimento} status={group.status} />
+                      </td>
+                      <td className="px-8 py-8 text-right">
+                        <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                          <button 
+                            onClick={() => onEdit(group)}
+                            className="p-3 bg-white border border-slate-100 hover:border-emerald-200 rounded-2xl text-slate-400 hover:text-emerald-600 transition-all shadow-sm"
+                            title="Editar Grupo"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => setConfirmDeleteId(group.id)}
+                            className="p-3 bg-white border border-slate-100 hover:border-rose-200 rounded-2xl text-slate-400 hover:text-rose-600 transition-all shadow-sm"
+                            title="Excluir Grupo"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-                   <div className="grid grid-cols-2 gap-4 border-t border-gray-50 pt-4">
-                      <div>
-                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Locatário</p>
-                        <p className="text-sm font-bold text-gray-700 leading-tight truncate">
-                          {group.locatario || 'Disponível'}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Vencimento</p>
-                        <ExpiryBadge dareStr={group.data_vencimento} status={group.status} compact />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Valor</p>
-                        <p className="text-sm font-bold font-mono text-gray-900">{formatCurrency(group.valor)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Status</p>
-                        <span className={cn(
-                          "text-[10px] font-black uppercase border px-2 py-0.5 rounded-full inline-block",
-                          group.status === 'Alugado' ? "border-green-200 text-green-600 bg-green-50" : "border-gray-200 text-gray-400 bg-gray-50"
-                        )}>
-                          {group.status}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Perfil</p>
-                        <span className={cn(
-                          "text-[10px] font-black uppercase px-2 py-0.5 rounded-full inline-block",
-                          group.perfil_compartilhando === 'Ativo' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                        )}>
-                          {group.perfil_compartilhando === 'Ativo' ? 'Perfil Ativo' : 'Perfil Inativo'}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-1">Shopee</p>
-                        <span className={cn(
-                          "text-[10px] font-black uppercase px-2 py-0.5 rounded-full inline-block",
-                          group.uso_shopee === 'Ativo' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
-                        )}>
-                          {group.uso_shopee === 'Ativo' ? 'Shopee Ativo' : 'Shopee Inativo'}
-                        </span>
-                      </div>
+      {/* Mobile Card Layout */}
+      <div className="lg:hidden space-y-8 pb-20">
+        {sortedNiches.map(nicho => (
+          <div key={nicho} className="space-y-4">
+            <h3 className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 flex items-center gap-2 ml-4">
+               <span className="w-1 h-1 rounded-full bg-emerald-500" />
+               Nicho: {nicho}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-1">
+              {groupedGroups[nicho].map(group => (
+                <div key={group.id} className={cn(
+                  "bg-white p-4 md:p-8 rounded-2xl md:rounded-[3rem] border transition-all relative overflow-hidden",
+                  group.perfil_compartilhando === 'Inativo' ? "border-rose-200 bg-rose-50/10 shadow-rose-50" : "border-slate-100 shadow-xl shadow-slate-100/50"
+                )}>
+                   {/* Priority Indicator */}
+                   <div className={cn(
+                     "absolute left-0 top-0 bottom-0 w-1.5 md:w-2",
+                     group.priorityInfo.prioridade === 'Alta' ? "bg-rose-500" : 
+                     group.priorityInfo.prioridade === 'Média' ? "bg-amber-500" : "bg-slate-200"
+                   )} />
+
+                   <div className="flex flex-col gap-4 md:gap-8">
+                     <div className="flex justify-between items-start">
+                       <div className="flex-1">
+                          <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2 md:mb-3">
+                            <span className={cn(
+                              "text-[7px] md:text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 md:px-3 md:py-1 rounded-full",
+                              group.priorityInfo.prioridade === 'Alta' ? "bg-rose-600 text-white shadow-lg shadow-rose-200" :
+                              group.priorityInfo.prioridade === 'Média' ? "bg-amber-500 text-white shadow-lg shadow-amber-100" :
+                              "bg-slate-100 text-slate-400"
+                            )}>
+                              {group.priorityInfo.prioridade}
+                            </span>
+                            <span className="text-[7px] md:text-[8px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 md:px-3 md:py-1 rounded-full border border-slate-100">
+                               {group.priorityInfo.score} pts
+                            </span>
+                          </div>
+                          <h4 className="text-sm md:text-xl font-black text-slate-900 leading-tight mb-1 md:mb-2 truncate" title={group.nome_grupo}>{group.nome_grupo}</h4>
+                          <div className="flex flex-wrap items-center gap-2 md:gap-4">
+                            <p className="text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-[0.15em]">{formatNumber(group.quantidade_membros)} MEMBROS</p>
+                            {group.link_grupo && (
+                              <a 
+                                href={ensureAbsoluteUrl(group.link_grupo)} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="text-[8px] md:text-[10px] text-blue-600 font-black uppercase tracking-widest flex items-center gap-1"
+                              >
+                                Link <ExternalLink className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                              </a>
+                            )}
+                          </div>
+                       </div>
+                       <div className="flex gap-2 shrink-0">
+                          <button onClick={() => onEdit(group)} className="p-2 md:p-4 bg-slate-50 text-slate-400 hover:text-emerald-600 rounded-xl md:rounded-[1.5rem] transition-colors"><Edit2 className="w-4 h-4 md:w-5 md:h-5" /></button>
+                       </div>
+                     </div>
+
+                     <div className="grid grid-cols-2 gap-4 md:gap-8 pt-4 md:pt-8 border-t border-slate-50">
+                        <div className="space-y-3">
+                          <div className="space-y-0.5">
+                            <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Locatário</p>
+                            <p className={cn(
+                              "text-xs md:text-sm font-black uppercase tracking-tight truncate",
+                              group.locatario ? "text-slate-900" : "text-emerald-500 italic"
+                            )}>
+                              {group.locatario || 'Disponível'}
+                            </p>
+                            {group.whatsapp && <p className="text-[9px] md:text-[10px] font-bold text-slate-300 font-mono">{group.whatsapp}</p>}
+                          </div>
+                          <div className="space-y-0.5">
+                            <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Custo</p>
+                            <p className="text-xs md:text-sm font-black font-mono text-emerald-600">{formatCurrency(group.valor)}</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 text-right">
+                          <div className="space-y-0.5">
+                            <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Fim</p>
+                            <ExpiryBadge dareStr={group.data_vencimento} status={group.status} compact />
+                          </div>
+                          <div className="space-y-1.5 flex flex-col items-end">
+                            <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Config</p>
+                            <div className="flex gap-1.5">
+                               <div className={cn("w-1.5 h-1.5 rounded-full", group.perfil_compartilhando === 'Ativo' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" : "bg-rose-400")} />
+                               <div className={cn("w-1.5 h-1.5 rounded-full", group.uso_shopee === 'Ativo' ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]" : "bg-slate-200")} />
+                            </div>
+                          </div>
+                        </div>
+                     </div>
+
+                     <button 
+                       onClick={() => setConfirmDeleteId(group.id)}
+                       className="w-full py-3 md:py-5 bg-rose-50 text-rose-600 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] rounded-xl md:rounded-2xl hover:bg-rose-600 hover:text-white transition-all border border-rose-100"
+                     >
+                       Remover Grupo
+                     </button>
                    </div>
                 </div>
               ))}
@@ -607,31 +561,52 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
   );
 }
 
+function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
+  return (
+    <div className="flex items-center gap-2 md:gap-3 bg-white px-3.5 md:px-5 py-2.5 md:py-4 rounded-[2rem] border border-slate-100 shadow-sm hover:border-emerald-200 transition-all group shrink-0">
+      <Filter className="w-3 md:w-3.5 h-3 md:h-3.5 text-slate-300 group-hover:text-emerald-500" />
+      <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{label}:</span>
+      <select 
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className={cn(
+          "bg-transparent border-0 focus:ring-0 p-0 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-emerald-600 cursor-pointer",
+          isCapitalize && "capitalize"
+        )}
+      >
+        {options.map((opt: string) => (
+          <option key={opt} value={opt} className={cn(isCapitalize && "capitalize")}>{opt}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 function ExpiryBadge({ dareStr, status, compact = false }: { dareStr: string, status: string, compact?: boolean }) {
-  if (status !== 'Alugado' || !dareStr) return <span className="text-sm text-gray-300">-</span>;
+  if (status !== 'Alugado' || !dareStr) return <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">-</span>;
   
   const date = parseISO(dareStr);
   const isVenceHoje = isToday(date);
   const isVenceAmanha = isTomorrow(date);
   const isVencido = isPast(date) && !isVenceHoje;
 
-  const colorClass = isVencido ? "text-red-600" : isVenceHoje ? "text-red-700" : isVenceAmanha ? "text-orange-600" : "text-gray-600";
-  const bgClass = isVencido ? "bg-red-50" : isVenceHoje ? "bg-red-50" : isVenceAmanha ? "bg-orange-50" : "bg-gray-50";
+  const colorClass = isVencido ? "text-rose-600" : isVenceHoje ? "text-rose-600" : isVenceAmanha ? "text-amber-600" : "text-slate-600";
+  const bgClass = isVencido ? "bg-rose-50 border-rose-100 shadow-rose-50" : isVenceHoje ? "bg-rose-50 border-rose-100 shadow-rose-50" : isVenceAmanha ? "bg-amber-50 border-amber-100 shadow-amber-50" : "bg-slate-50 border-slate-100";
 
   return (
     <div className={cn(
       "flex flex-col",
-      compact ? "items-end" : "items-start"
+      compact ? "items-end" : "items-end"
     )}>
       <span className={cn(
-        "text-sm font-bold font-mono",
+        "text-[10px] font-black font-mono tracking-tighter",
         colorClass
       )}>
         {format(date, 'dd/MM/yyyy')}
       </span>
       {(isVenceHoje || isVenceAmanha || isVencido) && (
         <span className={cn(
-          "text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md mt-0.5",
+          "text-[8px] font-black uppercase px-2 py-0.5 rounded-md mt-1 shadow-sm border",
           bgClass,
           colorClass
         )}>

@@ -37,38 +37,38 @@ export function Shell({
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] font-sans text-gray-900 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[#F8F9FA] font-sans text-slate-900 flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <header className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+      <header className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-2">
-          <div className="bg-green-600 p-1.5 rounded-lg">
+          <div className="bg-emerald-600 p-1.5 rounded-lg">
             <Landmark className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-lg tracking-tight">Grupos FB</span>
+          <span className="font-bold text-lg tracking-tight text-slate-800">Grupos FB</span>
         </div>
         <button 
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="p-1 text-gray-600 hover:bg-gray-100 rounded-md"
+          className="p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors"
         >
           {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </header>
 
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 sticky top-0 h-screen">
-        <div className="p-6 border-b border-gray-100">
+      <aside className="hidden md:flex flex-col w-72 bg-white border-r border-slate-200 sticky top-0 h-screen">
+        <div className="p-8 border-b border-slate-50">
           <div className="flex items-center gap-3">
-            <div className="bg-green-600 p-2 rounded-xl shadow-lg shadow-green-200">
+            <div className="bg-emerald-600 p-2.5 rounded-xl shadow-lg shadow-emerald-100">
               <Landmark className="w-6 h-6 text-white" />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-xl tracking-tight leading-none text-green-700">Grupos FB</span>
-              <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 mt-1 whitespace-nowrap">Aluguel & Gestão</span>
+              <span className="font-extrabold text-xl tracking-tight leading-none text-slate-900">Grupos FB</span>
+              <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mt-1.5 whitespace-nowrap">Gestão de Grupos</span>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-6 space-y-1.5 pt-8">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -80,38 +80,38 @@ export function Shell({
                   setActiveFilter('all');
                 }}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
+                  "w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-200 font-semibold text-sm",
                   isActive 
-                    ? "bg-green-50 text-green-700 shadow-sm" 
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-slate-950 text-white shadow-md shadow-slate-200 scale-[1.02]" 
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 )}
               >
-                <Icon className={cn("w-5 h-5", isActive ? "text-green-600" : "text-gray-400")} />
+                <Icon className={cn("w-5 h-5", isActive ? "text-emerald-400" : "text-slate-400")} />
                 {item.label}
               </button>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-100 space-y-2 text-center">
+        <div className="p-6 border-t border-slate-50 space-y-3">
           <button 
             onClick={onCleanupData}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-50 to-white border border-green-100 text-green-700 hover:border-green-200 font-bold py-2 rounded-xl transition-all active:scale-95 text-xs mb-2 shadow-sm"
+            className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:border-emerald-500 hover:text-emerald-700 font-bold py-3 rounded-2xl transition-all active:scale-95 text-xs shadow-sm"
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4 text-emerald-500" />
             Faxina de Dados
           </button>
           
           <button 
             onClick={onImportGroups}
-            className="w-full flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold py-3 rounded-xl transition-all active:scale-95"
+            className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold py-3 rounded-2xl transition-all active:scale-95 text-sm"
           >
-            <FileUp className="w-5 h-5 text-gray-400" />
-            Importar Grupos
+            <FileUp className="w-5 h-5 text-slate-400" />
+            Importar
           </button>
           <button 
             onClick={onAddGroup}
-            className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-green-100 transition-all active:scale-95"
+            className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-3xl shadow-xl shadow-emerald-100 transition-all active:scale-95 text-sm"
           >
             <Plus className="w-5 h-5" />
             Novo Grupo
@@ -127,7 +127,7 @@ export function Shell({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsMenuOpen(false)}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-md z-40 md:hidden"
           />
         )}
       </AnimatePresence>
@@ -140,16 +140,18 @@ export function Shell({
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 left-0 w-3/4 max-w-xs bg-white shadow-2xl z-50 md:hidden p-6"
+            className="fixed inset-y-0 left-0 w-[85%] max-w-[320px] bg-white shadow-2xl z-50 md:hidden flex flex-col"
           >
-            <div className="flex items-center gap-3 mb-8">
-              <div className="bg-green-600 p-2 rounded-xl">
-                <Landmark className="w-6 h-6 text-white" />
+            <div className="p-8 border-b border-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="bg-emerald-600 p-2 rounded-xl">
+                  <Landmark className="w-6 h-6 text-white" />
+                </div>
+                <span className="font-extrabold text-2xl tracking-tight text-slate-900">Grupos FB</span>
               </div>
-              <span className="font-bold text-xl tracking-tight text-green-700">Grupos FB</span>
             </div>
 
-            <nav className="space-y-2">
+            <nav className="p-6 space-y-2 mt-4">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
@@ -162,26 +164,26 @@ export function Shell({
                       setIsMenuOpen(false);
                     }}
                     className={cn(
-                      "w-full flex items-center gap-4 px-4 py-4 rounded-xl transition-all font-semibold",
+                      "w-full flex items-center gap-4 px-5 py-4 rounded-[1.5rem] transition-all font-bold text-base",
                       isActive 
-                        ? "bg-green-600 text-white shadow-lg shadow-green-200" 
-                        : "text-gray-600 hover:bg-gray-100"
+                        ? "bg-slate-950 text-white shadow-xl shadow-slate-200" 
+                        : "text-slate-500 hover:bg-slate-100"
                     )}
                   >
-                    <Icon className="w-6 h-6" />
+                    <Icon className={cn("w-6 h-6", isActive ? "text-emerald-400" : "text-slate-400")} />
                     {item.label}
                   </button>
                 );
               })}
             </nav>
 
-            <div className="mt-auto absolute bottom-8 left-6 right-6 space-y-2">
+            <div className="p-6 border-t border-slate-50 space-y-3 mt-auto mb-8">
               <button 
                 onClick={() => {
                   onCleanupData();
                   setIsMenuOpen(false);
                 }}
-                className="w-full flex items-center justify-center gap-2 bg-green-50 text-green-700 font-bold py-3 rounded-xl mb-2"
+                className="w-full flex items-center justify-center gap-3 bg-emerald-50 text-emerald-700 font-bold py-4 rounded-2xl"
               >
                 <Sparkles className="w-5 h-5" />
                 Faxina de Dados
@@ -192,9 +194,9 @@ export function Shell({
                   onImportGroups();
                   setIsMenuOpen(false);
                 }}
-                className="w-full flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-600 font-bold py-4 rounded-xl shadow-sm"
+                className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-600 font-bold py-4 rounded-2xl shadow-sm"
               >
-                <FileUp className="w-5 h-5 text-gray-400" />
+                <FileUp className="w-5 h-5 text-slate-400" />
                 Importar Grupos
               </button>
               <button 
@@ -202,9 +204,9 @@ export function Shell({
                   onAddGroup();
                   setIsMenuOpen(false);
                 }}
-                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-green-100"
+                className="w-full flex items-center justify-center gap-3 bg-emerald-600 text-white font-bold py-5 rounded-[2rem] shadow-xl shadow-emerald-100"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-6 h-6 transition-transform group-active:scale-90" />
                 Novo Grupo
               </button>
             </div>
@@ -213,9 +215,19 @@ export function Shell({
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-auto">
-        <div className="max-w-7xl mx-auto p-4 md:p-8">
-          {children}
+      <main className="flex-1 overflow-x-hidden">
+        <div className="max-w-[1600px] mx-auto p-4 md:p-10 lg:p-12">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, scale: 0.99, y: 5 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.99, y: -5 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
 
