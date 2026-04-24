@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Group, QuickFilter } from '@/src/types';
 import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, exportToCSV, ensureAbsoluteUrl } from '@/src/lib/utils';
+import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -13,7 +14,11 @@ interface GroupListProps {
   onQuickFilterChange?: (filter: QuickFilter) => void;
 }
 
-type SortField = 'data_vencimento' | 'quantidade_membros' | 'nome_grupo';
+type SortField = 'data_vencimento' | 'quantidade_membros' | 'nome_grupo' | 'prioridade' | 'score';
+
+interface GroupWithPriority extends Group {
+  priorityInfo: PriorityInfo;
+}
 
 export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuickFilterChange }: GroupListProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,6 +27,7 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [perfilFilter, setPerfilFilter] = useState('Todos');
   const [shopeeFilter, setShopeeFilter] = useState('Todos');
+  const [priorityFilter, setPriorityFilter] = useState('Todos');
   const [onlyReadyForShopee, setOnlyReadyForShopee] = useState(false);
   const [sortField, setSortField] = useState<SortField>('data_vencimento');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -33,7 +39,17 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
   const perfis = ['Todos', 'Ativo', 'Inativo'];
   const shopees = ['Todos', 'Ativo', 'Inativo'];
 
+  const priorities = ['Todos', 'Alta', 'Média', 'Baixa'];
+
   const [renterFilter, setRenterFilter] = useState('Todos');
+
+  // Add priority info to groups for sorting and filtering
+  const groupsWithPriority = useMemo(() => {
+    return groups.map(g => ({
+      ...g,
+      priorityInfo: getGroupPriority(g)
+    })) as GroupWithPriority[];
+  }, [groups]);
 
   // Handle Quick Filters from Sidebar
   useEffect(() => {
@@ -43,6 +59,7 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
         setStatusFilter('Todos');
         setPerfilFilter('Todos');
         setShopeeFilter('Todos');
+        setPriorityFilter('Todos');
         setRenterFilter('Todos');
         setOnlyReadyForShopee(false);
         setSearchTerm('');
@@ -56,6 +73,7 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
     setStatusFilter('Todos');
     setPerfilFilter('Todos');
     setShopeeFilter('Todos');
+    setPriorityFilter('Todos');
     setRenterFilter('Todos');
     setOnlyReadyForShopee(false);
     setSearchTerm('');
@@ -67,6 +85,9 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
       case 'shopee_ativo': setShopeeFilter('Ativo'); break;
       case 'shopee_inativo': setShopeeFilter('Inativo'); break;
       case 'ready_shopee': setOnlyReadyForShopee(true); break;
+      case 'priority_alta': setPriorityFilter('Alta'); break;
+      case 'priority_media': setPriorityFilter('Média'); break;
+      case 'priority_baixa': setPriorityFilter('Baixa'); break;
     }
   }, [activeQuickFilter]);
 
@@ -78,7 +99,13 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
     }
   };
 
-  const filteredGroups = groups
+  const priorityOrder: Record<PriorityLevel, number> = {
+    'Alta': 0,
+    'Média': 1,
+    'Baixa': 2
+  };
+
+  const filteredGroups = groupsWithPriority
     .filter(g => 
       g.nome_grupo.toLowerCase().includes(searchTerm.toLowerCase()) &&
       g.locatario.toLowerCase().includes(renterSearch.toLowerCase()) &&
@@ -86,32 +113,61 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
       (statusFilter === 'Todos' || g.status === statusFilter) &&
       (perfilFilter === 'Todos' || g.perfil_compartilhando === perfilFilter) &&
       (shopeeFilter === 'Todos' || g.uso_shopee === shopeeFilter) &&
+      (priorityFilter === 'Todos' || g.priorityInfo.prioridade === priorityFilter) &&
       (renterFilter === 'Todos' || g.locatario === renterFilter) &&
       (!onlyReadyForShopee || (g.perfil_compartilhando === 'Ativo' && g.uso_shopee === 'Ativo'))
     )
     .sort((a, b) => {
-      // Primary sort: Nicho (case insensitive)
+      // Handle Sorting
+      if (sortField === 'nome_grupo') {
+        const valA = a.nome_grupo.toLowerCase();
+        const valB = b.nome_grupo.toLowerCase();
+        return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      }
+      
+      if (sortField === 'quantidade_membros') {
+        const valA = a.quantidade_membros || 0;
+        const valB = b.quantidade_membros || 0;
+        return sortOrder === 'asc' ? valA - valB : valB - valA;
+      }
+      
+      if (sortField === 'data_vencimento') {
+        const valA = a.data_vencimento || '9999-99-99';
+        const valB = b.data_vencimento || '9999-99-99';
+        return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      }
+
+      if (sortField === 'prioridade') {
+        const valA = priorityOrder[a.priorityInfo.prioridade];
+        const valB = priorityOrder[b.priorityInfo.prioridade];
+        return sortOrder === 'asc' ? valA - valB : valB - valA;
+      }
+
+      if (sortField === 'score') {
+        const valA = a.priorityInfo.score;
+        const valB = b.priorityInfo.score;
+        return sortOrder === 'asc' ? valB - valA : valA - valB;
+      }
+
+      // Default grouping sort: Nicho
       const nichoA = a.nicho.toLowerCase();
       const nichoB = b.nicho.toLowerCase();
       if (nichoA < nichoB) return -1;
       if (nichoA > nichoB) return 1;
 
-      // Secondary sort: Nome do Grupo (alphabetical)
+      // Secondary sort: Nome do Grupo
       const nameA = a.nome_grupo.toLowerCase();
       const nameB = b.nome_grupo.toLowerCase();
-      if (nameA < nameB) return -1;
-      if (nameA > nameB) return 1;
-
-      return 0;
+      return nameA.localeCompare(nameB);
     });
 
   // Grouping for visual separation
-  const groupedGroups: { [nicho: string]: Group[] } = filteredGroups.reduce((acc, group) => {
+  const groupedGroups: { [nicho: string]: GroupWithPriority[] } = filteredGroups.reduce((acc, group) => {
     const nicho = group.nicho || 'Sem Nicho';
     if (!acc[nicho]) acc[nicho] = [];
     acc[nicho].push(group);
     return acc;
-  }, {} as { [nicho: string]: Group[] });
+  }, {} as { [nicho: string]: GroupWithPriority[] });
 
   // Get sorted niche names for display
   const sortedNiches = Object.keys(groupedGroups).sort((a, b) => a.localeCompare(b));
@@ -199,6 +255,16 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
               <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
               <select
                 className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
+                value={priorityFilter}
+                onChange={e => handleFilterChange(setPriorityFilter, e.target.value)}
+              >
+                {priorities.map(p => <option key={p} value={p}>Prioridade: {p}</option>)}
+              </select>
+            </div>
+            <div className="relative">
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              <select
+                className="bg-white border border-gray-100 pl-10 pr-10 py-3 rounded-2xl shadow-sm focus:ring-2 focus:ring-green-100 outline-none font-bold text-xs appearance-none cursor-pointer whitespace-nowrap min-w-[140px]"
                 value={renterFilter}
                 onChange={e => handleFilterChange(setRenterFilter, e.target.value)}
               >
@@ -230,6 +296,12 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
               </th>
               <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-900" onClick={() => toggleSort('quantidade_membros')}>
                 <div className="flex items-center gap-2">Membros <ArrowUpDown className="w-3 h-3" /></div>
+              </th>
+              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-900" onClick={() => toggleSort('prioridade')}>
+                <div className="flex items-center gap-2">Prioridade <ArrowUpDown className="w-3 h-3" /></div>
+              </th>
+              <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-900" onClick={() => toggleSort('score')}>
+                <div className="flex items-center gap-2">Score <ArrowUpDown className="w-3 h-3" /></div>
               </th>
               <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Nicho</th>
               <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Locatário</th>
@@ -285,6 +357,24 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
                       <span className="text-sm font-bold text-gray-600 font-mono">
                         {formatNumber(group.quantidade_membros)}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={cn(
+                        "text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg inline-block",
+                        group.priorityInfo.prioridade === 'Alta' ? "bg-red-100 text-red-700 shadow-sm" :
+                        group.priorityInfo.prioridade === 'Média' ? "bg-yellow-100 text-yellow-700" :
+                        "bg-gray-100 text-gray-400"
+                      )}>
+                        {group.priorityInfo.prioridade}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Score</span>
+                        <span className="text-xs font-bold text-gray-700 font-mono">
+                          {group.priorityInfo.score} pts
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-xs font-bold px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg uppercase tracking-wider capitalize">
@@ -377,11 +467,25 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
                    {/* Status Bar */}
                    <div className={cn(
                      "absolute left-0 top-0 bottom-0 w-1.5",
-                     group.perfil_compartilhando === 'Ativo' ? "bg-green-500" : "bg-red-500"
+                     group.priorityInfo.prioridade === 'Alta' ? "bg-red-500" : 
+                     group.priorityInfo.prioridade === 'Média' ? "bg-yellow-500" : "bg-gray-300"
                    )} />
 
                    <div className="flex justify-between items-start mb-4">
                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={cn(
+                            "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md",
+                            group.priorityInfo.prioridade === 'Alta' ? "bg-red-600 text-white" :
+                            group.priorityInfo.prioridade === 'Média' ? "bg-yellow-500 text-white" :
+                            "bg-gray-200 text-gray-500"
+                          )}>
+                            {group.priorityInfo.prioridade}
+                          </span>
+                          <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
+                             Score: {group.priorityInfo.score}
+                          </span>
+                        </div>
                         <h4 className="font-bold text-gray-900">{group.nome_grupo}</h4>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                           <p className="text-xs text-gray-400 font-bold uppercase tracking-widest capitalize">{group.nicho} • {formatNumber(group.quantidade_membros)} memb.</p>

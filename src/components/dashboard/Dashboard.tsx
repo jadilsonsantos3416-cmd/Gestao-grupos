@@ -1,15 +1,42 @@
-import React from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Group } from '@/src/types';
-import { Users, CheckCircle2, XCircle, Clock, AlertCircle, TrendingUp, ListChecks, ShieldCheck, ShieldAlert, ShieldQuestion } from 'lucide-react';
+import { Users, CheckCircle2, XCircle, Clock, AlertCircle, TrendingUp, ListChecks, ShieldCheck, ShieldAlert, ShieldQuestion, Star, Target, ExternalLink, ChevronDown } from 'lucide-react';
 import { isToday, isTomorrow, isPast, parseISO } from 'date-fns';
 import { cn, formatNumber } from '@/src/lib/utils';
-import { motion } from 'motion/react';
+import { getGroupPriority, PriorityLevel } from '@/src/lib/priorityUtils';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface DashboardProps {
   groups: Group[];
 }
 
 export function Dashboard({ groups }: DashboardProps) {
+  const [selectedPriority, setSelectedPriority] = useState<PriorityLevel | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const groupsWithPriority = useMemo(() => groups.map(g => ({
+    ...g,
+    priorityInfo: getGroupPriority(g)
+  })), [groups]);
+
+  // Click outside listener
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setSelectedPriority(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedGroupsList = useMemo(() => {
+    if (!selectedPriority) return [];
+    return groupsWithPriority
+      .filter(g => g.priorityInfo.prioridade === selectedPriority)
+      .sort((a, b) => b.priorityInfo.score - a.priorityInfo.score);
+  }, [selectedPriority, groupsWithPriority]);
+
   const stats = {
     total: groups.length,
     alugados: groups.filter(g => g.status === 'Alugado').length,
@@ -22,6 +49,9 @@ export function Dashboard({ groups }: DashboardProps) {
     perfilInativo: groups.filter(g => g.perfil_compartilhando === 'Inativo' || !g.perfil_compartilhando).length,
     shopeeAtivo: groups.filter(g => g.uso_shopee === 'Ativo').length,
     shopeeInativo: groups.filter(g => g.uso_shopee === 'Inativo' || !g.uso_shopee).length,
+    priorityAlta: groupsWithPriority.filter(g => g.priorityInfo.prioridade === 'Alta').length,
+    priorityMedia: groupsWithPriority.filter(g => g.priorityInfo.prioridade === 'Média').length,
+    priorityBaixa: groupsWithPriority.filter(g => g.priorityInfo.prioridade === 'Baixa').length,
   };
 
   const alertItems = [
@@ -127,6 +157,108 @@ export function Dashboard({ groups }: DashboardProps) {
         />
       </div>
 
+      {/* Prioridade de Postagem */}
+      <section className="space-y-4 relative">
+        <h3 className="text-lg font-bold flex items-center gap-2">
+          <Target className="w-5 h-5 text-red-500" />
+          Prioridade de Postagem
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+          <StatCard 
+            label="Prioridade Alta" 
+            value={stats.priorityAlta} 
+            icon={Star} 
+            color="red" 
+            subValue="Melhores grupos no momento"
+            onClick={() => setSelectedPriority(selectedPriority === 'Alta' ? null : 'Alta')}
+            isActive={selectedPriority === 'Alta'}
+          />
+          <StatCard 
+            label="Prioridade Média" 
+            value={stats.priorityMedia} 
+            icon={Star} 
+            color="yellow" 
+            subValue="Bom engajamento e potencial"
+            onClick={() => setSelectedPriority(selectedPriority === 'Média' ? null : 'Média')}
+            isActive={selectedPriority === 'Média'}
+          />
+          <StatCard 
+            label="Prioridade Baixa" 
+            value={stats.priorityBaixa} 
+            icon={Star} 
+            color="gray" 
+            subValue="Grupos em desenvolvimento"
+            onClick={() => setSelectedPriority(selectedPriority === 'Baixa' ? null : 'Baixa')}
+            isActive={selectedPriority === 'Baixa'}
+          />
+        </div>
+
+        {/* Groups Dropdown */}
+        <AnimatePresence>
+          {selectedPriority && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              ref={dropdownRef}
+              className="absolute left-0 right-0 z-50 mt-2 bg-white rounded-3xl border border-gray-100 shadow-2xl overflow-hidden max-h-[400px] flex flex-col"
+            >
+              <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between sticky top-0 z-10">
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "w-2 h-2 rounded-full animate-pulse",
+                    selectedPriority === 'Alta' ? "bg-red-500" :
+                    selectedPriority === 'Média' ? "bg-yellow-500" : "bg-gray-400"
+                  )} />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                    Grupos Prioridade {selectedPriority} ({selectedGroupsList.length})
+                  </span>
+                </div>
+                <button 
+                  onClick={() => setSelectedPriority(null)}
+                  className="text-gray-400 hover:text-gray-600 text-[10px] font-black uppercase tracking-widest"
+                >
+                  Fechar
+                </button>
+              </div>
+              <div className="overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {selectedGroupsList.map(group => (
+                  <div 
+                    key={group.id}
+                    className="p-3 bg-gray-50 rounded-2xl border border-gray-100 hover:border-gray-200 transition-colors group flex items-center justify-between"
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-bold text-gray-800 line-clamp-1">{group.nome_grupo}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{group.nicho}</span>
+                        <span className="text-[9px] font-mono text-gray-400 font-bold bg-white px-1.5 py-0.5 rounded border border-gray-100">
+                          {group.priorityInfo.score} pts
+                        </span>
+                      </div>
+                    </div>
+                    {group.link_grupo && (
+                      <a 
+                        href={group.link_grupo} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="p-2 bg-white rounded-xl text-gray-400 hover:text-blue-500 hover:shadow-sm transition-all"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {selectedGroupsList.length === 0 && (
+                <div className="p-10 text-center text-gray-400 text-sm italic">
+                  Nenhum grupo nesta prioridade.
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </section>
+
       {/* Checklist Diário Section */}
       <section className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
@@ -182,25 +314,37 @@ export function Dashboard({ groups }: DashboardProps) {
   );
 }
 
-function StatCard({ label, value, icon: Icon, color, subValue }: any) {
+function StatCard({ label, value, icon: Icon, color, subValue, onClick, isActive }: any) {
   const colors: any = {
-    green: "bg-green-50 text-green-600 border-green-100",
-    blue: "bg-blue-50 text-blue-600 border-blue-100",
-    gray: "bg-gray-50 text-gray-600 border-gray-100",
-    orange: "bg-orange-50 text-orange-600 border-orange-100",
-    red: "bg-red-50 text-red-600 border-red-100",
-    yellow: "bg-yellow-50 text-yellow-600 border-yellow-100",
+    green: "bg-green-50 text-green-600 border-green-100 ring-green-500",
+    blue: "bg-blue-50 text-blue-600 border-blue-100 ring-blue-500",
+    gray: "bg-gray-50 text-gray-600 border-gray-100 ring-gray-500",
+    orange: "bg-orange-50 text-orange-600 border-orange-100 ring-orange-500",
+    red: "bg-red-50 text-red-600 border-red-100 ring-red-500",
+    yellow: "bg-yellow-50 text-yellow-600 border-yellow-100 ring-yellow-500",
   };
 
   return (
     <motion.div 
-      whileHover={{ y: -4 }}
-      className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col gap-4"
+      whileHover={{ y: onClick ? -4 : 0 }}
+      whileTap={{ scale: onClick ? 0.98 : 1 }}
+      onClick={onClick}
+      className={cn(
+        "bg-white p-6 rounded-3xl border transition-all flex flex-col gap-4 text-left",
+        onClick ? "cursor-pointer" : "border-gray-100 shadow-sm",
+        isActive ? cn("border-transparent ring-2", colors[color]) : "border-gray-100 shadow-sm hover:border-gray-200"
+      )}
     >
       <div className="flex items-center justify-between">
         <div className={cn("p-3 rounded-2xl border", colors[color])}>
           <Icon className="w-6 h-6" />
         </div>
+        {onClick && (
+          <ChevronDown className={cn(
+            "w-4 h-4 transition-transform",
+            isActive ? "rotate-180 text-gray-900" : "text-gray-300"
+          )} />
+        )}
       </div>
       <div>
         <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{label}</p>

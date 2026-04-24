@@ -29,13 +29,20 @@ export default function App() {
     }
   };
 
-  const handleMassUpdate = (updates: { id: string, nome_grupo: string, quantidade_membros: number }[]) => {
-    updates.forEach(update => {
-      updateGroup(update.id, { 
-        nome_grupo: update.nome_grupo, 
-        quantidade_membros: update.quantidade_membros 
-      });
-    });
+  const handleMassUpdate = async (updates: { id: string, nome_grupo: string, quantidade_membros: number }[]) => {
+    try {
+      const promises = updates.map(update => 
+        updateGroup(update.id, { 
+          nome_grupo: update.nome_grupo, 
+          quantidade_membros: update.quantidade_membros 
+        })
+      );
+      await Promise.all(promises);
+      alert(`${updates.length} registros atualizados com sucesso!`);
+    } catch (error) {
+      console.error("Erro na atualização em massa:", error);
+      alert("Houve um erro ao atualizar os registros. Verifique o console.");
+    }
   };
 
   const handleBulkImport = (itemsToImport: any[]) => {

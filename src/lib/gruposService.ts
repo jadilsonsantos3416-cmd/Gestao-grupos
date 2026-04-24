@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { extractGroupId } from "./groupParser";
+import { calculatePriority } from "./priorityUtils";
 
 // Mantendo os nomes dos campos compatíveis com o restante do app para não quebrar o layout/pesquisa
 export type GrupoData = {
@@ -28,6 +29,8 @@ export type GrupoData = {
   valor: number;
   link_grupo?: string;
   observacoes?: string;
+  prioridade_postagem?: string;
+  score_postagem?: number;
 };
 
 const gruposRef = collection(db, "grupos");
@@ -96,6 +99,13 @@ export async function adicionarGrupo(grupo: GrupoData) {
     }
   }
 
+  const priorityInfo = calculatePriority({
+    quantidade_membros: grupo.quantidade_membros,
+    perfil_compartilhando: grupo.perfil_compartilhando as any,
+    uso_shopee: grupo.uso_shopee as any,
+    nicho: grupo.nicho
+  });
+
   const payload = {
     nome_grupo: grupo.nome_grupo.trim(),
     nicho: grupo.nicho.trim(),
@@ -111,6 +121,8 @@ export async function adicionarGrupo(grupo: GrupoData) {
     link_grupo: linkLimpo || "",
     group_id: extractGroupId(linkLimpo),
     observacoes: grupo.observacoes || "",
+    prioridade_postagem: priorityInfo.prioridade,
+    score_postagem: priorityInfo.score,
     updatedAt: serverTimestamp(),
   };
 
@@ -122,36 +134,51 @@ export async function adicionarGrupo(grupo: GrupoData) {
   };
 }
 
-export async function atualizarGrupo(id: string, grupo: GrupoData) {
-  const linkLimpo = cleanLinkForComparison(grupo.link_grupo);
+export async function atualizarGrupo(id: string, updates: Partial<GrupoData>) {
+  const grupoRef = doc(db, "grupos", id);
 
-  if (linkLimpo) {
-    const existente: any = await buscarGrupoPorLink(linkLimpo);
-
-    if (existente && existente.id !== id) {
-      throw new Error(`Já existe outro grupo cadastrado com esse link ou ID. (Conflito: ${existente.nome_grupo})`);
+  // If link is being updated, check for duplicates
+  if (updates.link_grupo !== undefined) {
+    const linkLimpo = cleanLinkForComparison(updates.link_grupo);
+    if (linkLimpo) {
+      const existente: any = await buscarGrupoPorLink(linkLimpo);
+      if (existente && existente.id !== id) {
+        throw new Error(`Já existe outro grupo cadastrado com esse link ou ID. (Conflito: ${existente.nome_grupo})`);
+      }
     }
   }
 
-  const grupoRef = doc(db, "grupos", id);
-
-  const payload = {
-    nome_grupo: grupo.nome_grupo.trim(),
-    nicho: grupo.nicho.trim(),
-    quantidade_membros: Number(grupo.quantidade_membros) || 0,
-    locatario: grupo.locatario.trim(),
-    whatsapp: grupo.whatsapp.trim(),
-    data_vencimento: grupo.data_vencimento || "",
-    data_inicio: grupo.data_inicio || "",
-    status: grupo.status || "Disponível",
-    perfil_compartilhando: grupo.perfil_compartilhando || "Inativo",
-    uso_shopee: grupo.uso_shopee || "Inativo",
-    valor: Number(grupo.valor) || 0,
-    link_grupo: linkLimpo || "",
-    group_id: extractGroupId(linkLimpo),
-    observacoes: grupo.observacoes || "",
+  const payload: any = {
     updatedAt: serverTimestamp(),
   };
+
+  if (updates.nome_grupo !== undefined) payload.nome_grupo = updates.nome_grupo.trim();
+  if (updates.nicho !== undefined) payload.nicho = updates.nicho.trim();
+  if (updates.quantidade_membros !== undefined) payload.quantidade_membros = Number(updates.quantidade_membros) || 0;
+  if (updates.locatario !== undefined) payload.locatario = updates.locatario.trim();
+  if (updates.whatsapp !== undefined) payload.whatsapp = updates.whatsapp.trim();
+  if (updates.data_vencimento !== undefined) payload.data_vencimento = updates.data_vencimento || "";
+  if (updates.data_inicio !== undefined) payload.data_inicio = updates.data_inicio || "";
+  if (updates.status !== undefined) payload.status = updates.status || "Disponível";
+  if (updates.perfil_compartilhando !== undefined) payload.perfil_compartilhando = updates.perfil_compartilhando || "Inativo";
+  if (updates.uso_shopee !== undefined) payload.uso_shopee = updates.uso_shopee || "Inativo";
+  if (updates.valor !== undefined) payload.valor = Number(updates.valor) || 0;
+  if (updates.link_grupo !== undefined) {
+    const linkLimpo = cleanLinkForComparison(updates.link_grupo);
+    payload.link_grupo = linkLimpo || "";
+    payload.group_id = extractGroupId(linkLimpo);
+  }
+  if (updates.observacoes !== undefined) payload.observacoes = updates.observacoes || "";
+
+  // Always recalculate priority on update if any relevant field changed
+  const priorityInfo = calculatePriority({
+    quantidade_membros: payload.quantidade_membros ?? updates.quantidade_membros,
+    perfil_compartilhando: (payload.perfil_compartilhando ?? updates.perfil_compartilhando) as any,
+    uso_shopee: (payload.uso_shopee ?? updates.uso_shopee) as any,
+    nicho: payload.nicho ?? updates.nicho
+  });
+  payload.prioridade_postagem = priorityInfo.prioridade;
+  payload.score_postagem = priorityInfo.score;
 
   await updateDoc(grupoRef, payload);
 }

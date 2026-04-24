@@ -8,6 +8,8 @@ export type PerfilStatus = 'Ativo' | 'Inativo';
 export type ShopeeStatus = 'Ativo' | 'Inativo';
 export type GrowthTier = 'High' | 'Medium' | 'Low' | 'Pending';
 
+export type PriorityLevel = 'Alta' | 'Média' | 'Baixa';
+
 export interface Group {
   id: string;
   group_id: string;
@@ -27,6 +29,8 @@ export interface Group {
   updatedAt: string;
   growth_tier?: GrowthTier;
   ai_analysis?: string;
+  prioridade_postagem?: PriorityLevel;
+  score_postagem?: number;
 }
 
 export interface Renter {
@@ -44,4 +48,4 @@ export interface NicheStats {
   totalMembros: number;
 }
 
-export type QuickFilter = 'all' | 'perfil_ativo' | 'perfil_inativo' | 'shopee_ativo' | 'shopee_inativo' | 'ready_shopee';
+export type QuickFilter = 'all' | 'perfil_ativo' | 'perfil_inativo' | 'shopee_ativo' | 'shopee_inativo' | 'ready_shopee' | 'priority_alta' | 'priority_media' | 'priority_baixa';
