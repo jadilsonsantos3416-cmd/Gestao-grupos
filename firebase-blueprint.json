@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "Group": {
+      "title": "Grupo",
+      "description": "Dados do grupo do Facebook",
+      "type": "object",
+      "properties": {
+        "nome_grupo": { "type": "string" },
+        "link_grupo": { "type": "string" },
+        "nicho": { "type": "string" },
+        "status": { "type": "string" },
+        "quantidade_membros": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "Campaign": {
+      "title": "Campanha",
+      "description": "Link curto rastreável",
+      "type": "object",
+      "properties": {
+        "nome_campanha": { "type": "string" },
+        "link_original": { "type": "string" },
+        "origem": { "type": "string" },
+        "slug": { "type": "string" },
+        "link_curto": { "type": "string" },
+        "cliques": { "type": "number" },
+        "status": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/grupos/{groupId}": {
+      "schema": "Group",
+      "description": "Coleção de grupos"
+    },
+    "/campanhas/{campaignId}": {
+      "schema": "Campaign",
+      "description": "Coleção de campanhas"
+    }
+  }
+}

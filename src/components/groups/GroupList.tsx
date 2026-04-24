@@ -400,20 +400,26 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
                       <ExpiryBadge dareStr={group.data_vencimento} status={group.status} />
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={cn(
-                        "text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg inline-block",
-                        group.perfil_compartilhando === 'Ativo' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                      )}>
-                        {group.perfil_compartilhando === 'Ativo' ? 'Perfil Ativo' : 'Perfil Inativo'}
-                      </span>
+                      <div className="flex items-center justify-center gap-2">
+                        <div className={cn("w-2 h-2 rounded-full", group.perfil_compartilhando === 'Ativo' ? "bg-emerald-500" : "bg-rose-400")} />
+                        <span className={cn(
+                          "text-[9px] font-bold uppercase tracking-wider",
+                          group.perfil_compartilhando === 'Ativo' ? "text-emerald-700" : "text-rose-600"
+                        )}>
+                          {group.perfil_compartilhando === 'Ativo' ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={cn(
-                        "text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg inline-block",
-                        group.uso_shopee === 'Ativo' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
-                      )}>
-                        {group.uso_shopee === 'Ativo' ? 'Shopee Ativo' : 'Shopee Inativo'}
-                      </span>
+                      <div className="flex items-center justify-center gap-2">
+                        <div className={cn("w-2 h-2 rounded-full", group.uso_shopee === 'Ativo' ? "bg-blue-500" : "bg-slate-300")} />
+                        <span className={cn(
+                          "text-[9px] font-bold uppercase tracking-wider",
+                          group.uso_shopee === 'Ativo' ? "text-blue-700" : "text-slate-400"
+                        )}>
+                          {group.uso_shopee === 'Ativo' ? 'Shopee' : 'Inativo'}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={cn(

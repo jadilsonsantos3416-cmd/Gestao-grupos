@@ -216,7 +216,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                 <input 
                   type="text" 
                   required
-                  value={formData.nome_grupo}
+                  value={formData.nome_grupo || ''}
                   onChange={e => setFormData({...formData, nome_grupo: e.target.value})}
                   className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-medium"
                   placeholder="Ex: Vagas ABC"
@@ -226,7 +226,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
               <FormField label="Link do Grupo" icon={Link}>
                 <input 
                   type="url" 
-                  value={formData.link_grupo}
+                  value={formData.link_grupo || ''}
                   onChange={e => {
                     const link = e.target.value;
                     setFormData({...formData, link_grupo: link, group_id: extractGroupId(link)});
@@ -259,7 +259,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                     <input 
                       type="text" 
                       required
-                      value={nichoSearch}
+                      value={nichoSearch || ''}
                       onChange={e => {
                         setNichoSearch(e.target.value);
                         setFormData({...formData, nicho: e.target.value});
@@ -297,7 +297,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                   <input 
                     type="number" 
                     required
-                    value={formData.quantidade_membros}
+                    value={formData.quantidade_membros === undefined || formData.quantidade_membros === null ? '' : formData.quantidade_membros}
                     onChange={e => setFormData({...formData, quantidade_membros: parseInt(e.target.value) || 0})}
                     className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-medium"
                     placeholder="0"
@@ -379,7 +379,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                 <FormField label="Locatário" icon={User}>
                   <input 
                     type="text" 
-                    value={renterSearch}
+                    value={renterSearch || ''}
                     onChange={e => {
                       setRenterSearch(e.target.value);
                       setFormData({...formData, locatario: e.target.value});
@@ -418,7 +418,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
               <FormField label="WhatsApp" icon={Phone}>
                 <input 
                   type="text" 
-                  value={formData.whatsapp}
+                  value={formData.whatsapp || ''}
                   onChange={e => setFormData({...formData, whatsapp: e.target.value})}
                   className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-medium"
                   placeholder="(00) 00000-0000"
@@ -429,7 +429,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                 <FormField label="Início" icon={Calendar}>
                   <input 
                     type="date" 
-                    value={formData.data_inicio}
+                    value={formData.data_inicio || ''}
                     onChange={e => setFormData({...formData, data_inicio: e.target.value})}
                     className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-medium"
                   />
@@ -437,7 +437,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                 <FormField label="Vencimento" icon={Calendar}>
                   <input 
                     type="date" 
-                    value={formData.data_vencimento}
+                    value={formData.data_vencimento || ''}
                     onChange={e => setFormData({...formData, data_vencimento: e.target.value})}
                     className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-medium"
                   />
@@ -495,7 +495,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
             <FormField label="Observações" icon={FileText}>
               <textarea 
                 rows={3}
-                value={formData.observacoes}
+                value={formData.observacoes || ''}
                 onChange={e => setFormData({...formData, observacoes: e.target.value})}
                 className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-medium resize-none"
                 placeholder="Detalhes adicionais..."

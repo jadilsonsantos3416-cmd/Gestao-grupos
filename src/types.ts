@@ -41,6 +41,35 @@ export interface Renter {
   groupCount: number;
 }
 
+export type CampaignStatus = 'Ativa' | 'Inativa';
+export type CampaignOrigin = 'Shopee' | 'Mercado Livre' | 'Hotmart' | 'Outro';
+
+export interface Campaign {
+  id: string;
+  nome_campanha: string;
+  link_original: string;
+  origem: CampaignOrigin;
+  grupo_id: string;
+  grupo_nome: string;
+  slug: string;
+  link_curto: string;
+  cliques: number;
+  status: CampaignStatus;
+  observacoes: string;
+  criado_em: string;
+  atualizado_em: string;
+}
+
+export interface CampaignClickLog {
+  id: string;
+  campanha_id: string;
+  slug: string;
+  data_hora: string;
+  userAgent: string;
+  origem: string;
+  grupo_id: string;
+}
+
 export interface NicheStats {
   nicho: string;
   totalGrupos: number;

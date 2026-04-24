@@ -8,12 +8,17 @@ import { BulkImporter } from '@/src/components/importer/BulkImporter';
 import { DataCleanupModal } from '@/src/components/groups/DataCleanupModal';
 import { RankingPage } from '@/src/components/ranking/RankingPage';
 import { GrowthAnalysis } from '@/src/components/growth/GrowthAnalysis';
+import { CampaignsPage } from '@/src/components/campaigns/CampaignsPage';
+import { RedirectPage } from '@/src/components/campaigns/RedirectPage';
 import { useGroups } from '@/src/hooks/useGroups';
 import { Group, QuickFilter } from '@/src/types';
 import { AnimatePresence } from 'motion/react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const path = window.location.pathname;
+  const isRedirect = path.startsWith('/l/');
+
   const [activeFilter, setActiveFilter] = useState<QuickFilter>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isImporterOpen, setIsImporterOpen] = useState(false);
@@ -90,6 +95,10 @@ export default function App() {
 
   if (!isLoaded) return null;
 
+  if (isRedirect) {
+    return <RedirectPage />;
+  }
+
   return (
     <Shell 
       activeTab={activeTab} 
@@ -121,6 +130,9 @@ export default function App() {
         )}
         {activeTab === 'growth' && (
           <GrowthAnalysis groups={groups} updateGroup={updateGroup} />
+        )}
+        {activeTab === 'campaigns' && (
+          <CampaignsPage groups={groups} />
         )}
       </AnimatePresence>
 

@@ -260,7 +260,7 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                           <td className="px-6 py-4">
                             {editingId === item.id_temp ? (
                               <input 
-                                value={item.nome_grupo}
+                                value={item.nome_grupo || ''}
                                 onChange={e => updateItem(item.id_temp, { nome_grupo: e.target.value })}
                                 className="w-full bg-white border border-green-200 rounded-lg px-3 py-1.5 text-sm font-medium outline-none ring-2 ring-green-50"
                               />
@@ -290,7 +290,7 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                           <td className="px-6 py-4">
                             {editingId === item.id_temp ? (
                               <input 
-                                value={item.nicho}
+                                value={item.nicho || ''}
                                 onChange={e => updateItem(item.id_temp, { nicho: e.target.value })}
                                 className="w-full bg-white border border-green-200 rounded-lg px-3 py-1.5 text-sm font-medium outline-none ring-2 ring-green-50 capitalize"
                               />
@@ -339,7 +339,7 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                           <td className="px-6 py-4">
                             {editingId === item.id_temp ? (
                               <input 
-                                value={item.link_grupo}
+                                value={item.link_grupo || ''}
                                 onChange={e => updateItem(item.id_temp, { link_grupo: e.target.value })}
                                 className="w-full bg-white border border-green-200 rounded-lg px-3 py-1.5 text-sm font-medium outline-none ring-2 ring-green-50 font-mono"
                               />
@@ -350,7 +350,7 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                           <td className="px-6 py-4">
                              {editingId === item.id_temp ? (
                               <input 
-                                value={item.observacoes}
+                                value={item.observacoes || ''}
                                 onChange={e => updateItem(item.id_temp, { observacoes: e.target.value })}
                                 className="w-full bg-white border border-green-200 rounded-lg px-3 py-1.5 text-sm font-medium outline-none ring-2 ring-green-50"
                               />
