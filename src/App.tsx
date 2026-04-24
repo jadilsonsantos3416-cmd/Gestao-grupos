@@ -6,6 +6,8 @@ import { GroupForm } from '@/src/components/groups/GroupForm';
 import { WhatsAppTab } from '@/src/components/whatsapp/WhatsAppTab';
 import { BulkImporter } from '@/src/components/importer/BulkImporter';
 import { DataCleanupModal } from '@/src/components/groups/DataCleanupModal';
+import { RankingPage } from '@/src/components/ranking/RankingPage';
+import { GrowthAnalysis } from '@/src/components/growth/GrowthAnalysis';
 import { useGroups } from '@/src/hooks/useGroups';
 import { Group, QuickFilter } from '@/src/types';
 import { AnimatePresence } from 'motion/react';
@@ -106,6 +108,12 @@ export default function App() {
         )}
         {activeTab === 'whatsapp' && (
           <WhatsAppTab groups={groups} />
+        )}
+        {activeTab === 'ranking' && (
+          <RankingPage />
+        )}
+        {activeTab === 'growth' && (
+          <GrowthAnalysis groups={groups} updateGroup={updateGroup} />
         )}
       </AnimatePresence>
 

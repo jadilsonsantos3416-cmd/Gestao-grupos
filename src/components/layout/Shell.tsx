@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, MessageSquare, Plus, Menu, X, Landmark, FileUp, Sparkles, Filter, ShieldCheck, ShieldAlert, ShoppingBag, Zap, RotateCcw } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquare, Plus, Menu, X, Landmark, FileUp, Sparkles, Trophy, Brain } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { QuickFilter } from '@/src/types';
@@ -31,14 +31,8 @@ export function Shell({
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'groups', label: 'Grupos', icon: Users },
     { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare },
-  ];
-
-  const quickFilters: { id: QuickFilter, label: string, icon: any, color: string }[] = [
-    { id: 'perfil_ativo', label: 'Perfil Ativo', icon: ShieldCheck, color: 'text-green-600' },
-    { id: 'perfil_inativo', label: 'Perfil Inativo', icon: ShieldAlert, color: 'text-red-600' },
-    { id: 'shopee_ativo', label: 'Shopee Ativo', icon: ShoppingBag, color: 'text-orange-600' },
-    { id: 'shopee_inativo', label: 'Shopee Inativo', icon: ShoppingBag, color: 'text-gray-400' },
-    { id: 'ready_shopee', label: 'Prontos Shopee', icon: Zap, color: 'text-yellow-600' },
+    { id: 'ranking', label: 'Ranking Postagem', icon: Trophy },
+    { id: 'growth', label: 'Análise Crescimento', icon: Brain },
   ];
 
   return (
@@ -80,7 +74,10 @@ export function Shell({
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setActiveFilter('all');
+                }}
                 className={cn(
                   "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
                   isActive 
@@ -94,46 +91,6 @@ export function Shell({
             );
           })}
         </nav>
-
-        {/* Quick Filters Section */}
-        <div className="px-4 py-2 mt-2">
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-4 flex items-center gap-2">
-            <Filter className="w-3 h-3" /> Filtros Rápidos
-          </p>
-          <div className="space-y-1">
-            {quickFilters.map((filter) => {
-              const Icon = filter.icon;
-              const isActive = activeFilter === filter.id;
-              return (
-                <button
-                  key={filter.id}
-                  onClick={() => {
-                    setActiveFilter(filter.id);
-                    setActiveTab('groups');
-                  }}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-200 text-xs font-bold",
-                    isActive 
-                      ? "bg-green-50 text-green-700 shadow-sm" 
-                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
-                  )}
-                >
-                  <Icon className={cn("w-4 h-4", isActive ? "text-green-600" : filter.color)} />
-                  {filter.label}
-                </button>
-              );
-            })}
-            {activeFilter !== 'all' && (
-              <button
-                onClick={() => setActiveFilter('all')}
-                className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-all mt-2 border border-dashed border-gray-100"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Limpar Filtros
-              </button>
-            )}
-          </div>
-        </div>
 
         <div className="p-4 border-t border-gray-100 space-y-2 text-center">
           <button 
@@ -200,6 +157,7 @@ export function Shell({
                     key={item.id}
                     onClick={() => {
                       setActiveTab(item.id);
+                      setActiveFilter('all');
                       setIsMenuOpen(false);
                     }}
                     className={cn(
@@ -215,48 +173,6 @@ export function Shell({
                 );
               })}
             </nav>
-
-            {/* Mobile Quick Filters */}
-            <div className="mt-6">
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 ml-4">Filtros Rápidos</p>
-              <div className="grid grid-cols-2 gap-2">
-                {quickFilters.map((filter) => {
-                  const Icon = filter.icon;
-                  const isActive = activeFilter === filter.id;
-                  return (
-                    <button
-                      key={filter.id}
-                      onClick={() => {
-                        setActiveFilter(filter.id);
-                        setActiveTab('groups');
-                        setIsMenuOpen(false);
-                      }}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-3 rounded-xl transition-all text-[10px] font-bold uppercase tracking-tight",
-                        isActive 
-                          ? "bg-green-50 text-green-700 border border-green-200" 
-                          : "bg-gray-50 text-gray-500"
-                      )}
-                    >
-                      <Icon className={cn("w-3 h-3", isActive ? "text-green-600" : filter.color)} />
-                      {filter.label}
-                    </button>
-                  );
-                })}
-                {activeFilter !== 'all' && (
-                  <button
-                    onClick={() => {
-                      setActiveFilter('all');
-                      setIsMenuOpen(false);
-                    }}
-                    className="col-span-2 flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-gray-100 text-gray-500 text-[10px] font-bold uppercase"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    Limpar Filtros
-                  </button>
-                )}
-              </div>
-            </div>
 
             <div className="mt-auto absolute bottom-8 left-6 right-6 space-y-2">
               <button 

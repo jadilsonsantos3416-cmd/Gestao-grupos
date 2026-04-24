@@ -6,6 +6,7 @@
 export type GroupStatus = 'Disponível' | 'Alugado';
 export type PerfilStatus = 'Ativo' | 'Inativo';
 export type ShopeeStatus = 'Ativo' | 'Inativo';
+export type GrowthTier = 'High' | 'Medium' | 'Low' | 'Pending';
 
 export interface Group {
   id: string;
@@ -24,6 +25,8 @@ export interface Group {
   quantidade_membros: number | null;
   observacoes: string;
   updatedAt: string;
+  growth_tier?: GrowthTier;
+  ai_analysis?: string;
 }
 
 export interface Renter {

@@ -209,17 +209,6 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
 
           <div className="flex gap-2">
             <button 
-              onClick={() => handleFilterChange(setOnlyReadyForShopee, !onlyReadyForShopee)}
-              className={cn(
-                "flex items-center gap-2 px-4 py-3 rounded-2xl border-2 font-bold text-[10px] uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap",
-                onlyReadyForShopee 
-                  ? "bg-orange-600 border-orange-600 text-white shadow-lg shadow-orange-100" 
-                  : "bg-white border-gray-100 text-gray-400 hover:border-orange-200 hover:text-orange-600"
-              )}
-            >
-              🔥 Prontos Para Shopee
-            </button>
-            <button 
               onClick={() => exportToCSV(filteredGroups, `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`)}
               className="flex items-center gap-2 px-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm text-xs font-bold text-gray-600 hover:bg-gray-50 active:scale-95 transition-all whitespace-nowrap"
               title="Download da lista atual em CSV"

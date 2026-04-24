@@ -153,11 +153,6 @@ export function Dashboard({ groups }: DashboardProps) {
               status={stats.vencidos > 0 ? 'error' : 'success'}
               description="Contatar locatários para renovação ou liberação."
             />
-            <ChecklistItem 
-              title={`${groups.filter(g => g.perfil_compartilhando === 'Ativo' && g.uso_shopee === 'Ativo').length} grupos prontos para Shopee`}
-              status="success"
-              description="Perfil Ativo + Uso Shopee Ativo."
-            />
           </div>
           
           <div className="pt-4 border-t border-gray-50 grid grid-cols-1 md:grid-cols-2 gap-4">
