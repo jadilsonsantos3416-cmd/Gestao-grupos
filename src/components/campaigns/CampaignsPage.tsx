@@ -19,11 +19,13 @@ import {
   Filter,
   CheckCircle2,
   XCircle,
-  Link2
+  Link2,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { CampaignForm } from './CampaignForm';
+import { CopyGeneratorModal } from './CopyGeneratorModal';
 
 interface CampaignsPageProps {
   groups: Group[];
@@ -36,6 +38,8 @@ export function CampaignsPage({ groups }: CampaignsPageProps) {
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+  const [selectedCampaignForCopy, setSelectedCampaignForCopy] = useState<Campaign | null>(null);
   
   const [filters, setFilters] = useState({
     origem: 'All',
@@ -230,6 +234,18 @@ export function CampaignsPage({ groups }: CampaignsPageProps) {
                       <div className="flex items-center justify-end gap-2 relative">
                         <button 
                           onClick={() => {
+                            setSelectedCampaignForCopy(camp);
+                            setIsCopyModalOpen(true);
+                          }}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 font-black rounded-xl hover:bg-blue-100 transition-all text-[10px] uppercase tracking-wider"
+                          title="Gerar Textos"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span className="hidden xl:inline">Gerar Textos</span>
+                        </button>
+
+                        <button 
+                          onClick={() => {
                             setEditingCampaign(camp);
                             setIsFormOpen(true);
                           }}
@@ -320,6 +336,19 @@ export function CampaignsPage({ groups }: CampaignsPageProps) {
               }
             }}
             editingCampaign={editingCampaign}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isCopyModalOpen && selectedCampaignForCopy && (
+          <CopyGeneratorModal 
+            campaign={selectedCampaignForCopy}
+            group={groups.find(g => g.id === selectedCampaignForCopy.grupo_id)}
+            onClose={() => {
+              setIsCopyModalOpen(false);
+              setSelectedCampaignForCopy(null);
+            }}
           />
         )}
       </AnimatePresence>
