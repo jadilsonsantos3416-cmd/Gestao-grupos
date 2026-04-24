@@ -275,13 +275,13 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-white">
-                        <th className="px-10 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">Pos</th>
-                        <th className="px-6 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">Nome do Grupo</th>
-                        <th className="px-6 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">Membros</th>
-                        <th className="px-6 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">Nicho</th>
-                        <th className="px-6 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center border-b border-slate-50">Score</th>
-                        <th className="px-6 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">Prioridade</th>
-                        <th className="px-10 py-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right border-b border-slate-50">Ação</th>
+                        <th className="px-10 py-6 text-[10px] font-bold uppercase text-slate-400 tracking-widest border-b border-slate-50">Pos</th>
+                        <th className="px-6 py-6 text-[10px] font-bold uppercase text-slate-400 tracking-widest border-b border-slate-50">Grupo</th>
+                        <th className="px-6 py-6 text-[10px] font-bold uppercase text-slate-400 tracking-widest border-b border-slate-50">Membros</th>
+                        <th className="px-6 py-6 text-[10px] font-bold uppercase text-slate-400 tracking-widest border-b border-slate-50">Nicho</th>
+                        <th className="px-6 py-6 text-[10px] font-bold uppercase text-slate-400 tracking-widest text-center border-b border-slate-50">Score</th>
+                        <th className="px-6 py-6 text-[10px] font-bold uppercase text-slate-400 tracking-widest border-b border-slate-50">Prioridade</th>
+                        <th className="px-10 py-6 text-[10px] font-bold uppercase text-slate-400 tracking-widest text-right border-b border-slate-50">Ação</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
@@ -289,7 +289,7 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
                         <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                           <td className="px-10 py-6">
                             <span className={cn(
-                              "w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm",
+                              "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm",
                               idx === 0 ? "bg-amber-400 text-amber-900 shadow-lg shadow-amber-100" :
                               idx === 1 ? "bg-slate-200 text-slate-700" :
                               idx === 2 ? "bg-orange-200 text-orange-800" : "bg-slate-100 text-slate-400"
@@ -299,29 +299,29 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
                           </td>
                           <td className="px-6 py-6">
                             <div className="flex flex-col">
-                              <span className="font-black text-slate-900 truncate max-w-[200px] uppercase text-sm">{group.nome}</span>
+                              <span className="font-bold text-slate-900 truncate max-w-[200px] uppercase text-xs">{group.nome}</span>
                               {group.hot && (
-                                <span className="text-[8px] font-black uppercase tracking-widest text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1 w-fit border border-rose-100">
+                                <span className="text-[8px] font-bold uppercase tracking-widest text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1 w-fit border border-rose-100">
                                   🔥 Super Hot
                                 </span>
                               )}
                             </div>
                           </td>
                           <td className="px-6 py-6">
-                            <span className="text-sm font-black text-slate-900 font-mono italic">{formatNumber(group.membros)}</span>
+                            <span className="text-xs font-bold text-slate-900 font-mono">{formatNumber(group.membros)}</span>
                           </td>
                           <td className="px-6 py-6">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-50 border border-slate-100 px-3 py-1 rounded-lg inline-block capitalize">{group.nicho}</span>
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 bg-slate-50 border border-slate-100 px-3 py-1 rounded-lg inline-block capitalize">{group.nicho}</span>
                           </td>
                           <td className="px-6 py-6 border-x border-slate-50 text-center">
-                            <span className="text-xl font-black text-slate-900 font-mono tracking-tighter">
+                            <span className="text-lg font-bold text-slate-900 font-mono tracking-tighter">
                               {group.score}
                               <span className="text-[8px] ml-1 text-slate-400 uppercase">pts</span>
                             </span>
                           </td>
                           <td className="px-6 py-6">
                             <span className={cn(
-                              "text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full inline-block shadow-sm ring-1 ring-white",
+                              "text-[9px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full inline-block shadow-sm ring-1 ring-white",
                               group.prioridade === 'ALTA' ? "bg-emerald-500 text-white" :
                               group.prioridade === 'MÉDIA' ? "bg-amber-400 text-amber-900" : "bg-slate-400 text-white"
                             )}>
@@ -333,7 +333,7 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
                               href={ensureAbsoluteUrl(group.link)} 
                               target="_blank" 
                               rel="noreferrer" 
-                              className="px-6 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all inline-flex items-center gap-2 shadow-lg shadow-blue-100 active:scale-95 font-black text-[10px] uppercase tracking-widest"
+                              className="px-6 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all inline-flex items-center gap-2 shadow-lg shadow-blue-100 active:scale-95 font-bold text-[9px] uppercase tracking-widest"
                             >
                               👉 POSTAR AQUI <ExternalLink className="w-3.5 h-3.5" />
                             </a>

@@ -78,9 +78,9 @@ export function Dashboard({ groups }: DashboardProps) {
             <div className="p-2 bg-slate-900 rounded-lg">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Painel de Controle</h1>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Painel de Controle</h1>
           </div>
-          <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px] ml-[44px]">Visão geral da performance dos seus grupos</p>
+          <p className="text-slate-400 font-medium uppercase tracking-[0.2em] text-[9px] ml-[44px]">Visão geral da performance</p>
         </div>
       </header>
 
@@ -107,12 +107,12 @@ export function Dashboard({ groups }: DashboardProps) {
                 </div>
                 <div className="flex flex-col">
                   <span className={cn(
-                    "text-[9px] md:text-xs font-black uppercase tracking-[0.1em]",
+                    "text-[9px] md:text-[10px] font-bold uppercase tracking-[0.1em]",
                     item.type === 'error' ? "text-rose-600" : "text-amber-600"
                   )}>
-                    Atenção Necessária
+                    Atenção
                   </span>
-                  <span className="text-xs md:text-sm font-bold text-slate-600 mt-0.5">
+                  <span className="text-xs md:text-sm font-semibold text-slate-600 mt-0.5">
                     {item.count} {item.label}
                   </span>
                 </div>
@@ -191,7 +191,7 @@ export function Dashboard({ groups }: DashboardProps) {
       <section className="space-y-6 relative">
         <div className="flex items-center gap-3">
           <div className="w-1 h-6 bg-rose-500 rounded-full" />
-          <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">
+          <h3 className="text-lg font-bold text-slate-900 tracking-tight">
             Prioridade de Postagem
           </h3>
         </div>
@@ -298,11 +298,11 @@ export function Dashboard({ groups }: DashboardProps) {
       {/* Checklist Diário Section */}
       <section className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
         <div className="px-10 py-6 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
+          <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-3">
             <ListChecks className="w-6 h-6 text-emerald-600" />
             Checklist de Operação
           </h3>
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Monitoramento Dinâmico</span>
+          <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-300">Monitoramento Ativo</span>
         </div>
         <div className="p-10 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -342,7 +342,7 @@ export function Dashboard({ groups }: DashboardProps) {
       <section className="space-y-6">
         <div className="flex items-center gap-3">
           <div className="w-1 h-6 bg-blue-500 rounded-full" />
-          <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">
+          <h3 className="text-lg font-bold text-slate-900 tracking-tight">
             Performance por Nicho
           </h3>
         </div>
@@ -386,12 +386,12 @@ function StatCard({ label, value, icon: Icon, color, subValue, onClick, isActive
         )}
       </div>
       <div>
-        <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-0.5 md:mb-1 truncate">{label}</p>
+        <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-0.5 md:mb-1 truncate">{label}</p>
         <div className="flex items-baseline gap-2">
-          <p className="text-xl md:text-3xl font-black text-slate-900 tracking-tight">{value}</p>
+          <p className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">{value}</p>
         </div>
         {subValue && (
-          <p className="text-[8px] md:text-[10px] text-slate-400 mt-1 md:mt-2 font-bold uppercase tracking-wider flex items-center gap-1 md:gap-1.5 truncate">
+          <p className="text-[8px] md:text-[9px] text-slate-400 mt-1 md:mt-2 font-medium uppercase tracking-wider flex items-center gap-1 md:gap-1.5 truncate">
             <span className={cn("w-1 h-1 rounded-full shrink-0", colors[color].split(' ')[1])} />
             {subValue}
           </p>
@@ -423,8 +423,8 @@ function ChecklistItem({ title, status, description }: { title: string, status: 
         <Icon className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
       </div>
       <div>
-        <h4 className="text-xs md:text-sm font-black uppercase tracking-tight leading-tight">{title}</h4>
-        <p className="text-[8px] md:text-[10px] opacity-60 mt-0.5 md:mt-1 font-bold uppercase tracking-wider">{description}</p>
+        <h4 className="text-xs md:text-sm font-bold uppercase tracking-tight leading-tight">{title}</h4>
+        <p className="text-[8px] md:text-[9px] opacity-60 mt-0.5 md:mt-1 font-medium uppercase tracking-wider">{description}</p>
       </div>
     </div>
   );
@@ -449,11 +449,11 @@ function NicheGrid({ groups }: { groups: Group[] }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
       {nicheStats.map((stat, idx) => (
-        <div key={idx} className="bg-white p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-100/50 hover:shadow-2xl hover:shadow-slate-200/50 transition-all group overflow-hidden relative">
-          <div className="flex items-center justify-between mb-3 md:mb-6 relative z-10">
-            <span className="text-sm md:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight truncate mr-2">{stat.nicho}</span>
+        <div key={idx} className="bg-white p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-100/50 hover:shadow-2xl hover:shadow-slate-200/50 transition-all group overflow-hidden relative">
+          <div className="flex items-center justify-between mb-3 md:mb-4 relative z-10">
+            <span className="text-sm md:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight truncate mr-2">{stat.nicho}</span>
             <div className="p-1 px-2 md:p-2 bg-slate-50 rounded-lg md:rounded-xl border border-slate-100 shrink-0">
-               <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">
+               <span className="text-[8px] md:text-[9px] font-bold text-slate-400 uppercase tracking-widest">
                 {stat.total}
               </span>
             </div>
@@ -462,12 +462,12 @@ function NicheGrid({ groups }: { groups: Group[] }) {
           <div className="space-y-3 md:space-y-4 relative z-10">
             <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-2 md:gap-0">
               <div className="flex flex-col">
-                <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 md:mb-1">Ocupação</span>
-                <span className="text-base md:text-xl font-black text-emerald-600 font-mono tracking-tighter">{stat.alugados} <span className="text-slate-300 text-[10px] md:text-xs font-bold">/ {stat.total}</span></span>
+                <span className="text-[8px] md:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 md:mb-1">Ocupação</span>
+                <span className="text-sm md:text-lg font-bold text-emerald-600 font-mono tracking-tighter">{stat.alugados} <span className="text-slate-300 text-[10px] md:text-xs font-medium">/ {stat.total}</span></span>
               </div>
               <div className="flex flex-col md:text-right">
-                <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 md:mb-1">Membros</span>
-                <span className="text-base md:text-xl font-black text-slate-900 font-mono tracking-tighter">{formatNumber(stat.membros)}</span>
+                <span className="text-[8px] md:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 md:mb-1">Membros</span>
+                <span className="text-sm md:text-lg font-bold text-slate-900 font-mono tracking-tighter">{formatNumber(stat.membros)}</span>
               </div>
             </div>
             

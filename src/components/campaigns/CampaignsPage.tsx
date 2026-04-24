@@ -97,8 +97,8 @@ export function CampaignsPage({ groups }: CampaignsPageProps) {
               <Megaphone className="w-6 h-6 md:w-8 md:h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight uppercase">Minhas Campanhas</h1>
-              <p className="text-slate-500 font-bold uppercase tracking-widest text-[8px] md:text-[10px] mt-0.5 md:mt-1">Gerenciamento de links curtos e performance</p>
+              <h1 className="text-xl md:text-3xl font-bold text-slate-900 tracking-tight uppercase">Minhas Campanhas</h1>
+              <p className="text-slate-500 font-medium uppercase tracking-widest text-[8px] md:text-[9px] mt-0.5 md:mt-1">Links curtos e performance</p>
             </div>
           </div>
 
@@ -365,11 +365,11 @@ function StatCard({ label, value, subValue, icon: Icon, color, bg }: any) {
     <div className={cn("p-3 md:p-6 rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm", bg)}>
       <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
         <Icon className={cn("w-3.5 h-3.5 md:w-5 md:h-5", color)} />
-        <span className="text-[8px] md:text-[10px] font-black uppercase text-gray-400 tracking-widest">{label}</span>
+        <span className="text-[8px] md:text-[9px] font-bold uppercase text-gray-400 tracking-widest">{label}</span>
       </div>
       <div className="flex flex-col">
-        <span className={cn("text-lg md:text-2xl font-black", color)}>{value}</span>
-        {subValue && <span className="text-[8px] md:text-[10px] font-bold text-gray-400 truncate mt-0.5">{subValue}</span>}
+        <span className={cn("text-lg md:text-xl font-bold", color)}>{value}</span>
+        {subValue && <span className="text-[8px] md:text-[9px] font-medium text-gray-400 truncate mt-0.5">{subValue}</span>}
       </div>
     </div>
   );
