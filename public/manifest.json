@@ -1,19 +1,18 @@
 {
-  "name": "Grupos FB · Aluguel",
+  "name": "Grupos FB",
   "short_name": "GruposFB",
-  "description": "Controle visual e produtivo dos seus grupos",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F5F5F5",
-  "theme_color": "#16a34a",
+  "background_color": "#ffffff",
+  "theme_color": "#16A34A",
   "icons": [
     {
-      "src": "https://picsum.photos/seed/fbrental192/192/192",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://picsum.photos/seed/fbrental512/512/512",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
