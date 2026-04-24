@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   collection, 
   query, 
@@ -37,19 +37,19 @@ export function useCampaigns() {
     return () => unsubscribe();
   }, []);
 
-  const generateSlug = () => {
+  const generateSlug = useCallback(() => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let slug = '';
     for (let i = 0; i < 6; i++) {
       slug += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return slug;
-  };
+  }, []);
 
-  const addCampaign = async (campaignData: Omit<Campaign, 'id' | 'cliques' | 'link_curto' | 'criado_em' | 'atualizado_em'> & { slug?: string }) => {
+  const addCampaign = useCallback(async (campaignData: Omit<Campaign, 'id' | 'cliques' | 'link_curto' | 'criado_em' | 'atualizado_em'> & { slug?: string }) => {
     const slug = campaignData.slug || generateSlug();
-    const domain = 'https://gestao-grupos.vercel.app';
-    const link_curto = `${domain}/l/${slug}`;
+    const baseUrl = 'https://gestao-grupos.vercel.app';
+    const link_curto = `${baseUrl}/l/${slug}`;
     
     await addDoc(collection(db, 'campanhas'), {
       ...campaignData,
@@ -59,11 +59,11 @@ export function useCampaigns() {
       criado_em: new Date().toISOString(),
       atualizado_em: new Date().toISOString(),
     });
-  };
+  }, [generateSlug]);
 
-  const updateCampaign = async (id: string, updates: Partial<Campaign>) => {
+  const updateCampaign = useCallback(async (id: string, updates: Partial<Campaign>) => {
     const campaignRef = doc(db, 'campanhas', id);
-    const domain = 'https://gestao-grupos.vercel.app';
+    const baseUrl = 'https://gestao-grupos.vercel.app';
     
     // Get existing slug if not provided in updates
     const existingCampaign = campaigns.find(c => c.id === id);
@@ -71,16 +71,16 @@ export function useCampaigns() {
     
     const finalUpdates = { ...updates };
     if (slug) {
-      finalUpdates.link_curto = `${domain}/l/${slug}`;
+      finalUpdates.link_curto = `${baseUrl}/l/${slug}`;
     }
     
     await updateDoc(campaignRef, {
       ...finalUpdates,
       atualizado_em: new Date().toISOString(),
     });
-  };
+  }, [campaigns]);
 
-  const deleteCampaign = async (id: string) => {
+  const deleteCampaign = useCallback(async (id: string) => {
     try {
       await deleteDoc(doc(db, 'campanhas', id));
       return { success: true };
@@ -88,9 +88,9 @@ export function useCampaigns() {
       console.error("Error deleting campaign:", error);
       return { success: false, error };
     }
-  };
+  }, []);
 
-  const trackClick = async (slug: string) => {
+  const trackClick = useCallback(async (slug: string) => {
     const q = query(
       collection(db, 'campanhas'), 
       where('slug', '==', slug),
@@ -121,9 +121,9 @@ export function useCampaigns() {
     });
 
     return campaign.link_original;
-  };
+  }, []);
 
-  const getCampaignBySlug = async (slug: string) => {
+  const getCampaignBySlug = useCallback(async (slug: string) => {
     const q = query(
       collection(db, 'campanhas'), 
       where('slug', '==', slug),
@@ -132,7 +132,7 @@ export function useCampaigns() {
     const snapshot = await getDocs(q);
     if (snapshot.empty) return null;
     return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Campaign;
-  };
+  }, []);
 
   return {
     campaigns,

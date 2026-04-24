@@ -196,10 +196,10 @@ export function CampaignsPage({ groups }: CampaignsPageProps) {
                     <td className="px-6 py-6 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <code className="text-xs font-mono font-bold bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100">
-                          {camp.link_curto.split('://')[1]}
+                          gestao-grupos.vercel.app/l/{camp.slug}
                         </code>
                         <button 
-                          onClick={() => copyToClipboard(camp.link_curto, camp.id)}
+                          onClick={() => copyToClipboard(`https://gestao-grupos.vercel.app/l/${camp.slug}`, camp.id)}
                           className={cn(
                             "p-2 rounded-lg transition-all",
                             copySuccess === camp.id ? "bg-green-100 text-green-600" : "bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
