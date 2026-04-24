@@ -22,7 +22,11 @@ export function Dashboard({ groups }: DashboardProps) {
   // Click outside listener
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as HTMLElement;
+      // Skip if clicking a priority card (let its own onClick handle it)
+      if (target.closest('[data-priority-trigger]')) return;
+      
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) {
         setSelectedPriority(null);
       }
     }
@@ -30,11 +34,15 @@ export function Dashboard({ groups }: DashboardProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const togglePriority = (priority: PriorityLevel) => {
+    setSelectedPriority(prev => prev === priority ? null : priority);
+  };
+
   const selectedGroupsList = useMemo(() => {
     if (!selectedPriority) return [];
     return groupsWithPriority
       .filter(g => g.priorityInfo.prioridade === selectedPriority)
-      .sort((a, b) => b.priorityInfo.score - a.priorityInfo.score);
+      .sort((a, b) => (Number(b.quantidade_membros) || 0) - (Number(a.quantidade_membros) || 0));
   }, [selectedPriority, groupsWithPriority]);
 
   const stats = {
@@ -170,8 +178,9 @@ export function Dashboard({ groups }: DashboardProps) {
             icon={Star} 
             color="red" 
             subValue="Melhores grupos no momento"
-            onClick={() => setSelectedPriority(selectedPriority === 'Alta' ? null : 'Alta')}
+            onClick={() => togglePriority('Alta')}
             isActive={selectedPriority === 'Alta'}
+            data-priority-trigger="Alta"
           />
           <StatCard 
             label="Prioridade Média" 
@@ -179,8 +188,9 @@ export function Dashboard({ groups }: DashboardProps) {
             icon={Star} 
             color="yellow" 
             subValue="Bom engajamento e potencial"
-            onClick={() => setSelectedPriority(selectedPriority === 'Média' ? null : 'Média')}
+            onClick={() => togglePriority('Média')}
             isActive={selectedPriority === 'Média'}
+            data-priority-trigger="Média"
           />
           <StatCard 
             label="Prioridade Baixa" 
@@ -188,8 +198,9 @@ export function Dashboard({ groups }: DashboardProps) {
             icon={Star} 
             color="gray" 
             subValue="Grupos em desenvolvimento"
-            onClick={() => setSelectedPriority(selectedPriority === 'Baixa' ? null : 'Baixa')}
+            onClick={() => togglePriority('Baixa')}
             isActive={selectedPriority === 'Baixa'}
+            data-priority-trigger="Baixa"
           />
         </div>
 
@@ -314,7 +325,7 @@ export function Dashboard({ groups }: DashboardProps) {
   );
 }
 
-function StatCard({ label, value, icon: Icon, color, subValue, onClick, isActive }: any) {
+function StatCard({ label, value, icon: Icon, color, subValue, onClick, isActive, ...props }: any) {
   const colors: any = {
     green: "bg-green-50 text-green-600 border-green-100 ring-green-500",
     blue: "bg-blue-50 text-blue-600 border-blue-100 ring-blue-500",
@@ -334,6 +345,7 @@ function StatCard({ label, value, icon: Icon, color, subValue, onClick, isActive
         onClick ? "cursor-pointer" : "border-gray-100 shadow-sm",
         isActive ? cn("border-transparent ring-2", colors[color]) : "border-gray-100 shadow-sm hover:border-gray-200"
       )}
+      {...props}
     >
       <div className="flex items-center justify-between">
         <div className={cn("p-3 rounded-2xl border", colors[color])}>
@@ -386,7 +398,7 @@ function NicheGrid({ groups }: { groups: Group[] }) {
       alugados: nicheGroups.filter(g => g.status === 'Alugado').length,
       membros: nicheGroups.reduce((acc, g) => acc + (g.quantidade_membros || 0), 0),
     };
-  });
+  }).sort((a, b) => b.membros - a.membros);
 
   if (nicheStats.length === 0) {
     return <p className="text-gray-400 italic text-sm">Nenhum nicho cadastrado ainda.</p>;

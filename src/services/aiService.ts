@@ -39,8 +39,8 @@ Retorne um JSON com a classificação de cada grupo (groupId), o nível (tier) e
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
+      contents: prompt,
+      config: {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.ARRAY,
@@ -60,12 +60,13 @@ Retorne um JSON com a classificação de cada grupo (groupId), o nível (tier) e
       }
     });
 
-    if (!response.text) {
-      console.warn("AI retornou resposta vazia");
+    const responseText = response.text;
+    if (!responseText) {
+      console.warn("AI returned empty response text");
       return [];
     }
 
-    const result = JSON.parse(response.text);
+    const result = JSON.parse(responseText);
     console.log("Resultados da IA:", result);
     return result;
   } catch (error) {

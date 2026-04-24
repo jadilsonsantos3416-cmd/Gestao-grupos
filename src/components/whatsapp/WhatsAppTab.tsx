@@ -51,7 +51,7 @@ export function WhatsAppTab({ groups }: WhatsAppTabProps) {
         }
       }
     });
-    return Array.from(map.values());
+    return Array.from(map.values()).sort((a, b) => b.groupCount - a.groupCount);
   }, [groups]);
 
   // Personalize message when selecting or when component mounts

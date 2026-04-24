@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Group, GrowthTier } from '@/src/types';
 import { 
   Sparkles, 
@@ -13,7 +13,12 @@ import {
   AlertCircle,
   LayoutGrid,
   Info,
-  ExternalLink
+  ExternalLink,
+  Target,
+  UserCheck,
+  ShoppingBag,
+  Zap,
+  ArrowRight
 } from 'lucide-react';
 import { cn, formatNumber, ensureAbsoluteUrl } from '@/src/lib/utils';
 import { analyzeGroupsGrowth } from '@/src/services/aiService';
@@ -28,6 +33,88 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedTier, setSelectedTier] = useState<GrowthTier | 'All'>('All');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'autopilot' | 'ai'>('autopilot');
+  const [selectedAutopilotCategory, setSelectedAutopilotCategory] = useState<string | null>(null);
+
+  // --- Local Autopilot Analysis Logic ---
+  const priorityNiches = ["Evangélico", "Receitas", "Musa", "Beleza / Cabelo", "Agro / Notícias"];
+
+  const analyzedGroups = useMemo(() => {
+    return groups.map(group => {
+      let score = 0;
+      const membros = Number(group.quantidade_membros) || 0;
+      
+      // Score Rules
+      if (membros >= 30000) score += 3;
+      else if (membros >= 10000) score += 2;
+      
+      if (group.perfil_compartilhando === 'Ativo') score += 3;
+      if (group.uso_shopee === 'Ativo') score += 3;
+      
+      if (priorityNiches.some(n => group.nicho?.toLowerCase().includes(n.toLowerCase()))) {
+        score += 2;
+      }
+      
+      if (group.status === 'Disponível') score += 1;
+
+      // Potential Classification
+      let potential: GrowthTier = 'Low';
+      if (score >= 8) potential = 'High';
+      else if (score >= 4) potential = 'Medium';
+
+      // Recommended Action
+      let action = "Revisar depois";
+      if (group.perfil_compartilhando === 'Ativo' && group.uso_shopee === 'Ativo') {
+        action = "Postar link da Shopee";
+      } else if ((group.perfil_compartilhando === 'Inativo' || !group.perfil_compartilhando) && membros >= 30000) {
+        action = "Ativar perfil compartilhando";
+      } else if ((group.uso_shopee === 'Inativo' || !group.uso_shopee) && group.perfil_compartilhando === 'Ativo') {
+        action = "Ativar uso para Shopee";
+      }
+
+      return {
+        ...group,
+        localScore: score,
+        localPotential: potential,
+        recommendedAction: action
+      };
+    });
+  }, [groups]);
+
+  // Autopilot Categories
+  const autopilotCategories = useMemo(() => {
+    const postarAgora = analyzedGroups.filter(g => 
+      g.perfil_compartilhando === 'Ativo' && 
+      g.uso_shopee === 'Ativo' && 
+      (Number(g.quantidade_membros) || 0) >= 30000
+    );
+    
+    const ativarPerfil = analyzedGroups.filter(g => 
+      (g.perfil_compartilhando === 'Inativo' || !g.perfil_compartilhando) && 
+      (Number(g.quantidade_membros) || 0) >= 30000
+    );
+    
+    const ativarShopee = analyzedGroups.filter(g => 
+      (g.uso_shopee === 'Inativo' || !g.uso_shopee) && 
+      (Number(g.quantidade_membros) || 0) >= 30000
+    );
+    
+    const oportunidades = analyzedGroups.filter(g => 
+      (Number(g.quantidade_membros) || 0) >= 30000 && 
+      g.status === 'Disponível'
+    );
+
+    return { postarAgora, ativarPerfil, ativarShopee, oportunidades };
+  }, [analyzedGroups]);
+
+  const stats = useMemo(() => {
+    const total = analyzedGroups.length;
+    const high = analyzedGroups.filter(g => g.localPotential === 'High').length;
+    const medium = analyzedGroups.filter(g => g.localPotential === 'Medium').length;
+    const low = analyzedGroups.filter(g => g.localPotential === 'Low').length;
+
+    return { total, high, medium, low };
+  }, [analyzedGroups]);
 
   const handleStartAnalysis = async () => {
     if (isAnalyzing) return;
@@ -38,17 +125,19 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
     
     setIsAnalyzing(true);
     try {
-      // Only analyze groups that haven't been analyzed or re-analyze everything
       const results = await analyzeGroupsGrowth(groups);
       
       if (!results || results.length === 0) {
-        alert("A IA não retornou resultados para esses grupos. Tente novamente mais tarde.");
+        alert("A IA não retornou resultados para esses grupos. Usando análise automática local.");
+        setViewMode('autopilot');
         return;
       }
 
-      // Update each group in Firestore
       let successCount = 0;
       for (const res of results) {
+        const groupExists = groups.find(g => g.id === res.groupId);
+        if (!groupExists) continue;
+
         try {
           await updateGroup(res.groupId, {
             growth_tier: res.tier,
@@ -61,19 +150,37 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
       }
       
       if (successCount > 0) {
-        alert(`Análise concluída! ${successCount} grupos categorizados.`);
+        alert(`Análise concluída com sucesso! ${successCount} grupos categorizados.`);
+        setViewMode('ai');
       }
-    } catch (error) {
-      console.error("Analysis failed:", error);
-      alert("Houve um erro na análise de IA. Verifique se a sua chave API está configurada corretamente.");
+    } catch (error: any) {
+      console.error("AI Analysis failed:", error);
+      alert("Houve um erro na análise de IA. Usando análise automática local.");
+      setViewMode('autopilot');
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  const filteredGroups = selectedTier === 'All' 
-    ? groups.filter(g => g.growth_tier) 
-    : groups.filter(g => g.growth_tier === selectedTier);
+  const filteredGroups = useMemo(() => {
+    let result = viewMode === 'ai' 
+      ? groups.filter(g => g.growth_tier) 
+      : analyzedGroups;
+
+    if (viewMode === 'autopilot' && selectedAutopilotCategory) {
+      switch (selectedAutopilotCategory) {
+        case 'postarAgora': result = autopilotCategories.postarAgora; break;
+        case 'ativarPerfil': result = autopilotCategories.ativarPerfil; break;
+        case 'ativarShopee': result = autopilotCategories.ativarShopee; break;
+        case 'oportunidades': result = autopilotCategories.oportunidades; break;
+      }
+    } else if (selectedTier !== 'All') {
+      result = (result as any[]).filter(g => (viewMode === 'ai' ? g.growth_tier : g.localPotential) === selectedTier);
+    }
+
+    // Always sort by members descending
+    return [...result].sort((a, b) => (Number(b.quantidade_membros) || 0) - (Number(a.quantidade_membros) || 0));
+  }, [viewMode, groups, analyzedGroups, selectedTier, selectedAutopilotCategory, autopilotCategories]);
 
   const getTierIcon = (tier?: GrowthTier) => {
     switch (tier) {
@@ -98,31 +205,79 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
       case 'High': return "Alto Potencial";
       case 'Medium': return "Capacidade Média";
       case 'Low': return "Baixa Capacidade";
-      case 'All': return "Ver Todos Analisados";
+      case 'All': return "Ver Todos";
       default: return tier;
     }
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       {/* Header Section */}
-      <section className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative">
+      <section className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative z-20">
         <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden pointer-events-none">
           <div className="absolute right-0 top-0 w-48 h-48 bg-purple-50/50 rounded-bl-[6rem] flex items-center justify-center -mr-12 -mt-12">
             <Brain className="w-20 h-20 text-purple-200" />
           </div>
         </div>
         
-        <div className="relative z-10 max-w-2xl">
-          <h2 className="text-3xl font-black tracking-tight text-gray-900 mb-2 flex items-center gap-3">
-            Análise de Crescimento IA
-            <span className="text-xs font-black bg-purple-100 text-purple-700 px-3 py-1 rounded-full uppercase tracking-widest">Beta</span>
-          </h2>
-          <p className="text-gray-500 font-medium leading-relaxed">
-            Nossa Inteligência Artificial analisa o nicho, o nome e a base de membros para identificar quais grupos têm maior potencial de retenção e escalabilidade.
-          </p>
+        <div className="relative z-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="max-w-2xl">
+              <h2 className="text-3xl font-black tracking-tight text-gray-900 mb-2 flex items-center gap-3">
+                Piloto Automático IA
+                <span className="text-[10px] font-black bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase tracking-widest">Ativo</span>
+              </h2>
+              <p className="text-gray-500 font-medium leading-relaxed">
+                Análise automática local concluída com base nos dados dos seus grupos. Identificamos as melhores ações para hoje.
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => setViewMode('autopilot')}
+                className={cn(
+                  "px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all",
+                  viewMode === 'autopilot' 
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-100" 
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                )}
+              >
+                Modo Piloto Automático
+              </button>
+              <button
+                onClick={() => setViewMode('ai')}
+                className={cn(
+                  "px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all",
+                  viewMode === 'ai' 
+                    ? "bg-purple-600 text-white shadow-lg shadow-purple-100" 
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                )}
+              >
+                Modo Análise Profunda
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-gray-50/50 rounded-[2rem] border border-gray-100/50">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Analisado</span>
+              <span className="text-2xl font-black text-gray-900 font-mono">{stats.total}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-green-500 uppercase tracking-widest mb-1">Alto Potencial</span>
+              <span className="text-2xl font-black text-gray-900 font-mono">{stats.high}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Médio Potencial</span>
+              <span className="text-2xl font-black text-gray-900 font-mono">{stats.medium}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Baixo Potencial</span>
+              <span className="text-2xl font-black text-gray-900 font-mono">{stats.low}</span>
+            </div>
+          </div>
           
-          <div className="mt-8 flex flex-wrap gap-4">
+          <div className="mt-8 flex flex-wrap items-center gap-4">
             <button
               onClick={handleStartAnalysis}
               disabled={isAnalyzing}
@@ -134,11 +289,10 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
               )}
             >
               {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-              {isAnalyzing ? "Analisando..." : "Iniciar Nova Análise IA"}
+              {isAnalyzing ? "Analisando..." : "Forçar Nova Análise IA Profunda"}
             </button>
-            
-            {/* Dropdown Menu Style Filter */}
-            <div className="relative">
+
+            <div className={cn("relative", isDropdownOpen && "z-50")}>
               <button 
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="flex items-center gap-2 px-6 py-4 bg-white border border-gray-100 rounded-2xl font-bold text-sm text-gray-700 hover:border-purple-200 transition-all shadow-sm"
@@ -182,85 +336,224 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
         </div>
       </section>
 
-      {/* Grid of Results */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredGroups.length === 0 ? (
-          <div className="col-span-full py-20 bg-white rounded-[2.5rem] border border-dashed border-gray-200 flex flex-col items-center justify-center text-center">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-              <Brain className="w-10 h-10 text-gray-200" />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900">Nenhum grupo analisado ainda</h3>
-            <p className="text-gray-400 max-w-xs mt-1">Clique em "Iniciar Nova Análise IA" para categorizar seus grupos.</p>
+      {/* Piloto Automático de Hoje Section */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-2">
+          <Zap className="w-6 h-6 text-yellow-500 fill-yellow-500" />
+          <h3 className="text-2xl font-black text-gray-900 tracking-tight">Piloto Automático de Hoje</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <AutopilotCard 
+            title="Postar Agora" 
+            count={autopilotCategories.postarAgora.length} 
+            icon={<Target className="w-6 h-6 text-red-500" />}
+            color="red"
+            description="Perfis ativos em grupos grandes."
+            onClick={() => {
+              setSelectedAutopilotCategory(prev => prev === 'postarAgora' ? null : 'postarAgora');
+              setSelectedTier('All');
+            }}
+            isActive={selectedAutopilotCategory === 'postarAgora'}
+          />
+          <AutopilotCard 
+            title="Ativar Perfil" 
+            count={autopilotCategories.ativarPerfil.length} 
+            icon={<UserCheck className="w-6 h-6 text-blue-500" />}
+            color="blue"
+            description="Ative o perfil nesses 30k+."
+            onClick={() => {
+              setSelectedAutopilotCategory(prev => prev === 'ativarPerfil' ? null : 'ativarPerfil');
+              setSelectedTier('All');
+            }}
+            isActive={selectedAutopilotCategory === 'ativarPerfil'}
+          />
+          <AutopilotCard 
+            title="Ativar Shopee" 
+            count={autopilotCategories.ativarShopee.length} 
+            icon={<ShoppingBag className="w-6 h-6 text-orange-500" />}
+            color="orange"
+            description="Configure Shopee nesses 30k+."
+            onClick={() => {
+              setSelectedAutopilotCategory(prev => prev === 'ativarShopee' ? null : 'ativarShopee');
+              setSelectedTier('All');
+            }}
+            isActive={selectedAutopilotCategory === 'ativarShopee'}
+          />
+          <AutopilotCard 
+            title="Oportunidades" 
+            count={autopilotCategories.oportunidades.length} 
+            icon={<Sparkles className="w-6 h-6 text-green-500" />}
+            color="green"
+            description="30k+ disponíveis para locação."
+            onClick={() => {
+              setSelectedAutopilotCategory(prev => prev === 'oportunidades' ? null : 'oportunidades');
+              setSelectedTier('All');
+            }}
+            isActive={selectedAutopilotCategory === 'oportunidades'}
+          />
+        </div>
+      </section>
+
+      {/* Table Section */}
+      <section className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-8 py-6 bg-gray-50/80 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-black text-gray-900">Relatório Detalhado de Análise</h3>
+            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">
+              {viewMode === 'autopilot' ? 'Análise Automática baseada em Score' : 'Análise Profunda por IA'}
+            </p>
           </div>
-        ) : (
-          filteredGroups.map((group) => (
-            <motion.div
-              layoutId={group.id}
-              key={group.id}
-              className="bg-white border border-gray-100 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden"
-            >
-              <div className={cn(
-                "absolute top-0 right-0 w-32 h-32 opacity-5 rounded-bl-[4rem] -mr-8 -mt-8",
-                group.growth_tier === 'High' ? "bg-green-500" : group.growth_tier === 'Medium' ? "bg-blue-500" : "bg-gray-500"
-              )} />
+        </div>
 
-              <header className="flex items-start justify-between mb-4">
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1">{group.nicho}</span>
-                  <h4 className="font-bold text-gray-900 leading-tight group-hover:text-purple-600 transition-colors uppercase">{group.nome_grupo}</h4>
-                  {group.link_grupo && (
-                    <a 
-                      href={ensureAbsoluteUrl(group.link_grupo)} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="text-[10px] text-blue-500 hover:underline flex items-center gap-1 font-mono uppercase tracking-widest mt-1"
-                    >
-                      Ver link <ExternalLink className="w-2.5 h-2.5" />
-                    </a>
-                  )}
-                </div>
-                <div className={cn("p-2 rounded-xl", getTierColor(group.growth_tier))}>
-                  {getTierIcon(group.growth_tier)}
-                </div>
-              </header>
-
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Membros</span>
-                  <span className="text-sm font-bold text-gray-900 font-mono">{formatNumber(group.quantidade_membros || 0)}</span>
-                </div>
-                <div className="h-8 w-px bg-gray-100" />
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</span>
-                  <span className={cn(
-                    "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                    group.status === 'Disponível' ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
-                  )}>
-                    {group.status}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 flex gap-3 relative z-10">
-                <Info className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                <p className="text-xs font-medium text-gray-600 italic leading-relaxed">
-                  "{group.ai_analysis}"
-                </p>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between">
-                <div className={cn(
-                  "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
-                  getTierColor(group.growth_tier)
-                )}>
-                  {getTierLabel(group.growth_tier!)}
-                </div>
-                <span className="text-[10px] text-gray-300 font-bold">Ref: {group.group_id.slice(0, 8)}</span>
-              </div>
-            </motion.div>
-          ))
-        )}
-      </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50/50">
+                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Grupo</th>
+                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Nicho</th>
+                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Membros</th>
+                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Config</th>
+                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Score</th>
+                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Potencial</th>
+                <th className="px-6 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Ação Recomendada</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filteredGroups.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-8 py-20 text-center text-gray-400 italic">
+                    Nenhum grupo encontrado para estes critérios.
+                  </td>
+                </tr>
+              ) : (
+                filteredGroups.map((group: any) => (
+                  <tr key={group.id} className="hover:bg-gray-50/50 transition-colors group">
+                    <td className="px-8 py-6">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors uppercase text-sm line-clamp-1">{group.nome_grupo}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={cn(
+                            "text-[8px] font-black px-2 py-0.5 rounded-full",
+                            group.status === 'Disponível' ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                          )}>
+                            {group.status}
+                          </span>
+                          {group.link_grupo && (
+                            <a href={ensureAbsoluteUrl(group.link_grupo)} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline flex items-center gap-1 font-mono uppercase">
+                              LINK <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-6 text-center">
+                      <span className="text-[10px] font-black text-gray-500 bg-white border border-gray-100 px-2.5 py-1 rounded-lg uppercase tracking-widest capitalize">
+                        {group.nicho}
+                      </span>
+                    </td>
+                    <td className="px-6 py-6 text-center">
+                      <span className="text-sm font-bold text-gray-900 font-mono">{formatNumber(group.quantidade_membros || 0)}</span>
+                    </td>
+                    <td className="px-6 py-6 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className={cn(
+                          "w-6 h-6 rounded-lg flex items-center justify-center border",
+                          group.perfil_compartilhando === 'Ativo' ? "bg-green-50 border-green-100 text-green-600" : "bg-red-50 border-red-100 text-red-600"
+                        )}>
+                          <UserCheck className="w-3.5 h-3.5" />
+                        </div>
+                        <div className={cn(
+                          "w-6 h-6 rounded-lg flex items-center justify-center border",
+                          group.uso_shopee === 'Ativo' ? "bg-green-50 border-green-100 text-green-600" : "bg-red-50 border-red-100 text-red-600"
+                        )}>
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-6 text-center">
+                      <span className="text-sm font-black text-purple-600 font-mono">
+                        {viewMode === 'autopilot' ? group.localScore : '-'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-6 text-center">
+                      <div className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
+                        getTierColor(viewMode === 'ai' ? group.growth_tier : group.localPotential)
+                      )}>
+                        {getTierIcon(viewMode === 'ai' ? group.growth_tier : group.localPotential)}
+                        {getTierLabel(viewMode === 'ai' ? group.growth_tier : group.localPotential)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gray-50 rounded-xl border border-gray-100">
+                          <ArrowRight className="w-4 h-4 text-gray-300" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-gray-700">
+                            {viewMode === 'autopilot' ? group.recommendedAction : (group.ai_analysis || "Analisar via IA Profunda")}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }
+
+function AutopilotCard({ title, count, icon, color, description, onClick, isActive }: any) {
+  const colors: any = {
+    red: "bg-red-50 border-red-100 group-hover:border-red-200 ring-red-500",
+    blue: "bg-blue-50 border-blue-100 group-hover:border-blue-200 ring-blue-500",
+    orange: "bg-orange-50 border-orange-100 group-hover:border-orange-200 ring-orange-500",
+    green: "bg-green-50 border-green-100 group-hover:border-green-200 ring-green-500"
+  };
+
+  return (
+    <button 
+      onClick={onClick}
+      className={cn(
+        "w-full text-left bg-white p-6 rounded-[2rem] border transition-all hover:shadow-lg group relative overflow-hidden",
+        colors[color],
+        isActive ? "ring-2 border-transparent scale-[1.02] shadow-xl" : "hover:scale-[1.01]"
+      )}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className={cn(
+          "p-3 rounded-2xl shadow-sm transition-colors",
+          isActive ? "bg-white" : "bg-white"
+        )}>
+          {icon}
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-2xl font-black text-gray-900 font-mono leading-none">{count}</span>
+          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Grupos</span>
+        </div>
+      </div>
+      <div className="relative z-10">
+        <h4 className="font-black text-gray-900 text-sm uppercase mb-1">{title}</h4>
+        <p className={cn(
+          "text-[10px] font-medium leading-relaxed",
+          isActive ? "text-gray-700" : "text-gray-500"
+        )}>
+          {description}
+        </p>
+      </div>
+      
+      {/* Active Indicator */}
+      {isActive && (
+        <div className="absolute top-3 right-3">
+          <div className="w-2 h-2 rounded-full bg-current animate-pulse" />
+        </div>
+      )}
+    </button>
+  );
+}
+

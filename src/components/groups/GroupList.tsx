@@ -155,7 +155,12 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
       if (nichoA < nichoB) return -1;
       if (nichoA > nichoB) return 1;
 
-      // Secondary sort: Nome do Grupo
+      // Secondary sort: Members Descending (maior para o menor)
+      const memA = a.quantidade_membros || 0;
+      const memB = b.quantidade_membros || 0;
+      if (memB !== memA) return memB - memA;
+
+      // Tertiary sort: Nome do Grupo
       const nameA = a.nome_grupo.toLowerCase();
       const nameB = b.nome_grupo.toLowerCase();
       return nameA.localeCompare(nameB);

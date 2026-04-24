@@ -117,7 +117,7 @@ export default function App() {
           <WhatsAppTab groups={groups} />
         )}
         {activeTab === 'ranking' && (
-          <RankingPage />
+          <RankingPage groups={groups} activeFilter={activeFilter} />
         )}
         {activeTab === 'growth' && (
           <GrowthAnalysis groups={groups} updateGroup={updateGroup} />
