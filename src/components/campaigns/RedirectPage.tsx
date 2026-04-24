@@ -1,12 +1,23 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useCampaigns } from '@/src/hooks/useCampaigns';
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  limit, 
+  doc, 
+  updateDoc, 
+  increment, 
+  addDoc 
+} from 'firebase/firestore';
+import { db } from '@/src/lib/firebase';
+import { Campaign } from '@/src/types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Loader2, AlertCircle, ExternalLink, Lock } from 'lucide-react';
+import { Loader2, AlertCircle, ExternalLink } from 'lucide-react';
 
 export function RedirectPage() {
   const [status, setStatus] = useState<'loading' | 'not_found' | 'inactive' | 'error'>('loading');
   const [targetUrl, setTargetUrl] = useState<string | null>(null);
-  const { trackClick, getCampaignBySlug } = useCampaigns();
   const hasStarted = useRef(false);
 
   useEffect(() => {
@@ -14,8 +25,8 @@ export function RedirectPage() {
     hasStarted.current = true;
 
     const handleRedirect = async () => {
-      const path = window.location.pathname;
-      const slug = path.split('/l/')[1]?.split('?')[0]?.split('#')[0];
+      // 1. Extração rápida do slug
+      const slug = window.location.pathname.split('/l/')[1]?.split('?')[0]?.split('#')[0];
 
       if (!slug) {
         setStatus('not_found');
@@ -23,86 +34,116 @@ export function RedirectPage() {
       }
 
       try {
-        const campaign = await getCampaignBySlug(slug);
+        // 2. Query ultra-leve (direto sem o overhead do useCampaigns)
+        const q = query(
+          collection(db, 'campanhas'), 
+          where('slug', '==', slug),
+          limit(1)
+        );
         
-        if (!campaign) {
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
           setStatus('not_found');
           return;
         }
 
+        const campaignDoc = snapshot.docs[0];
+        const campaign = { id: campaignDoc.id, ...campaignDoc.data() } as Campaign;
+
+        // 3. Verificação de status
         if (campaign.status === 'Inativa') {
           setStatus('inactive');
           return;
         }
 
-        const rawUrl = campaign.link_original;
-        if (!rawUrl) {
-          console.error("Link original não encontrado");
+        // 4. Normalização do Link
+        let destination = (campaign.link_original || "").trim();
+        if (!destination) {
           setStatus('error');
           return;
         }
 
-        // Garantir Protocolo
-        const destination = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`;
+        destination = destination.replace(/\s+/g, '');
+        while (destination.match(/^https?:\/\/https?:\/\//i)) {
+          destination = destination.replace(/^https?:\/\//i, '');
+        }
+        if (!destination.match(/^https?:\/\//i)) {
+          destination = `https://${destination}`;
+        }
+
         setTargetUrl(destination);
 
-        // 1. Rastrear em background
-        trackClick(slug).catch(e => console.error("Erro no track:", e));
-
-        // 2. Redirecionar Imediatamente
-        const redirect = () => {
-          console.log("Redirecionando para:", destination);
+        // 5. REDIRECIONAMENTO IMEDIATO (PRIORIDADE MÁXIMA)
+        const performRedirection = () => {
           try {
-            // Tenta forçar a saída do iframe do Studio se necessário
             if (window.top && window.top !== window) {
               window.top.location.href = destination;
             } else {
               window.location.replace(destination);
             }
-          } catch (err) {
-            // Fallback total
+          } catch (e) {
             window.location.href = destination;
           }
         };
 
-        // Redireciona logo
-        redirect();
+        // EXECUTAR AGORA
+        performRedirection();
 
-        // Se após 2 segundos ainda estiver aqui, atualiza status para mostrar o botão
-        setTimeout(() => {
-          setStatus('loading'); // Garante que o botão deir para o link apareça se o redirect falhar
-        }, 2000);
+        // 6. Rastreamento em Background (Não aguardamos para ser instantâneo)
+        // Fire-and-forget
+        (async () => {
+          try {
+            await Promise.all([
+              updateDoc(doc(db, 'campanhas', campaign.id), {
+                cliques: increment(1),
+                atualizado_em: new Date().toISOString()
+              }),
+              addDoc(collection(db, 'cliques_log'), {
+                campanha_id: campaign.id,
+                slug: campaign.slug,
+                data_hora: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                origem: campaign.origem,
+                grupo_id: campaign.grupo_id
+              })
+            ]);
+          } catch (e) {
+            console.error("Silent background track error:", e);
+          }
+        })();
+
+        // Fallback UI se o redirect demorar a responder (ex: browser slow)
+        setTimeout(() => setStatus('loading'), 2000);
         
       } catch (err) {
-        console.error('Redirect error:', err);
+        console.error('Fast redirect error:', err);
         setStatus('error');
       }
     };
 
     handleRedirect();
-  }, [getCampaignBySlug, trackClick]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center p-4">
       <AnimatePresence mode="wait">
         <motion.div 
           key={status}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
           className="bg-white p-10 rounded-[2.5rem] shadow-2xl border border-gray-100 max-w-sm w-full text-center"
         >
           {status === 'loading' && (
             <div className="space-y-6">
               <div className="relative w-16 h-16 mx-auto">
                 <Loader2 className="w-16 h-16 text-green-600 animate-spin" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
-                </div>
               </div>
               <div>
                 <h1 className="text-2xl font-black text-gray-900 mb-2">Redirecionando...</h1>
-                <p className="text-sm text-gray-500 leading-relaxed font-medium">
-                  {targetUrl ? 'Sua conexão está pronta.' : 'Estamos preparando seu link seguro.'}
+                <p className="text-sm text-gray-500 font-medium">
+                  Preparando sua conexão segura.
                 </p>
               </div>
               
@@ -110,15 +151,15 @@ export function RedirectPage() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 2 }}
+                  transition={{ delay: 1 }}
                 >
-                  <p className="text-xs text-gray-400 mb-4 italic">Se não for redirecionado automaticamente, clique abaixo:</p>
+                  <p className="text-xs text-gray-400 mb-4">Clique abaixo se não for redirecionado:</p>
                   <a 
                     href={targetUrl}
-                    className="flex items-center justify-center gap-2 w-full py-4 bg-gray-900 text-white font-black rounded-2xl hover:bg-black transition-all group"
+                    className="flex items-center justify-center gap-2 w-full py-4 bg-gray-900 text-white font-black rounded-2xl"
                   >
-                    <span>IR PARA O LINK</span>
-                    <ExternalLink className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    <span>ABRIR LINK AGORA</span>
+                    <ExternalLink className="w-4 h-4" />
                   </a>
                 </motion.div>
               )}
@@ -130,36 +171,31 @@ export function RedirectPage() {
               <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto border border-orange-100">
                 <AlertCircle className="w-8 h-8 text-orange-500" />
               </div>
-              <div>
-                <h1 className="text-2xl font-black text-gray-900 mb-2">Link não encontrado</h1>
-                <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                  Este link pode ter sido removido ou o slug está incorreto.
-                </p>
-              </div>
+              <h1 className="text-2xl font-black text-gray-900">Link não encontrado</h1>
+              <p className="text-sm text-gray-500 font-medium">O link expirou ou é inválido.</p>
               <button 
                 onClick={() => window.location.href = '/'}
-                className="w-full py-4 bg-gray-900 text-white font-black rounded-2xl hover:bg-black transition-all shadow-lg"
+                className="w-full py-4 bg-gray-900 text-white font-black rounded-2xl"
               >
-                IR PARA DASHBOARD
+                VOLTAR
               </button>
             </div>
           )}
 
-          {/* ... outros estados (simplificados para brevidade no diff) ... */}
           {status === 'inactive' && (
             <div className="space-y-6">
               <AlertCircle className="w-12 h-12 text-gray-400 mx-auto" />
               <h1 className="text-2xl font-black text-gray-900">Link Inativo</h1>
-              <p className="text-sm text-gray-500">Esta campanha foi pausada.</p>
+              <p className="text-sm text-gray-500">Esta oferta expirou.</p>
               <button onClick={() => window.location.href = '/'} className="w-full py-4 bg-gray-900 text-white font-black rounded-2xl">VOLTAR</button>
             </div>
           )}
 
           {status === 'error' && (
-            <div className="space-y-6 text-red-600">
-              <AlertCircle className="w-12 h-12 mx-auto" />
-              <h1 className="text-2xl font-black">Erro de Conexão</h1>
-              <p className="text-sm">Não foi possível processar o redirecionamento.</p>
+            <div className="space-y-6">
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+              <h1 className="text-2xl font-black text-gray-900">Erro na Conexão</h1>
+              <p className="text-sm text-gray-500">Houve um problema ao processar seu link.</p>
               <button onClick={() => window.location.reload()} className="w-full py-4 bg-red-600 text-white font-black rounded-2xl">TENTAR NOVAMENTE</button>
             </div>
           )}
