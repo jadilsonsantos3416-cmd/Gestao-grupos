@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Group, QuickFilter } from '@/src/types';
 import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download } from 'lucide-react';
-import { cn, formatNumber, formatCurrency, exportToCSV } from '@/src/lib/utils';
+import { cn, formatNumber, formatCurrency, exportToCSV, ensureAbsoluteUrl } from '@/src/lib/utils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -264,7 +264,7 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
                         <div className="flex items-center gap-3 mt-1">
                           {group.link_grupo && (
                             <a 
-                              href={group.link_grupo} 
+                              href={ensureAbsoluteUrl(group.link_grupo)} 
                               target="_blank" 
                               rel="noreferrer"
                               className="text-[10px] text-blue-500 hover:underline flex items-center gap-1 font-mono uppercase tracking-widest"
@@ -383,7 +383,19 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
                    <div className="flex justify-between items-start mb-4">
                      <div>
                         <h4 className="font-bold text-gray-900">{group.nome_grupo}</h4>
-                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1 capitalize">{group.nicho} • {formatNumber(group.quantidade_membros)} memb.</p>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                          <p className="text-xs text-gray-400 font-bold uppercase tracking-widest capitalize">{group.nicho} • {formatNumber(group.quantidade_membros)} memb.</p>
+                          {group.link_grupo && (
+                            <a 
+                              href={ensureAbsoluteUrl(group.link_grupo)} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="text-[10px] text-blue-500 hover:underline flex items-center gap-1 font-mono uppercase tracking-widest"
+                            >
+                              Ver link <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                        </div>
                      </div>
                      <div className="flex gap-1">
                         <button onClick={() => onEdit(group)} className="p-2 text-gray-400 bg-gray-50 rounded-xl"><Edit2 className="w-4 h-4" /></button>

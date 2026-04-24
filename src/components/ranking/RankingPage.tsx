@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trophy, Play, Copy, CheckCircle2, AlertCircle, Users, ExternalLink, Hash, Flame } from 'lucide-react';
 import { analyzeGroups, RankingResult } from '@/src/lib/rankingUtils';
-import { cn, formatNumber } from '@/src/lib/utils';
+import { cn, formatNumber, ensureAbsoluteUrl } from '@/src/lib/utils';
 
 export function RankingPage() {
   const [jsonInput, setJsonInput] = useState('');
@@ -196,7 +196,7 @@ export function RankingPage() {
                               </span>
                             </td>
                             <td className="px-6 py-4 text-right">
-                              <a href={group.link} target="_blank" rel="noreferrer" className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all inline-block">
+                              <a href={ensureAbsoluteUrl(group.link)} target="_blank" rel="noreferrer" className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all inline-block">
                                 <ExternalLink className="w-4 h-4" />
                               </a>
                             </td>

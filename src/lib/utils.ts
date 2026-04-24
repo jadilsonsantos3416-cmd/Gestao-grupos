@@ -47,3 +47,27 @@ export function exportToCSV(data: any[], filename: string) {
   link.click();
   document.body.removeChild(link);
 }
+
+export function ensureAbsoluteUrl(link: string): string {
+  if (!link) return '';
+  
+  const trimmedLink = link.trim();
+  
+  // If it's just a numeric ID, assume it's a Facebook group ID
+  if (/^\d+$/.test(trimmedLink)) {
+    return `https://www.facebook.com/groups/${trimmedLink}`;
+  }
+
+  // If it's an ID that looks like facebook numeric ID but might have alphabets if it's a vanity URL/slug
+  // Actually, if it doesn't have a protocol and doesn't have dots, it's probably an ID
+  if (!trimmedLink.includes('://') && !trimmedLink.includes('.')) {
+    return `https://www.facebook.com/groups/${trimmedLink}`;
+  }
+
+  // If it doesn't start with http or https, add it
+  if (!/^https?:\/\//i.test(trimmedLink)) {
+    return `https://${trimmedLink}`;
+  }
+
+  return trimmedLink;
+}

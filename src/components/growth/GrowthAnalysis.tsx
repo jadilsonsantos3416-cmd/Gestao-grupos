@@ -12,9 +12,10 @@ import {
   Activity,
   AlertCircle,
   LayoutGrid,
-  Info
+  Info,
+  ExternalLink
 } from 'lucide-react';
-import { cn, formatNumber } from '@/src/lib/utils';
+import { cn, formatNumber, ensureAbsoluteUrl } from '@/src/lib/utils';
 import { analyzeGroupsGrowth } from '@/src/services/aiService';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -207,6 +208,16 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1">{group.nicho}</span>
                   <h4 className="font-bold text-gray-900 leading-tight group-hover:text-purple-600 transition-colors uppercase">{group.nome_grupo}</h4>
+                  {group.link_grupo && (
+                    <a 
+                      href={ensureAbsoluteUrl(group.link_grupo)} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="text-[10px] text-blue-500 hover:underline flex items-center gap-1 font-mono uppercase tracking-widest mt-1"
+                    >
+                      Ver link <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  )}
                 </div>
                 <div className={cn("p-2 rounded-xl", getTierColor(group.growth_tier))}>
                   {getTierIcon(group.growth_tier)}
