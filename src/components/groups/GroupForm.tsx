@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Group, GroupStatus, Renter } from '@/src/types';
+import { Group, GroupStatus, Renter, Nicho } from '@/src/types';
 import { X, Search, Phone, User, Calendar, DollarSign, Users, Type, Link, FileText, AlertCircle } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, addMonths, parseISO } from 'date-fns';
 import { extractGroupId } from '@/src/lib/groupParser';
+import { listarNichos } from '@/src/lib/nichosService';
 
 interface GroupFormProps {
   onClose: () => void;
@@ -16,6 +17,19 @@ interface GroupFormProps {
 export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: GroupFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [nichos, setNichos] = useState<Nicho[]>([]);
+
+  useEffect(() => {
+    const fetchNichos = async () => {
+      try {
+        const data = await listarNichos();
+        setNichos(data);
+      } catch (err) {
+        console.error("Erro ao carregar nichos:", err);
+      }
+    };
+    fetchNichos();
+  }, []);
   
   const [formData, setFormData] = useState<Partial<Group>>({
     nome_grupo: '',
@@ -82,20 +96,27 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
   }, [existingGroups]);
 
   // Extract unique niches
-  const niches: string[] = React.useMemo(() => {
+  const nichesList: string[] = React.useMemo(() => {
     const set = new Set<string>();
+    
+    // De grupos existentes
     existingGroups.forEach(g => {
       if (g.nicho) {
-        // Find existing with same content but original case
         const normalized = g.nicho.trim();
         const existing = Array.from(set).find(s => s.toLowerCase() === normalized.toLowerCase());
-        if (!existing) {
-          set.add(normalized);
-        }
+        if (!existing) set.add(normalized);
       }
     });
+
+    // Da coleção de nichos
+    nichos.forEach(n => {
+      const normalized = n.nome.trim();
+      const existing = Array.from(set).find(s => s.toLowerCase() === normalized.toLowerCase());
+      if (!existing) set.add(normalized);
+    });
+
     return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [existingGroups]);
+  }, [existingGroups, nichos]);
 
   // Extract unique monthly values
   const commonValores: number[] = React.useMemo(() => {
@@ -140,7 +161,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
         throw new Error("O nome do grupo é obrigatório.");
       }
       
-      const normalizedNicho = niches.find(n => n.toLowerCase() === nichoSearch.trim().toLowerCase()) || nichoSearch.trim();
+      const normalizedNicho = nichesList.find(n => n.toLowerCase() === nichoSearch.trim().toLowerCase()) || nichoSearch.trim();
       let finalLocatario = renterSearch.trim();
 
       const finalData = { 
@@ -192,7 +213,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
     r.whatsapp.includes(renterSearch)
   );
 
-  const filteredNiches = niches.filter(n => 
+  const filteredNiches = nichesList.filter(n => 
     n.toLowerCase().includes(nichoSearch.toLowerCase())
   );
 

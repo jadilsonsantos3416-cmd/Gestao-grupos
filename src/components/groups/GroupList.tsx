@@ -9,6 +9,11 @@ import { ptBR } from 'date-fns/locale';
 import { MemberReviewModal } from './MemberReviewModal';
 import { PostTodayModal } from './PostTodayModal';
 import { GenerateCopyModal } from './GenerateCopyModal';
+import { NichoFilter } from './NichoFilter';
+import { PriorityFilter } from './PriorityFilter';
+import { NichoModal } from './NichoModal';
+import { listarNichos } from '@/src/lib/nichosService';
+import { Nicho } from '@/src/types';
 
 interface GroupListProps {
   groups: Group[];
@@ -40,9 +45,27 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isPostTodayModalOpen, setIsPostTodayModalOpen] = useState(false);
   const [isGenerateCopyModalOpen, setIsGenerateCopyModalOpen] = useState(false);
+  const [isNichoModalOpen, setIsNichoModalOpen] = useState(false);
+  const [nichos, setNichos] = useState<Nicho[]>([]);
+  const [loadingNichos, setLoadingNichos] = useState(true);
   const [processingAction, setProcessingAction] = useState<{ id: string, field: 'perfil' | 'shopee' | 'nicho' | 'membros' } | null>(null);
   const [editingMembersId, setEditingMembersId] = useState<string | null>(null);
   const [membersInputValue, setMembersInputValue] = useState('');
+
+  useEffect(() => {
+    loadNichos();
+  }, []);
+
+  const loadNichos = async () => {
+    try {
+      const data = await listarNichos();
+      setNichos(data);
+    } catch (error) {
+      console.error("Erro ao carregar nichos:", error);
+    } finally {
+      setLoadingNichos(false);
+    }
+  };
 
   const handleUpdateMembers = async (group: Group) => {
     if (!onUpdate || processingAction) return;
@@ -74,9 +97,10 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   ], []);
 
   const allAvailableNiches = useMemo(() => {
-    const existingNiches = Array.from(new Set(groups.map(g => g.nicho))).filter(Boolean);
-    return Array.from(new Set([...defaultNiches, ...existingNiches])).sort();
-  }, [groups, defaultNiches]);
+    const existingNichesFromGroups = Array.from(new Set(groups.map(g => g.nicho))).filter(Boolean);
+    const existingNichesFromDB = nichos.map(n => n.nome);
+    return Array.from(new Set([...existingNichesFromGroups, ...existingNichesFromDB])).sort();
+  }, [groups, nichos]);
 
   const handleUpdateNiche = async (group: Group, newNicho: string) => {
     if (!onUpdate || processingAction || group.nicho === newNicho) return;
@@ -318,21 +342,20 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 pb-4 md:pb-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:flex xl:flex-wrap gap-2 md:gap-3 w-full">
-            <FilterBadge 
-              label="Nicho" 
-              value={nichoFilter} 
-              options={niches} 
-              onChange={v => handleFilterChange(setNichoFilter, v)} 
-              isCapitalize
-            />
-            <FilterBadge 
-              label="Status" 
-              value={statusFilter} 
-              options={statuses} 
-              onChange={v => handleFilterChange(setStatusFilter, v)} 
-            />
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 pb-4 md:pb-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:flex xl:flex-wrap gap-2 md:gap-3 w-full">
+              <NichoFilter 
+                value={nichoFilter} 
+                onChange={v => handleFilterChange(setNichoFilter, v)} 
+                nichos={nichos}
+                onManage={() => setIsNichoModalOpen(true)}
+              />
+              <FilterBadge 
+                label="Status" 
+                value={statusFilter} 
+                options={statuses} 
+                onChange={v => handleFilterChange(setStatusFilter, v)} 
+              />
             <FilterBadge 
               label="Perfil" 
               value={perfilFilter} 
@@ -345,10 +368,8 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
               options={shopees} 
               onChange={v => handleFilterChange(setShopeeFilter, v)} 
             />
-            <FilterBadge 
-              label="Prioridade" 
+            <PriorityFilter 
               value={priorityFilter} 
-              options={priorities} 
               onChange={v => handleFilterChange(setPriorityFilter, v)} 
             />
             
@@ -912,6 +933,12 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
             isOpen={isGenerateCopyModalOpen}
             onClose={() => setIsGenerateCopyModalOpen(false)}
           />
+          <NichoModal
+            isOpen={isNichoModalOpen}
+            onClose={() => setIsNichoModalOpen(false)}
+            nichos={nichos}
+            onUpdate={loadNichos}
+          />
         </>
       )}
     </div>
@@ -924,8 +951,6 @@ function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
   const handleClick = () => {
     if (selectRef.current) {
       selectRef.current.focus();
-      // On some mobile devices, we might need to trigger click to open
-      // selectRef.current.click(); 
     }
   };
 
@@ -933,7 +958,7 @@ function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
     <div 
       onClick={handleClick}
       className={cn(
-        "flex items-center gap-2 md:gap-3 bg-white px-4 md:px-5 h-12 lg:h-14 rounded-xl md:rounded-2xl border transition-all group w-full lg:w-auto xl:flex-1 min-w-[140px] cursor-pointer outline-none ring-offset-2 focus-within:ring-2 focus-within:ring-emerald-100",
+        "flex items-center gap-2 md:gap-3 bg-white px-4 md:px-5 h-12 lg:h-14 rounded-xl md:rounded-2xl border transition-all group w-full lg:w-auto xl:flex-1 min-w-[140px] cursor-pointer outline-none relative",
         value !== 'Todos' ? "border-emerald-200 bg-emerald-50/10 shadow-sm shadow-emerald-50" : "border-slate-100 shadow-sm hover:border-emerald-200"
       )}
     >
@@ -952,15 +977,16 @@ function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
           }}
           onClick={e => e.stopPropagation()}
           className={cn(
-            "bg-transparent border-0 focus:ring-0 p-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 cursor-pointer w-full truncate pointer-events-auto",
+            "bg-transparent border-0 focus:ring-0 p-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 cursor-pointer w-full truncate pointer-events-auto pr-6",
             isCapitalize && "capitalize"
           )}
         >
           {options.map((opt: string) => (
-            <option key={opt} value={opt} className={cn(isCapitalize && "capitalize")}>{opt}</option>
+            <option key={opt} value={opt} className={cn("bg-white text-slate-900", isCapitalize && "capitalize")}>{opt}</option>
           ))}
         </select>
       </div>
+      <ChevronDown className="w-3 h-3 text-slate-300 absolute right-4 pointer-events-none group-hover:text-emerald-400 transition-colors" />
     </div>
   );
 }

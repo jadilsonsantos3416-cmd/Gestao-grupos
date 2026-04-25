@@ -79,4 +79,10 @@ export interface NicheStats {
   totalMembros: number;
 }
 
+export interface Nicho {
+  id: string;
+  nome: string;
+  criado_em: any;
+}
+
 export type QuickFilter = 'all' | 'perfil_ativo' | 'perfil_inativo' | 'shopee_ativo' | 'shopee_inativo' | 'ready_shopee' | 'priority_alta' | 'priority_media' | 'priority_baixa';

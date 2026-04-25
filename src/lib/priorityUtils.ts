@@ -11,17 +11,17 @@ export function calculatePriority(group: Partial<Group>): PriorityInfo {
   const membros = Number(group?.quantidade_membros) || 0;
   const perfilAtivo = group?.perfil_compartilhando === 'Ativo';
   const shopeeAtivo = group?.uso_shopee === 'Ativo';
-  const nicho = group?.nicho || '';
-
+  
   // Calculate Score: (membros / 10000) + (perfil_ativo ? 5 : 0) + (shopee_ativo ? 5 : 0)
   let score = (membros / 10000) + (perfilAtivo ? 5 : 0) + (shopeeAtivo ? 5 : 0);
   
-  // Calculate Priority Level
+  // Calculate Priority Level based on user request:
+  // membros > 50k → ALTA, membros > 15k → MEDIA, abaixo → BAIXA
   let prioridade: PriorityLevel = 'Baixa';
 
-  if (score >= 10 || membros >= 50000) {
+  if (membros >= 50000) {
     prioridade = 'Alta';
-  } else if (score >= 5 || membros >= 20000) {
+  } else if (membros >= 15000) {
     prioridade = 'Média';
   } else {
     prioridade = 'Baixa';
@@ -36,14 +36,18 @@ export function calculatePriority(group: Partial<Group>): PriorityInfo {
 export function getGroupPriority(group: Group): PriorityInfo {
   if (!group) return { prioridade: 'Baixa', score: 0 };
   
-  if (group.prioridade_postagem && group.score_postagem !== undefined) {
-    // Normalizar para garantir que 'Media' vire 'Média' se vir do Firebase antigo ou inconsistente
-    let prioridade = group.prioridade_postagem as string;
-    if (prioridade === 'Media') prioridade = 'Média';
+  if (group.prioridade_postagem) {
+    // Normalizar para garantir consistência
+    const p = group.prioridade_postagem.toUpperCase();
+    let prioridade: PriorityLevel = 'Baixa';
+    
+    if (p === 'ALTA') prioridade = 'Alta';
+    else if (p === 'MEDIA' || p === 'MÉDIA') prioridade = 'Média';
+    else prioridade = 'Baixa';
     
     return {
-      prioridade: prioridade as PriorityLevel,
-      score: group.score_postagem
+      prioridade,
+      score: group.score_postagem || 0
     };
   }
   return calculatePriority(group);
