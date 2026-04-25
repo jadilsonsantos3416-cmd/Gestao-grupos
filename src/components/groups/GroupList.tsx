@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Group, QuickFilter } from '@/src/types';
-import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download } from 'lucide-react';
+import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2 } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, exportToCSV, ensureAbsoluteUrl } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -11,6 +11,7 @@ interface GroupListProps {
   groups: Group[];
   onEdit: (group: Group) => void;
   onDelete: (id: string) => void;
+  onUpdate?: (id: string, updates: Partial<Group>) => Promise<void>;
   activeQuickFilter?: QuickFilter;
   onQuickFilterChange?: (filter: QuickFilter) => void;
 }
@@ -21,7 +22,7 @@ interface GroupWithPriority extends Group {
   priorityInfo: PriorityInfo;
 }
 
-export function GroupList({ groups = [], onEdit, onDelete, activeQuickFilter, onQuickFilterChange }: GroupListProps) {
+export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuickFilter, onQuickFilterChange }: GroupListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [renterSearch, setRenterSearch] = useState('');
   const [nichoFilter, setNichoFilter] = useState('Todos');
@@ -33,6 +34,26 @@ export function GroupList({ groups = [], onEdit, onDelete, activeQuickFilter, on
   const [sortField, setSortField] = useState<SortField>('data_vencimento');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [processingAction, setProcessingAction] = useState<{ id: string, field: 'perfil' | 'shopee' } | null>(null);
+
+  const handleToggleField = async (group: Group, field: 'perfil' | 'shopee') => {
+    if (!onUpdate || processingAction) return;
+
+    const groupField = field === 'perfil' ? 'perfil_compartilhando' : 'uso_shopee';
+    const currentValue = group[groupField] || 'Inativo';
+    const newValue = currentValue === 'Ativo' ? 'Inativo' : 'Ativo';
+
+    setProcessingAction({ id: group.id, field });
+
+    try {
+      await onUpdate(group.id, { [groupField]: newValue });
+    } catch (error) {
+      console.error(`Erro ao atualizar ${field}:`, error);
+      alert(`Erro ao atualizar ${field === 'perfil' ? 'Perfil' : 'Shopee'}. Tente novamente.`);
+    } finally {
+      setProcessingAction(null);
+    }
+  };
 
   if (!Array.isArray(groups)) {
     return (
@@ -371,14 +392,40 @@ export function GroupList({ groups = [], onEdit, onDelete, activeQuickFilter, on
                       </td>
                       <td className="px-8 py-8">
                         <div className="flex flex-col gap-2.5 items-center justify-center">
-                           <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 w-full max-w-[120px] justify-between">
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Post</span>
-                              <div className={cn("w-2 h-2 rounded-full", group.perfil_compartilhando === 'Ativo' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-rose-400")} />
-                           </div>
-                           <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 w-full max-w-[120px] justify-between">
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Shop</span>
-                              <div className={cn("w-2 h-2 rounded-full", group.uso_shopee === 'Ativo' ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" : "bg-slate-200")} />
-                           </div>
+                           <button 
+                            onClick={() => handleToggleField(group, 'perfil')}
+                            disabled={!!processingAction}
+                            title={group.perfil_compartilhando === 'Ativo' ? "Perfil Ativo - Clique para Desativar" : "Perfil Inativo - Clique para Ativar"}
+                            className="group/btn flex items-center gap-2 bg-slate-50 hover:bg-white px-3 py-1.5 rounded-xl border border-slate-100 hover:border-emerald-200 transition-all w-full max-w-[120px] justify-between shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                           >
+                              <span className="text-[9px] font-black text-slate-400 group-hover/btn:text-emerald-600 uppercase tracking-widest">Post</span>
+                              {processingAction?.id === group.id && processingAction?.field === 'perfil' ? (
+                                <Loader2 className="w-2 h-2 text-emerald-500 animate-spin" />
+                              ) : (
+                                <div className={cn("w-2 h-2 rounded-full transition-all", 
+                                  group.perfil_compartilhando === 'Ativo' 
+                                    ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" 
+                                    : "bg-rose-400"
+                                )} />
+                              )}
+                           </button>
+                           <button 
+                            onClick={() => handleToggleField(group, 'shopee')}
+                            disabled={!!processingAction}
+                            title={group.uso_shopee === 'Ativo' ? "Shopee Ativo - Clique para Desativar" : "Shopee Inativo - Clique para Ativar"}
+                            className="group/btn flex items-center gap-2 bg-slate-50 hover:bg-white px-3 py-1.5 rounded-xl border border-slate-100 hover:border-blue-200 transition-all w-full max-w-[120px] justify-between shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                           >
+                              <span className="text-[9px] font-black text-slate-400 group-hover/btn:text-blue-600 uppercase tracking-widest">Shop</span>
+                              {processingAction?.id === group.id && processingAction?.field === 'shopee' ? (
+                                <Loader2 className="w-2 h-2 text-blue-500 animate-spin" />
+                              ) : (
+                                <div className={cn("w-2 h-2 rounded-full transition-all", 
+                                  group.uso_shopee === 'Ativo' 
+                                    ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" 
+                                    : "bg-slate-200"
+                                )} />
+                              )}
+                           </button>
                         </div>
                       </td>
                       <td className="px-8 py-8">
@@ -512,9 +559,37 @@ export function GroupList({ groups = [], onEdit, onDelete, activeQuickFilter, on
                           </div>
                           <div className="space-y-1.5 flex flex-col items-end">
                             <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Config</p>
-                            <div className="flex gap-1.5">
-                               <div className={cn("w-1.5 h-1.5 rounded-full", (group.perfil_compartilhando || 'Inativo') === 'Ativo' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" : "bg-rose-400")} />
-                               <div className={cn("w-1.5 h-1.5 rounded-full", (group.uso_shopee || 'Inativo') === 'Ativo' ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]" : "bg-slate-200")} />
+                             <div className="flex gap-2">
+                               <button 
+                                onClick={(e) => { e.stopPropagation(); handleToggleField(group, 'perfil'); }}
+                                disabled={!!processingAction}
+                                className="relative active:scale-90 transition-transform p-1 -m-1"
+                               >
+                                 <div className={cn("w-4 h-4 rounded-full flex items-center justify-center transition-all", 
+                                   (group.perfil_compartilhando || 'Inativo') === 'Ativo' 
+                                     ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" 
+                                     : "bg-rose-400"
+                                 )}>
+                                   {processingAction?.id === group.id && processingAction?.field === 'perfil' && (
+                                     <Loader2 className="w-2 h-2 text-white animate-spin" />
+                                   )}
+                                 </div>
+                               </button>
+                               <button 
+                                onClick={(e) => { e.stopPropagation(); handleToggleField(group, 'shopee'); }}
+                                disabled={!!processingAction}
+                                className="relative active:scale-90 transition-transform p-1 -m-1"
+                               >
+                                 <div className={cn("w-4 h-4 rounded-full flex items-center justify-center transition-all", 
+                                   (group.uso_shopee || 'Inativo') === 'Ativo' 
+                                     ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]" 
+                                     : "bg-slate-200"
+                                 )}>
+                                   {processingAction?.id === group.id && processingAction?.field === 'shopee' && (
+                                     <Loader2 className="w-2 h-2 text-white animate-spin" />
+                                   )}
+                                 </div>
+                               </button>
                             </div>
                           </div>
                         </div>

@@ -123,6 +123,7 @@ export default function App() {
                 groups={groups} 
                 onEdit={handleEdit} 
                 onDelete={deleteGroup} 
+                onUpdate={updateGroup}
                 activeQuickFilter={activeFilter}
                 onQuickFilterChange={setActiveFilter}
               />
