@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Group, QuickFilter } from '@/src/types';
-import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList } from 'lucide-react';
+import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, exportToCSV, ensureAbsoluteUrl, parseMembers } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { ptBR } from 'date-fns/locale';
 import { MemberReviewModal } from './MemberReviewModal';
+import { PostTodayModal } from './PostTodayModal';
+import { GenerateCopyModal } from './GenerateCopyModal';
 
 interface GroupListProps {
   groups: Group[];
@@ -36,6 +38,8 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isPostTodayModalOpen, setIsPostTodayModalOpen] = useState(false);
+  const [isGenerateCopyModalOpen, setIsGenerateCopyModalOpen] = useState(false);
   const [processingAction, setProcessingAction] = useState<{ id: string, field: 'perfil' | 'shopee' | 'nicho' | 'membros' } | null>(null);
   const [editingMembersId, setEditingMembersId] = useState<string | null>(null);
   const [membersInputValue, setMembersInputValue] = useState('');
@@ -111,12 +115,22 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
     }
   };
 
-  if (!Array.isArray(groups)) {
-    return (
-      <div className="bg-white p-12 rounded-[2rem] border border-dashed border-gray-200 text-center">
-        <p className="text-gray-400 font-medium italic">Erro ao carregar dados dos grupos. Por favor, recarregue a página.</p>
-      </div>
-    );
+  if (!Array.isArray(groups) || groups.length === 0) {
+    if (!activeQuickFilter || activeQuickFilter === 'all') {
+      return (
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-4 opacity-50">
+            <div className="flex-1 h-16 bg-slate-100 rounded-3xl animate-pulse" />
+            <div className="flex-1 h-16 bg-slate-100 rounded-3xl animate-pulse" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="h-48 bg-slate-50 rounded-[2.5rem] border border-slate-100 animate-pulse" />
+            ))}
+          </div>
+        </div>
+      );
+    }
   }
 
   const niches = ['Todos', ...Array.from(new Set((groups || []).map(g => g?.nicho || 'Geral')))].sort();
@@ -339,19 +353,35 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
             />
             
             <button 
-              onClick={() => exportToCSV(filteredGroups, `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`)}
-              className="h-12 lg:h-14 flex items-center justify-center gap-2 px-6 bg-white border border-slate-100 rounded-xl md:rounded-2xl shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:border-emerald-200 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
+              onClick={() => setIsReviewModalOpen(true)}
+              className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-slate-50 text-slate-600 rounded-xl md:rounded-2xl border border-slate-100 hover:border-blue-200 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-white active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
             >
-              <Download className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform shrink-0" />
-              <span className="truncate">Exportar CSV</span>
+              <ClipboardList className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform shrink-0" />
+              <span className="truncate">Revisar</span>
             </button>
 
             <button 
-              onClick={() => setIsReviewModalOpen(true)}
-              className="h-12 lg:h-14 flex items-center justify-center gap-2 px-6 bg-slate-900 text-white rounded-xl md:rounded-2xl shadow-lg shadow-slate-200 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
+              onClick={() => setIsPostTodayModalOpen(true)}
+              className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-slate-900 text-white rounded-xl md:rounded-2xl shadow-lg shadow-slate-200 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
             >
-              <ClipboardList className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
-              <span className="truncate">Revisar Membros</span>
+              <Trophy className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
+              <span className="truncate">Postar Hoje</span>
+            </button>
+
+            <button 
+              onClick={() => setIsGenerateCopyModalOpen(true)}
+              className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-white border border-slate-100 rounded-xl md:rounded-2xl shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 hover:border-indigo-200 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
+            >
+              <Wand2 className="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform shrink-0" />
+              <span className="truncate">Copys</span>
+            </button>
+
+            <button 
+              onClick={() => exportToCSV(filteredGroups, `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`)}
+              className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-white border border-slate-100 rounded-xl md:rounded-2xl shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:border-emerald-200 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
+            >
+              <Download className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform shrink-0" />
+              <span className="truncate">Exportar</span>
             </button>
           </div>
         </div>
@@ -510,6 +540,24 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                           )}>
                             {group.priorityInfo.prioridade}
                           </span>
+                          <span className={cn(
+                            "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border",
+                            group.quantidade_membros! >= 30000 && group.priorityInfo.score < 3 
+                              ? "bg-rose-100 text-rose-700 border-rose-200"
+                              : group.priorityInfo.score >= 8 
+                                ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                                : group.priorityInfo.score >= 4
+                                  ? "bg-blue-100 text-blue-700 border-blue-200"
+                                  : "bg-slate-100 text-slate-500 border-slate-200"
+                          )}>
+                            {group.quantidade_membros! >= 30000 && group.priorityInfo.score < 3 
+                              ? "Baixo Engajamento"
+                              : group.priorityInfo.score >= 8 
+                                ? "Alto Desempenho"
+                                : group.priorityInfo.score >= 4
+                                  ? "Médio Desempenho"
+                                  : "Baixo Desempenho"}
+                          </span>
                           <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest font-mono">
                             {group.priorityInfo.score} pts
                           </span>
@@ -637,6 +685,24 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                             </span>
                             <span className="text-[7px] md:text-[8px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 md:px-3 md:py-1 rounded-full border border-slate-100">
                                {group.priorityInfo?.score || 0} pts
+                            </span>
+                            <span className={cn(
+                              "text-[7px] md:text-[8px] font-black uppercase tracking-widest px-2 py-0.5 md:px-3 md:py-1 rounded-full border",
+                              group.quantidade_membros! >= 30000 && group.priorityInfo.score < 3 
+                                ? "bg-rose-100 text-rose-700 border-rose-200"
+                                : group.priorityInfo.score >= 8 
+                                  ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                                  : group.priorityInfo.score >= 4
+                                    ? "bg-blue-100 text-blue-700 border-blue-200"
+                                    : "bg-slate-100 text-slate-500 border-slate-200"
+                            )}>
+                              {group.quantidade_membros! >= 30000 && group.priorityInfo.score < 3 
+                                ? "Baixo Engaj."
+                                : group.priorityInfo.score >= 8 
+                                  ? "Alto Desem."
+                                  : group.priorityInfo.score >= 4
+                                    ? "Médio Desem."
+                                    : "Baixo Desem."}
                             </span>
                           </div>
                           <h4 className="text-sm md:text-xl font-black text-slate-900 leading-tight mb-1 md:mb-2 truncate" title={group.nome_grupo || ''}>{group.nome_grupo || 'Sem Nome'}</h4>
@@ -829,12 +895,24 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
       )}
 
       {onUpdate && (
-        <MemberReviewModal
-          isOpen={isReviewModalOpen}
-          onClose={() => setIsReviewModalOpen(false)}
-          groups={groups}
-          onUpdate={onUpdate}
-        />
+        <>
+          <MemberReviewModal
+            isOpen={isReviewModalOpen}
+            onClose={() => setIsReviewModalOpen(false)}
+            groups={groups}
+            onUpdate={onUpdate}
+          />
+          <PostTodayModal
+            isOpen={isPostTodayModalOpen}
+            onClose={() => setIsPostTodayModalOpen(false)}
+            groups={groups}
+            onUpdate={onUpdate}
+          />
+          <GenerateCopyModal
+            isOpen={isGenerateCopyModalOpen}
+            onClose={() => setIsGenerateCopyModalOpen(false)}
+          />
+        </>
       )}
     </div>
   );

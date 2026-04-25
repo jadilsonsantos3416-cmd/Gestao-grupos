@@ -32,6 +32,7 @@ export interface Group {
   prioridade_postagem?: PriorityLevel;
   score_postagem?: number;
   ultima_revisao_membros?: string;
+  ultimo_post?: string;
 }
 
 export interface Renter {

@@ -13,31 +13,22 @@ export function calculatePriority(group: Partial<Group>): PriorityInfo {
   const shopeeAtivo = group?.uso_shopee === 'Ativo';
   const nicho = group?.nicho || '';
 
-  // Calculate Score
-  let score = 0;
+  // Calculate Score: (membros / 10000) + (perfil_ativo ? 5 : 0) + (shopee_ativo ? 5 : 0)
+  let score = (membros / 10000) + (perfilAtivo ? 5 : 0) + (shopeeAtivo ? 5 : 0);
   
-  if (membros >= 30000) score += 3;
-  else if (membros >= 20000) score += 2;
-  else if (membros >= 10000) score += 1;
-
-  if (perfilAtivo) score += 3;
-  if (shopeeAtivo) score += 3;
-
-  const priorityNiches = ["Evangélico", "Musa", "Beleza / Cabelo", "Receitas", "Agro / Notícias"];
-  if (priorityNiches.some(n => nicho.includes(n))) {
-    score += 2;
-  }
-
   // Calculate Priority Level
   let prioridade: PriorityLevel = 'Baixa';
 
-  if (membros >= 30000 || (perfilAtivo && shopeeAtivo)) {
+  if (score >= 10 || membros >= 50000) {
     prioridade = 'Alta';
-  } else if (membros >= 10000 || perfilAtivo || shopeeAtivo) {
+  } else if (score >= 5 || membros >= 20000) {
     prioridade = 'Média';
   } else {
     prioridade = 'Baixa';
   }
+
+  // Round score to 2 decimal places
+  score = Math.round(score * 100) / 100;
 
   return { prioridade, score };
 }

@@ -20,7 +20,8 @@ import {
   CheckCircle2,
   XCircle,
   Link2,
-  Sparkles
+  Sparkles,
+  Trophy
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -115,6 +116,92 @@ export function CampaignsPage({ groups }: CampaignsPageProps) {
               bg="bg-amber-50" 
             />
           </div>
+        </div>
+      </section>
+
+      {/* Ranking Section */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-100">
+                <Trophy className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight uppercase">Ranking de Performance</h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Melhores resultados por cliques</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {[...campaigns]
+              .sort((a, b) => (b.cliques || 0) - (a.cliques || 0))
+              .slice(0, 5)
+              .map((camp, idx) => (
+                <div key={camp.id} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-50 rounded-2xl hover:border-slate-200 transition-all">
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-xs font-black",
+                      idx === 0 ? "bg-amber-400 text-amber-900" :
+                      idx === 1 ? "bg-slate-200 text-slate-700" :
+                      idx === 2 ? "bg-orange-200 text-orange-800" : "bg-white text-slate-400"
+                    )}>
+                      {idx + 1}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900">{camp.nome_campanha}</h4>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase">{camp.grupo_nome || 'Múltiplos Grupos'}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-black text-slate-900 font-mono">{camp.cliques || 0}</p>
+                    <p className="text-[9px] text-blue-500 font-black uppercase tracking-widest">Cliques</p>
+                  </div>
+                </div>
+              ))}
+            {campaigns.length === 0 && (
+              <p className="text-center py-8 text-slate-300 font-bold italic text-sm">Nenhum dado disponível para ranking.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-[2.5rem] text-white flex flex-col justify-between relative overflow-hidden shadow-2xl shadow-blue-200">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <Sparkles className="w-32 h-32" />
+          </div>
+          <div className="relative z-10">
+            <h3 className="text-xl font-black uppercase tracking-tight mb-2">Melhor Desempenho</h3>
+            <p className="text-blue-100 text-xs font-medium leading-relaxed mb-8">Baseado no volume de cliques e taxa de conversão estimada.</p>
+            
+            {stats.top ? (
+              <div className="space-y-6">
+                <div>
+                  <p className="text-blue-200 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Campanha Líder</p>
+                  <p className="text-2xl font-black truncate">{stats.top.nome_campanha}</p>
+                </div>
+                <div className="flex gap-8">
+                  <div>
+                    <p className="text-blue-200 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Cliques</p>
+                    <p className="text-3xl font-black font-mono">{stats.top.cliques}</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-200 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Alcance</p>
+                    <p className="text-3xl font-black font-mono">100%</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-blue-200 font-bold italic">Sem campanhas ativas.</p>
+            )}
+          </div>
+
+          <button 
+            onClick={() => setIsFormOpen(true)}
+            className="mt-8 relative z-10 w-full py-4 bg-white text-blue-600 font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-xl hover:bg-blue-50 transition-all active:scale-95"
+          >
+            Escalar Resultados
+          </button>
         </div>
       </section>
 

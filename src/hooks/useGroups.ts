@@ -44,7 +44,8 @@ export function useGroups() {
           score_postagem: data.score_postagem,
           growth_tier: data.growth_tier,
           ai_analysis: data.ai_analysis,
-          ultima_revisao_membros: data.ultima_revisao_membros
+          ultima_revisao_membros: data.ultima_revisao_membros,
+          ultimo_post: data.ultimo_post
         };
         
         groupsData.push(normalizedGroup);

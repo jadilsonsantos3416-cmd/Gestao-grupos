@@ -33,6 +33,7 @@ export type GrupoData = {
   prioridade_postagem?: string;
   score_postagem?: number;
   ultima_revisao_membros?: string;
+  ultimo_post?: string;
 };
 
 const gruposRef = collection(db, "grupos");
@@ -126,6 +127,7 @@ export async function adicionarGrupo(grupo: GrupoData) {
     prioridade_postagem: priorityInfo.prioridade,
     score_postagem: priorityInfo.score,
     ultima_revisao_membros: grupo.ultima_revisao_membros || null,
+    ultimo_post: grupo.ultimo_post || null,
     updatedAt: serverTimestamp(),
   };
 
@@ -175,6 +177,7 @@ export async function atualizarGrupo(id: string, updates: Partial<GrupoData>) {
   }
   if (updates.observacoes !== undefined) payload.observacoes = updates.observacoes || "";
   if (updates.ultima_revisao_membros !== undefined) payload.ultima_revisao_membros = updates.ultima_revisao_membros || null;
+  if (updates.ultimo_post !== undefined) payload.ultimo_post = updates.ultimo_post || null;
 
   // Always recalculate priority on update if any relevant field changed
   const priorityInfo = calculatePriority({
