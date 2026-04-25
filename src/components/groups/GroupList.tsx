@@ -276,7 +276,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
         </div>
 
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 pb-4 md:pb-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:flex lg:flex-wrap xl:flex-nowrap gap-2 md:gap-3 w-full lg:w-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:flex xl:flex-wrap gap-2 md:gap-3 w-full">
             <FilterBadge 
               label="Nicho" 
               value={nichoFilter} 
@@ -311,10 +311,10 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
             
             <button 
               onClick={() => exportToCSV(filteredGroups, `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`)}
-              className="h-12 lg:h-14 flex items-center justify-center gap-2 px-6 bg-white border border-slate-100 rounded-xl md:rounded-2xl shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:border-emerald-200 active:scale-95 transition-all shrink-0 w-full lg:w-auto group"
+              className="h-12 lg:h-14 flex items-center justify-center gap-2 px-6 bg-white border border-slate-100 rounded-xl md:rounded-2xl shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:border-emerald-200 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
             >
               <Download className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform shrink-0" />
-              <span>Exportar CSV</span>
+              <span className="truncate">Exportar CSV</span>
             </button>
           </div>
         </div>
@@ -717,7 +717,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
 
 function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
   return (
-    <div className="flex items-center gap-2 md:gap-3 bg-white px-4 md:px-5 h-12 lg:h-14 rounded-xl md:rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 transition-all group shrink-0 w-full lg:w-auto">
+    <div className="flex items-center gap-2 md:gap-3 bg-white px-4 md:px-5 h-12 lg:h-14 rounded-xl md:rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 transition-all group w-full lg:w-auto xl:flex-1 min-w-[140px]">
       <Filter className="w-3 md:w-3.5 h-3 md:h-3.5 text-slate-300 group-hover:text-emerald-500 shrink-0" />
       <div className="flex items-center gap-1.5 md:gap-2 flex-1 min-w-0">
         <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none shrink-0">{label}:</span>
