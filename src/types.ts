@@ -31,6 +31,7 @@ export interface Group {
   ai_analysis?: string;
   prioridade_postagem?: PriorityLevel;
   score_postagem?: number;
+  ultima_revisao_membros?: string;
 }
 
 export interface Renter {

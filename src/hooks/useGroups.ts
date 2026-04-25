@@ -43,7 +43,8 @@ export function useGroups() {
           prioridade_postagem: data.prioridade_postagem,
           score_postagem: data.score_postagem,
           growth_tier: data.growth_tier,
-          ai_analysis: data.ai_analysis
+          ai_analysis: data.ai_analysis,
+          ultima_revisao_membros: data.ultima_revisao_membros
         };
         
         groupsData.push(normalizedGroup);

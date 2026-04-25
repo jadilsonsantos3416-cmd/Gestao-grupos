@@ -72,3 +72,24 @@ export function ensureAbsoluteUrl(link: string): string {
 
   return trimmedLink;
 }
+
+export function parseMembers(val: string): number {
+  if (!val) return 0;
+  
+  // Remove dots and replace comma with dots for parsing
+  let clean = val.toLowerCase().trim();
+  
+  // Check for "mil" or "k"
+  const isThousand = clean.includes('mil') || clean.includes('k');
+  clean = clean.replace(/mil|k|membros|seguidores/g, '').trim();
+
+  // Replace comma with dot for float parsing
+  clean = clean.replace(/\./g, '').replace(',', '.');
+  
+  let num = parseFloat(clean);
+  if (isNaN(num)) return 0;
+  
+  if (isThousand) num = num * 1000;
+  
+  return Math.floor(num);
+}

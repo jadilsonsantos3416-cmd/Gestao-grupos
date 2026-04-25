@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Group, QuickFilter } from '@/src/types';
-import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown } from 'lucide-react';
-import { cn, formatNumber, formatCurrency, exportToCSV, ensureAbsoluteUrl } from '@/src/lib/utils';
+import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList } from 'lucide-react';
+import { cn, formatNumber, formatCurrency, exportToCSV, ensureAbsoluteUrl, parseMembers } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { ptBR } from 'date-fns/locale';
+import { MemberReviewModal } from './MemberReviewModal';
 
 interface GroupListProps {
   groups: Group[];
@@ -34,7 +35,35 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [sortField, setSortField] = useState<SortField>('data_vencimento');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [processingAction, setProcessingAction] = useState<{ id: string, field: 'perfil' | 'shopee' | 'nicho' } | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [processingAction, setProcessingAction] = useState<{ id: string, field: 'perfil' | 'shopee' | 'nicho' | 'membros' } | null>(null);
+  const [editingMembersId, setEditingMembersId] = useState<string | null>(null);
+  const [membersInputValue, setMembersInputValue] = useState('');
+
+  const handleUpdateMembers = async (group: Group) => {
+    if (!onUpdate || processingAction) return;
+
+    const newCount = parseMembers(membersInputValue);
+    if (newCount === group.quantidade_membros) {
+      setEditingMembersId(null);
+      return;
+    }
+
+    setProcessingAction({ id: group.id, field: 'membros' });
+    setEditingMembersId(null);
+
+    try {
+      await onUpdate(group.id, { 
+        quantidade_membros: newCount,
+        updatedAt: new Date().toISOString() 
+      });
+    } catch (error) {
+      console.error(`Erro ao atualizar membros:`, error);
+      alert(`Erro ao atualizar quantidade de membros. Tente novamente.`);
+    } finally {
+      setProcessingAction(null);
+    }
+  };
 
   const defaultNiches = useMemo(() => [
     "Evangélico", "Fã / Música", "Fã / TV", "Musa", "Beleza / Cabelo", "Receitas", "Agro / Notícias", "Geral"
@@ -316,6 +345,14 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
               <Download className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform shrink-0" />
               <span className="truncate">Exportar CSV</span>
             </button>
+
+            <button 
+              onClick={() => setIsReviewModalOpen(true)}
+              className="h-12 lg:h-14 flex items-center justify-center gap-2 px-6 bg-slate-900 text-white rounded-xl md:rounded-2xl shadow-lg shadow-slate-200 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
+            >
+              <ClipboardList className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
+              <span className="truncate">Revisar Membros</span>
+            </button>
           </div>
         </div>
       </div>
@@ -413,12 +450,55 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                         </div>
                       </td>
                       <td className="px-8 py-8 text-center">
-                        <div className="flex flex-col items-center">
-                          <span className="text-xl font-black text-slate-900 font-mono tracking-tighter">
-                            {formatNumber(group.quantidade_membros)}
-                          </span>
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Membros</span>
-                        </div>
+                        {editingMembersId === group.id ? (
+                          <div className="flex flex-col items-center">
+                            <div className="flex items-center gap-2">
+                              <input
+                                autoFocus
+                                type="text"
+                                value={membersInputValue}
+                                onChange={(e) => setMembersInputValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleUpdateMembers(group);
+                                  if (e.key === 'Escape') setEditingMembersId(null);
+                                }}
+                                className="w-24 px-2 py-1 bg-white border-2 border-emerald-500 rounded-lg text-center text-sm font-black text-slate-900 focus:outline-none shadow-lg shadow-emerald-100"
+                              />
+                            </div>
+                            <div className="flex gap-2 mt-2">
+                              <button 
+                                onClick={() => handleUpdateMembers(group)}
+                                className="px-3 py-1 bg-emerald-500 text-white rounded-md text-[8px] font-black uppercase tracking-widest hover:bg-emerald-600 active:scale-90 transition-all"
+                              >
+                                Salvar
+                              </button>
+                              <button 
+                                onClick={() => setEditingMembersId(null)}
+                                className="px-3 py-1 bg-slate-100 text-slate-400 rounded-md text-[8px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                              >
+                                Sair
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div 
+                            onClick={() => {
+                              setEditingMembersId(group.id);
+                              setMembersInputValue(formatNumber(group.quantidade_membros || 0));
+                            }}
+                            className="flex flex-col items-center cursor-pointer group/membros-edit"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl font-black text-slate-900 font-mono tracking-tighter group-hover/membros-edit:text-emerald-600 transition-colors">
+                                {formatNumber(group.quantidade_membros)}
+                              </span>
+                              {processingAction?.id === group.id && processingAction?.field === 'membros' && (
+                                <Loader2 className="w-3 h-3 text-emerald-500 animate-spin" />
+                              )}
+                            </div>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Membros</span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-8 py-8 text-center">
                         <div className="flex flex-col items-center gap-2">
@@ -561,7 +641,43 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                           </div>
                           <h4 className="text-sm md:text-xl font-black text-slate-900 leading-tight mb-1 md:mb-2 truncate" title={group.nome_grupo || ''}>{group.nome_grupo || 'Sem Nome'}</h4>
                           <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                            <p className="text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-[0.15em]">{formatNumber(group.quantidade_membros || 0)} MEMBROS</p>
+                            {editingMembersId === group.id ? (
+                              <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-emerald-500 shadow-lg shadow-emerald-50">
+                                <input
+                                  autoFocus
+                                  type="text"
+                                  value={membersInputValue}
+                                  onChange={(e) => setMembersInputValue(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleUpdateMembers(group);
+                                    if (e.key === 'Escape') setEditingMembersId(null);
+                                  }}
+                                  onBlur={() => {
+                                    setTimeout(() => setEditingMembersId(null), 200);
+                                  }}
+                                  className="w-20 bg-transparent border-0 p-0 text-[10px] font-black uppercase tracking-wider focus:ring-0"
+                                />
+                                <button onClick={() => handleUpdateMembers(group)} className="text-emerald-500">
+                                  <ArrowUpDown className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingMembersId(group.id);
+                                  setMembersInputValue(formatNumber(group.quantidade_membros || 0));
+                                }}
+                                className="flex items-center gap-2 group/mobile-membros shrink-0"
+                              >
+                                <p className="text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-[0.15em] group-hover/mobile-membros:text-emerald-600 transition-colors">
+                                  {formatNumber(group.quantidade_membros || 0)} MEMBROS
+                                </p>
+                                {processingAction?.id === group.id && processingAction?.field === 'membros' && (
+                                  <Loader2 className="w-2.5 h-2.5 text-emerald-500 animate-spin" />
+                                )}
+                              </button>
+                            )}
                             
                             <div className="flex items-center gap-1 px-2 py-0.5 md:px-3 md:py-1 bg-slate-50 rounded-lg border border-slate-100 group/nicho-mobile relative">
                               <div className="w-1 h-1 rounded-full bg-slate-300" />
@@ -710,6 +826,15 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
             </div>
           </div>
         </div>
+      )}
+
+      {onUpdate && (
+        <MemberReviewModal
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          groups={groups}
+          onUpdate={onUpdate}
+        />
       )}
     </div>
   );

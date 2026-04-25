@@ -2,6 +2,7 @@ import {
   collection,
   addDoc,
   getDocs,
+  getDoc,
   query,
   where,
   updateDoc,
@@ -31,6 +32,7 @@ export type GrupoData = {
   observacoes?: string;
   prioridade_postagem?: string;
   score_postagem?: number;
+  ultima_revisao_membros?: string;
 };
 
 const gruposRef = collection(db, "grupos");
@@ -123,6 +125,7 @@ export async function adicionarGrupo(grupo: GrupoData) {
     observacoes: grupo.observacoes || "",
     prioridade_postagem: priorityInfo.prioridade,
     score_postagem: priorityInfo.score,
+    ultima_revisao_membros: grupo.ultima_revisao_membros || null,
     updatedAt: serverTimestamp(),
   };
 
@@ -136,6 +139,8 @@ export async function adicionarGrupo(grupo: GrupoData) {
 
 export async function atualizarGrupo(id: string, updates: Partial<GrupoData>) {
   const grupoRef = doc(db, "grupos", id);
+  const currentSnap = await getDoc(grupoRef);
+  const currentData = currentSnap.exists() ? currentSnap.data() : {};
 
   // If link is being updated, check for duplicates
   if (updates.link_grupo !== undefined) {
@@ -169,13 +174,14 @@ export async function atualizarGrupo(id: string, updates: Partial<GrupoData>) {
     payload.group_id = extractGroupId(linkLimpo);
   }
   if (updates.observacoes !== undefined) payload.observacoes = updates.observacoes || "";
+  if (updates.ultima_revisao_membros !== undefined) payload.ultima_revisao_membros = updates.ultima_revisao_membros || null;
 
   // Always recalculate priority on update if any relevant field changed
   const priorityInfo = calculatePriority({
-    quantidade_membros: payload.quantidade_membros ?? updates.quantidade_membros,
-    perfil_compartilhando: (payload.perfil_compartilhando ?? updates.perfil_compartilhando) as any,
-    uso_shopee: (payload.uso_shopee ?? updates.uso_shopee) as any,
-    nicho: payload.nicho ?? updates.nicho
+    quantidade_membros: payload.quantidade_membros ?? updates.quantidade_membros ?? currentData.quantidade_membros,
+    perfil_compartilhando: (payload.perfil_compartilhando ?? updates.perfil_compartilhando ?? currentData.perfil_compartilhando) as any,
+    uso_shopee: (payload.uso_shopee ?? updates.uso_shopee ?? currentData.uso_shopee) as any,
+    nicho: payload.nicho ?? updates.nicho ?? currentData.nicho
   });
   payload.prioridade_postagem = priorityInfo.prioridade;
   payload.score_postagem = priorityInfo.score;
