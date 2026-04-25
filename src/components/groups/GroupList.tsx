@@ -9,8 +9,6 @@ import { ptBR } from 'date-fns/locale';
 import { MemberReviewModal } from './MemberReviewModal';
 import { PostTodayModal } from './PostTodayModal';
 import { GenerateCopyModal } from './GenerateCopyModal';
-import { NichoFilter } from './NichoFilter';
-import { PriorityFilter } from './PriorityFilter';
 import { NichoModal } from './NichoModal';
 import { listarNichos } from '@/src/lib/nichosService';
 import { Nicho } from '@/src/types';
@@ -46,6 +44,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [isPostTodayModalOpen, setIsPostTodayModalOpen] = useState(false);
   const [isGenerateCopyModalOpen, setIsGenerateCopyModalOpen] = useState(false);
   const [isNichoModalOpen, setIsNichoModalOpen] = useState(false);
+  const [nichoModalInitialAdd, setNichoModalInitialAdd] = useState(false);
   const [nichos, setNichos] = useState<Nicho[]>([]);
   const [loadingNichos, setLoadingNichos] = useState(true);
   const [processingAction, setProcessingAction] = useState<{ id: string, field: 'perfil' | 'shopee' | 'nicho' | 'membros' } | null>(null);
@@ -56,10 +55,13 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
     loadNichos();
   }, []);
 
-  const loadNichos = async () => {
+  const loadNichos = async (newlyCreatedNicheName?: string) => {
     try {
       const data = await listarNichos();
       setNichos(data);
+      if (typeof newlyCreatedNicheName === 'string') {
+        setNichoFilter(newlyCreatedNicheName);
+      }
     } catch (error) {
       console.error("Erro ao carregar nichos:", error);
     } finally {
@@ -344,11 +346,19 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
 
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 pb-4 md:pb-6">
             <div className="grid grid-cols-2 md:grid-cols-3 xl:flex xl:flex-wrap gap-2 md:gap-3 w-full">
-              <NichoFilter 
+              <FilterBadge 
+                label="Nicho" 
                 value={nichoFilter} 
-                onChange={v => handleFilterChange(setNichoFilter, v)} 
-                nichos={nichos}
-                onManage={() => setIsNichoModalOpen(true)}
+                options={['Todos', ...allAvailableNiches, "+ CRIAR NOVO NICHO"]} 
+                onChange={v => {
+                  if (v === "+ CRIAR NOVO NICHO") {
+                    setNichoModalInitialAdd(true);
+                    setIsNichoModalOpen(true);
+                  } else {
+                    handleFilterChange(setNichoFilter, v);
+                  }
+                }}
+                isCapitalize
               />
               <FilterBadge 
                 label="Status" 
@@ -368,10 +378,12 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
               options={shopees} 
               onChange={v => handleFilterChange(setShopeeFilter, v)} 
             />
-            <PriorityFilter 
-              value={priorityFilter} 
-              onChange={v => handleFilterChange(setPriorityFilter, v)} 
-            />
+              <FilterBadge 
+                label="Prioridade" 
+                value={priorityFilter} 
+                options={priorities} 
+                onChange={v => handleFilterChange(setPriorityFilter, v)} 
+              />
             
             <button 
               onClick={() => setIsReviewModalOpen(true)}
@@ -935,9 +947,13 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
           />
           <NichoModal
             isOpen={isNichoModalOpen}
-            onClose={() => setIsNichoModalOpen(false)}
+            onClose={() => {
+              setIsNichoModalOpen(false);
+              setNichoModalInitialAdd(false);
+            }}
             nichos={nichos}
             onUpdate={loadNichos}
+            initialAddMode={nichoModalInitialAdd}
           />
         </>
       )}

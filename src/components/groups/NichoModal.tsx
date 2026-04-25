@@ -9,15 +9,28 @@ interface NichoModalProps {
   isOpen: boolean;
   onClose: () => void;
   nichos: Nicho[];
-  onUpdate: () => void;
+  onUpdate: (newName?: string) => void;
+  initialAddMode?: boolean;
 }
 
-export function NichoModal({ isOpen, onClose, nichos, onUpdate }: NichoModalProps) {
+export function NichoModal({ isOpen, onClose, nichos, onUpdate, initialAddMode }: NichoModalProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [nome, setNome] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen && initialAddMode) {
+      setIsAdding(true);
+      setEditingId(null);
+      setNome('');
+    } else if (isOpen) {
+      setIsAdding(false);
+      setEditingId(null);
+      setNome('');
+    }
+  }, [isOpen, initialAddMode]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,13 +42,15 @@ export function NichoModal({ isOpen, onClose, nichos, onUpdate }: NichoModalProp
     try {
       if (editingId) {
         await atualizarNicho(editingId, nome);
+        onUpdate();
       } else {
         await adicionarNicho(nome);
+        onUpdate(nome.trim());
       }
       setNome('');
       setEditingId(null);
       setIsAdding(false);
-      onUpdate();
+      onClose();
     } catch (err: any) {
       setError(err.message || "Erro ao salvar nicho");
     } finally {
