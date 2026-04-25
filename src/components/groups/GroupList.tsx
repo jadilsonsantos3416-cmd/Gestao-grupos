@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Group, QuickFilter } from '@/src/types';
-import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2 } from 'lucide-react';
+import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, exportToCSV, ensureAbsoluteUrl } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -34,7 +34,34 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [sortField, setSortField] = useState<SortField>('data_vencimento');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [processingAction, setProcessingAction] = useState<{ id: string, field: 'perfil' | 'shopee' } | null>(null);
+  const [processingAction, setProcessingAction] = useState<{ id: string, field: 'perfil' | 'shopee' | 'nicho' } | null>(null);
+
+  const defaultNiches = useMemo(() => [
+    "Evangélico", "Fã / Música", "Fã / TV", "Musa", "Beleza / Cabelo", "Receitas", "Agro / Notícias", "Geral"
+  ], []);
+
+  const allAvailableNiches = useMemo(() => {
+    const existingNiches = Array.from(new Set(groups.map(g => g.nicho))).filter(Boolean);
+    return Array.from(new Set([...defaultNiches, ...existingNiches])).sort();
+  }, [groups, defaultNiches]);
+
+  const handleUpdateNiche = async (group: Group, newNicho: string) => {
+    if (!onUpdate || processingAction || group.nicho === newNicho) return;
+
+    setProcessingAction({ id: group.id, field: 'nicho' });
+
+    try {
+      await onUpdate(group.id, { 
+        nicho: newNicho,
+        updatedAt: new Date().toISOString() 
+      });
+    } catch (error) {
+      console.error(`Erro ao atualizar nicho:`, error);
+      alert(`Erro ao atualizar nicho. Tente novamente.`);
+    } finally {
+      setProcessingAction(null);
+    }
+  };
 
   const handleToggleField = async (group: Group, field: 'perfil' | 'shopee') => {
     if (!onUpdate || processingAction) return;
@@ -362,7 +389,25 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                             )}
                             <div className="flex items-center gap-1.5">
                                <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
-                               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{group.nicho}</span>
+                               <div className="relative flex items-center gap-1 group/nicho-select min-w-[80px]">
+                                 {processingAction?.id === group.id && processingAction?.field === 'nicho' ? (
+                                   <Loader2 className="w-2.5 h-2.5 text-emerald-500 animate-spin" />
+                                 ) : (
+                                   <>
+                                     <select
+                                       value={group.nicho || 'Geral'}
+                                       onChange={(e) => handleUpdateNiche(group, e.target.value)}
+                                       disabled={!!processingAction}
+                                       className="appearance-none bg-transparent border-0 p-0 pr-4 text-[10px] text-slate-400 font-bold uppercase tracking-wider focus:ring-0 cursor-pointer hover:text-emerald-600 transition-colors w-full"
+                                     >
+                                       {allAvailableNiches.map(n => (
+                                         <option key={n} value={n}>{n}</option>
+                                       ))}
+                                     </select>
+                                     <ChevronDown className="w-2.5 h-2.5 absolute right-0 pointer-events-none text-slate-300 group-hover/nicho-select:text-emerald-400 transition-colors" />
+                                   </>
+                                 )}
+                               </div>
                             </div>
                           </div>
                         </div>
@@ -517,6 +562,28 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                           <h4 className="text-sm md:text-xl font-black text-slate-900 leading-tight mb-1 md:mb-2 truncate" title={group.nome_grupo || ''}>{group.nome_grupo || 'Sem Nome'}</h4>
                           <div className="flex flex-wrap items-center gap-2 md:gap-4">
                             <p className="text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-[0.15em]">{formatNumber(group.quantidade_membros || 0)} MEMBROS</p>
+                            
+                            <div className="flex items-center gap-1 px-2 py-0.5 md:px-3 md:py-1 bg-slate-50 rounded-lg border border-slate-100 group/nicho-mobile relative">
+                              <div className="w-1 h-1 rounded-full bg-slate-300" />
+                              {processingAction?.id === group.id && processingAction?.field === 'nicho' ? (
+                                <Loader2 className="w-2.5 h-2.5 text-emerald-500 animate-spin" />
+                              ) : (
+                                <div className="relative flex items-center gap-1">
+                                  <select
+                                    value={group.nicho || 'Geral'}
+                                    onChange={(e) => handleUpdateNiche(group, e.target.value)}
+                                    disabled={!!processingAction}
+                                    className="appearance-none bg-transparent border-0 p-0 pr-3 text-[8px] md:text-[9px] text-slate-400 font-black uppercase tracking-wider focus:ring-0 cursor-pointer"
+                                  >
+                                    {allAvailableNiches.map(n => (
+                                      <option key={n} value={n}>{n}</option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown className="w-2.5 h-2.5 absolute right-0 pointer-events-none text-slate-300" />
+                                </div>
+                              )}
+                            </div>
+
                             {group.link_grupo && (
                               <a 
                                 href={ensureAbsoluteUrl(group.link_grupo)} 
