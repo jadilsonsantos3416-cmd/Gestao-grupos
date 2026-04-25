@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Shell } from '@/src/components/layout/Shell';
 import { Dashboard } from '@/src/components/dashboard/Dashboard';
 import { GroupList } from '@/src/components/groups/GroupList';
@@ -11,12 +11,15 @@ import { GrowthAnalysis } from '@/src/components/growth/GrowthAnalysis';
 import { CampaignsPage } from '@/src/components/campaigns/CampaignsPage';
 import { RedirectPage } from '@/src/components/campaigns/RedirectPage';
 import { ErrorBoundary } from '@/src/components/common/ErrorBoundary';
+import { SplashScreen } from '@/src/components/common/SplashScreen';
+import { DashboardSkeleton, GroupListSkeleton } from '@/src/components/common/Skeleton';
 import { useGroups } from '@/src/hooks/useGroups';
 import { Group, QuickFilter } from '@/src/types';
 import { AnimatePresence } from 'motion/react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showSplash, setShowSplash] = useState(true);
   const path = window.location.pathname;
   const isRedirect = path.startsWith('/l/');
 
@@ -26,6 +29,15 @@ export default function App() {
   const [isCleanupOpen, setIsCleanupOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const { groups, addGroup, updateGroup, deleteGroup, isLoaded } = useGroups();
+
+  useEffect(() => {
+    // Show splash for at least 1.5 seconds or until data is loaded
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSaveGroup = async (groupData: any) => {
     if (editingGroup) {
@@ -94,14 +106,16 @@ export default function App() {
     setIsFormOpen(true);
   };
 
-  if (!isLoaded) return null;
-
   if (isRedirect) {
     return <RedirectPage />;
   }
 
+  const isLoading = !isLoaded || showSplash;
+
   return (
     <ErrorBoundary>
+      <SplashScreen isVisible={showSplash} />
+      
       <Shell 
         activeTab={activeTab} 
         setActiveTab={setActiveTab}
@@ -112,42 +126,50 @@ export default function App() {
         onCleanupData={() => setIsCleanupOpen(true)}
       >
         <AnimatePresence mode="wait">
-          {activeTab === 'dashboard' && (
-            <ErrorBoundary>
-              <Dashboard groups={groups} />
-            </ErrorBoundary>
-          )}
-          {activeTab === 'groups' && (
-            <ErrorBoundary>
-              <GroupList 
-                groups={groups} 
-                onEdit={handleEdit} 
-                onDelete={deleteGroup} 
-                onUpdate={updateGroup}
-                activeQuickFilter={activeFilter}
-                onQuickFilterChange={setActiveFilter}
-              />
-            </ErrorBoundary>
-          )}
-          {activeTab === 'whatsapp' && (
-            <ErrorBoundary>
-              <WhatsAppTab groups={groups} />
-            </ErrorBoundary>
-          )}
-          {activeTab === 'ranking' && (
-            <ErrorBoundary>
-              <RankingPage groups={groups} activeFilter={activeFilter} />
-            </ErrorBoundary>
-          )}
-          {activeTab === 'growth' && (
-            <ErrorBoundary>
-              <GrowthAnalysis groups={groups} updateGroup={updateGroup} />
-            </ErrorBoundary>
-          )}
-          {activeTab === 'campaigns' && (
-            <ErrorBoundary>
-              <CampaignsPage groups={groups} />
-            </ErrorBoundary>
+          {isLoading ? (
+            <div key="loading">
+              {activeTab === 'dashboard' ? <DashboardSkeleton /> : <GroupListSkeleton />}
+            </div>
+          ) : (
+            <React.Fragment key="content">
+              {activeTab === 'dashboard' && (
+                <ErrorBoundary>
+                  <Dashboard groups={groups} />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'groups' && (
+                <ErrorBoundary>
+                  <GroupList 
+                    groups={groups} 
+                    onEdit={handleEdit} 
+                    onDelete={deleteGroup} 
+                    onUpdate={updateGroup}
+                    activeQuickFilter={activeFilter}
+                    onQuickFilterChange={setActiveFilter}
+                  />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'whatsapp' && (
+                <ErrorBoundary>
+                  <WhatsAppTab groups={groups} />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'ranking' && (
+                <ErrorBoundary>
+                  <RankingPage groups={groups} activeFilter={activeFilter} />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'growth' && (
+                <ErrorBoundary>
+                  <GrowthAnalysis groups={groups} updateGroup={updateGroup} />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'campaigns' && (
+                <ErrorBoundary>
+                  <CampaignsPage groups={groups} />
+                </ErrorBoundary>
+              )}
+            </React.Fragment>
           )}
         </AnimatePresence>
 

@@ -119,7 +119,7 @@ export function GenerateCopyModal({ isOpen, onClose, campaignLink }: GenerateCop
                 </div>
                 <div className={cn(
                   "w-10 h-10 rounded-xl flex items-center justify-center transition-all shrink-0",
-                  copiedIndex === index ? "bg-emerald-500 text-white" : "bg-white text-slate-400 shadow-sm border border-slate-100 group-hover:border-indigo-200 group-hover:text-indigo-500"
+                  copiedIndex === index ? "bg-primary text-white" : "bg-white text-slate-400 shadow-sm border border-slate-100 group-hover:border-indigo-200 group-hover:text-indigo-500"
                 )}>
                   {copiedIndex === index ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                 </div>

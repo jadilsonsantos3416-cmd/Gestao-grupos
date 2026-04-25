@@ -73,17 +73,17 @@ export function Dashboard({ groups = [] }: DashboardProps) {
   ].filter(item => item.count > 0);
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 pb-20">
+    <div className="space-y-8 md:space-y-12 animate-in fade-in duration-700 pb-20 p-2 md:p-0">
       {/* Header Section */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="p-2 bg-slate-900 rounded-lg">
+            <div className="p-2 bg-slate-900 rounded-lg shadow-lg shadow-slate-200">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Painel de Controle</h1>
+            <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Painel de Controle</h1>
           </div>
-          <p className="text-slate-400 font-medium uppercase tracking-[0.2em] text-[9px] ml-[44px]">Visão geral da performance</p>
+          <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[8px] md:text-[9px] ml-[44px]">Visão geral da performance</p>
         </div>
       </header>
 
@@ -270,7 +270,7 @@ export function Dashboard({ groups = [] }: DashboardProps) {
                       <div className="flex items-center gap-3">
                         <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{group.nicho}</span>
                         <div className="w-1 h-1 rounded-full bg-slate-100" />
-                        <span className="text-[10px] font-black text-emerald-600 font-mono">
+                        <span className="text-[10px] font-black text-primary font-mono">
                           {group.priorityInfo.score} pts
                         </span>
                       </div>
@@ -302,7 +302,7 @@ export function Dashboard({ groups = [] }: DashboardProps) {
       <section className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
         <div className="px-10 py-6 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            <ListChecks className="w-6 h-6 text-emerald-600" />
+            <ListChecks className="w-6 h-6 text-primary" />
             Checklist de Operação
           </h3>
           <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-300">Monitoramento Ativo</span>
@@ -357,7 +357,7 @@ export function Dashboard({ groups = [] }: DashboardProps) {
 
 function StatCard({ label, value, icon: Icon, color, subValue, onClick, isActive, ...props }: any) {
   const colors: any = {
-    green: "bg-emerald-50 text-emerald-600 border-emerald-100 ring-emerald-500",
+    green: "bg-green-50 text-primary border-green-100 ring-primary",
     blue: "bg-blue-50 text-blue-600 border-blue-100 ring-blue-500",
     gray: "bg-slate-50 text-slate-600 border-slate-100 ring-slate-500",
     orange: "bg-amber-50 text-amber-600 border-amber-100 ring-amber-500",
@@ -412,7 +412,7 @@ function StatCard({ label, value, icon: Icon, color, subValue, onClick, isActive
 
 function ChecklistItem({ title, status, description }: { title: string, status: 'success' | 'warning' | 'error' | 'info', description: string }) {
   const styles = {
-    success: "border-emerald-100 bg-emerald-50/20 text-emerald-700 shadow-sm",
+    success: "border-green-100 bg-green-50/20 text-accent shadow-sm",
     warning: "border-amber-100 bg-amber-50/20 text-amber-700 shadow-sm",
     error: "border-rose-100 bg-rose-50/20 text-rose-700 shadow-sm",
     info: "border-blue-100 bg-blue-50/20 text-blue-700 shadow-sm",
@@ -466,7 +466,7 @@ function NicheGrid({ groups }: { groups: Group[] }) {
             <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-2 md:gap-0">
               <div className="flex flex-col">
                 <span className="text-[8px] md:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 md:mb-1">Ocupação</span>
-                <span className="text-sm md:text-lg font-bold text-emerald-600 font-mono tracking-tighter">{stat.alugados} <span className="text-slate-300 text-[10px] md:text-xs font-medium">/ {stat.total}</span></span>
+                <span className="text-sm md:text-lg font-bold text-primary font-mono tracking-tighter">{stat.alugados} <span className="text-slate-300 text-[10px] md:text-xs font-medium">/ {stat.total}</span></span>
               </div>
               <div className="flex flex-col md:text-right">
                 <span className="text-[8px] md:text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 md:mb-1">Membros</span>
@@ -479,7 +479,7 @@ function NicheGrid({ groups }: { groups: Group[] }) {
                 initial={{ width: 0 }}
                 animate={{ width: `${(stat.alugados / stat.total) * 100}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
-                className="bg-gradient-to-r from-emerald-400 to-emerald-600 h-full rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]"
+                className="bg-primary h-full rounded-full shadow-[0_0_8px_rgba(22,163,74,0.3)]"
               />
             </div>
           </div>

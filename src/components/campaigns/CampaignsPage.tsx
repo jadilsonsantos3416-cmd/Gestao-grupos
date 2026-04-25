@@ -105,7 +105,7 @@ export function CampaignsPage({ groups }: CampaignsPageProps) {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mt-6 md:mt-10">
             <StatCard label="Total" value={stats.total} icon={History} color="text-slate-600" bg="bg-slate-50" />
-            <StatCard label="Ativas" value={stats.ativas} icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" />
+            <StatCard label="Ativas" value={stats.ativas} icon={CheckCircle2} color="text-primary" bg="bg-green-50" />
             <StatCard label="Cliques" value={stats.cliques} icon={MousePointerClick} color="text-blue-600" bg="bg-blue-50" />
             <StatCard 
               label="TOP" 
@@ -298,7 +298,7 @@ export function CampaignsPage({ groups }: CampaignsPageProps) {
                           onClick={() => copyToClipboard(`https://gestao-grupos.vercel.app/l/${camp.slug}`, camp.id)}
                           className={cn(
                             "p-3 rounded-xl transition-all shadow-sm",
-                            copySuccess === camp.id ? "bg-emerald-600 text-white shadow-emerald-200" : "bg-white text-slate-400 hover:text-blue-600 border border-slate-100 hover:border-blue-100"
+                            copySuccess === camp.id ? "bg-primary text-white shadow-green-200" : "bg-white text-slate-400 hover:text-blue-600 border border-slate-100 hover:border-blue-100"
                           )}
                         >
                           {copySuccess === camp.id ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -314,7 +314,7 @@ export function CampaignsPage({ groups }: CampaignsPageProps) {
                     <td className="px-8 py-8 text-center">
                       <span className={cn(
                         "text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-sm",
-                        camp.status === 'Ativa' ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-rose-50 text-rose-600 border border-rose-100"
+                        camp.status === 'Ativa' ? "bg-green-50 text-primary border border-green-100" : "bg-rose-50 text-rose-600 border border-rose-100"
                       )}>
                         {camp.status}
                       </span>

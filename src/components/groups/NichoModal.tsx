@@ -102,7 +102,7 @@ export function NichoModal({ isOpen, onClose, nichos, onUpdate, initialAddMode }
                   value={nome}
                   onChange={e => setNome(e.target.value)}
                   placeholder="Ex: Futebol, Novelas..."
-                  className="w-full bg-white border border-slate-200 px-5 py-4 rounded-2xl text-sm font-black text-slate-700 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-200 outline-none transition-all"
+                  className="w-full bg-white border border-slate-200 px-5 py-4 rounded-2xl text-sm font-black text-slate-700 focus:ring-4 focus:ring-green-50 focus:border-green-200 outline-none transition-all"
                 />
               </div>
               
@@ -117,7 +117,7 @@ export function NichoModal({ isOpen, onClose, nichos, onUpdate, initialAddMode }
                 <button 
                   type="submit"
                   disabled={isSaving || !nome.trim()}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-emerald-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 bg-primary hover:bg-accent text-white font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-green-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   {editingId ? 'Salvar Edição' : 'Criar Nicho'}
@@ -134,7 +134,7 @@ export function NichoModal({ isOpen, onClose, nichos, onUpdate, initialAddMode }
           ) : (
             <button 
               onClick={() => setIsAdding(true)}
-              className="w-full py-5 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 hover:border-emerald-300 hover:text-emerald-600 hover:bg-emerald-50/30 transition-all flex items-center justify-center gap-3 font-black text-[11px] uppercase tracking-[0.2em]"
+              className="w-full py-5 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 hover:border-emerald-300 hover:text-primary hover:bg-green-50/30 transition-all flex items-center justify-center gap-3 font-black text-[11px] uppercase tracking-[0.2em]"
             >
               <Plus className="w-5 h-5" />
               Adicionar Novo Nicho
@@ -145,11 +145,11 @@ export function NichoModal({ isOpen, onClose, nichos, onUpdate, initialAddMode }
             <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-widest ml-1 mb-4">Nichos Salvos ({nichos.length})</h3>
             <div className="grid grid-cols-1 gap-2">
               {nichos.map(nicho => (
-                <div key={nicho.id} className="group flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:border-emerald-100 hover:shadow-sm transition-all">
+                <div key={nicho.id} className="group flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:border-green-100 hover:shadow-sm transition-all">
                   <span className="text-sm font-black text-slate-700 capitalize">{nicho.nome}</span>
                   <button 
                     onClick={() => startEdit(nicho)}
-                    className="p-2.5 text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                    className="p-2.5 text-slate-300 hover:text-primary hover:bg-green-50 rounded-xl transition-all"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>

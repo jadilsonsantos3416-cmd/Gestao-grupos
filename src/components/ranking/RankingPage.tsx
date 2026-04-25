@@ -249,7 +249,7 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
                     onClick={copyToClipboard}
                     className={cn(
                       "flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md active:scale-95",
-                      isCopied ? "bg-emerald-600 text-white shadow-emerald-100" : "bg-slate-900 text-white hover:bg-slate-800"
+                      isCopied ? "bg-primary text-white shadow-green-100" : "bg-slate-900 text-white hover:bg-slate-800"
                     )}
                   >
                     {isCopied ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
@@ -266,7 +266,7 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
                     </h4>
                     <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Classificação baseada em alcance real e engajamento</p>
                   </div>
-                  <span className="shrink-0 self-start sm:self-center text-[10px] font-black bg-emerald-600 text-white px-6 py-2 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-100">
+                  <span className="shrink-0 self-start sm:self-center text-[10px] font-black bg-primary text-white px-6 py-2 rounded-full uppercase tracking-widest shadow-lg shadow-green-100">
                     🏆 Ranking Automático
                   </span>
                 </div>
@@ -322,7 +322,7 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
                           <td className="px-6 py-6">
                             <span className={cn(
                               "text-[9px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full inline-block shadow-sm ring-1 ring-white",
-                              group.prioridade === 'ALTA' ? "bg-emerald-500 text-white" :
+                              group.prioridade === 'ALTA' ? "bg-primary text-white" :
                               group.prioridade === 'MÉDIA' ? "bg-amber-400 text-amber-900" : "bg-slate-400 text-white"
                             )}>
                               {group.prioridade}

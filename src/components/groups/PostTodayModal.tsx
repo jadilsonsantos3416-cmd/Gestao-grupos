@@ -65,7 +65,7 @@ export function PostTodayModal({ isOpen, onClose, groups, onUpdate }: PostTodayM
         {/* Header */}
         <div className="p-6 md:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-200">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-green-200">
               <Trophy className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -92,7 +92,7 @@ export function PostTodayModal({ isOpen, onClose, groups, onUpdate }: PostTodayM
                 key={group.id}
                 className={cn(
                   "relative bg-white border rounded-[1.5rem] p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-300",
-                  isPostedToday ? "border-emerald-100/50 bg-emerald-50/20" : "border-slate-100 hover:border-slate-200"
+                  isPostedToday ? "border-green-100/50 bg-green-50/20" : "border-slate-100 hover:border-slate-200"
                 )}
               >
                 <div className="flex items-center gap-4 flex-1">
@@ -102,12 +102,12 @@ export function PostTodayModal({ isOpen, onClose, groups, onUpdate }: PostTodayM
                   <div className="min-w-0 flex-1">
                     <h4 className="text-sm font-black text-slate-900 truncate flex items-center gap-2">
                       {group.nome_grupo}
-                      {isPostedToday && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                      {isPostedToday && <CheckCircle2 className="w-3.5 h-3.5 text-primary" />}
                     </h4>
                     <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       <span>{formatNumber(group.quantidade_membros)} membros</span>
                       <span className="w-1 h-1 rounded-full bg-slate-200" />
-                      <span className="text-emerald-500">Score: {group.score_postagem}</span>
+                      <span className="text-primary">Score: {group.score_postagem}</span>
                     </div>
                   </div>
                 </div>
@@ -118,7 +118,7 @@ export function PostTodayModal({ isOpen, onClose, groups, onUpdate }: PostTodayM
                     className={cn(
                       "h-10 px-4 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 border",
                       copiedId === group.id 
-                        ? "bg-emerald-50 border-emerald-200 text-emerald-600" 
+                        ? "bg-green-50 border-green-200 text-primary" 
                         : "bg-white border-slate-100 text-slate-600 hover:border-slate-200"
                     )}
                   >
@@ -132,8 +132,8 @@ export function PostTodayModal({ isOpen, onClose, groups, onUpdate }: PostTodayM
                     className={cn(
                       "h-10 px-4 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95",
                       isPostedToday
-                        ? "bg-emerald-100 text-emerald-600 cursor-not-allowed"
-                        : "bg-slate-900 text-white hover:bg-emerald-600 shadow-md shadow-slate-200"
+                        ? "bg-green-100 text-primary cursor-not-allowed"
+                        : "bg-slate-900 text-white hover:bg-primary shadow-md shadow-slate-200"
                     )}
                   >
                     {loadingId === group.id ? (

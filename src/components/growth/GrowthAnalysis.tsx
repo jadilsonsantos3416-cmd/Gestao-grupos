@@ -465,7 +465,7 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
                       <div className="flex items-center justify-center gap-2">
                         <div className={cn(
                           "w-6 h-6 rounded-lg flex items-center justify-center border transition-colors",
-                          group.perfil_compartilhando === 'Ativo' ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-rose-50 border-rose-100 text-rose-600"
+                          group.perfil_compartilhando === 'Ativo' ? "bg-green-50 border-green-100 text-primary" : "bg-rose-50 border-rose-100 text-rose-600"
                         )}>
                           <UserCheck className="w-3.5 h-3.5" />
                         </div>
@@ -501,7 +501,7 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
                             className={cn(
                               "text-[9px] font-bold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-2 uppercase tracking-wide",
                               group.perfil_compartilhando === 'Ativo' && group.uso_shopee === 'Ativo'
-                                ? "bg-emerald-50/50 border-emerald-100 text-emerald-600 hover:bg-emerald-50"
+                                ? "bg-green-50/50 border-green-100 text-primary hover:bg-green-50"
                                 : "bg-slate-50/50 border-slate-100 text-slate-500 hover:bg-slate-50"
                             )}
                           >
@@ -522,10 +522,10 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
                              >
                                <span className="text-[9px] font-medium text-gray-600 uppercase">Perfil</span>
                                <div className="flex items-center gap-1.5">
-                                 <div className={cn("w-1.5 h-1.5 rounded-full", group.perfil_compartilhando === 'Ativo' ? "bg-emerald-500" : "bg-rose-400")} />
+                                 <div className={cn("w-1.5 h-1.5 rounded-full", group.perfil_compartilhando === 'Ativo' ? "bg-primary" : "bg-rose-400")} />
                                  <span className={cn(
                                    "text-[8px] font-bold",
-                                   group.perfil_compartilhando === 'Ativo' ? "text-emerald-700" : "text-rose-600"
+                                   group.perfil_compartilhando === 'Ativo' ? "text-accent" : "text-rose-600"
                                  )}>
                                    {group.perfil_compartilhando === 'Ativo' ? 'SIM' : 'NÃO'}
                                  </span>

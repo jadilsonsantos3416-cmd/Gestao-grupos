@@ -61,7 +61,7 @@ export function MemberReviewModal({ isOpen, onClose, groups, onUpdate }: MemberR
     const today = new Date();
     
     if (isSameDay(date, today)) {
-      return { label: 'Revisado Hoje', color: 'text-emerald-600', icon: CheckCircle2, bg: 'bg-emerald-50 border-emerald-100' };
+      return { label: 'Revisado Hoje', color: 'text-primary', icon: CheckCircle2, bg: 'bg-green-50 border-green-100' };
     }
     
     if (isSameWeek(date, today, { weekStartsOn: 0 })) {
@@ -93,7 +93,7 @@ export function MemberReviewModal({ isOpen, onClose, groups, onUpdate }: MemberR
         <div className="p-6 md:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-200">
+              <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-green-200">
                 <CheckCircle2 className="w-6 h-6 text-white" />
               </div>
               <h2 className="text-2xl font-black text-slate-900 tracking-tight">Revisar Membros</h2>
@@ -129,7 +129,7 @@ export function MemberReviewModal({ isOpen, onClose, groups, onUpdate }: MemberR
                   key={group.id}
                   className={cn(
                     "group relative bg-white border rounded-3xl p-5 md:p-6 transition-all duration-300",
-                    isEditing ? "border-emerald-500 shadow-xl shadow-emerald-50 ring-4 ring-emerald-50" : "border-slate-100 hover:border-slate-200 hover:shadow-md"
+                    isEditing ? "border-primary shadow-xl shadow-green-50 ring-4 ring-green-50" : "border-slate-100 hover:border-slate-200 hover:shadow-md"
                   )}
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -164,7 +164,7 @@ export function MemberReviewModal({ isOpen, onClose, groups, onUpdate }: MemberR
                             href={ensureAbsoluteUrl(group.link_grupo)} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-slate-300 hover:text-emerald-500 transition-colors"
+                            className="text-slate-300 hover:text-primary transition-colors"
                           >
                             <ExternalLink className="w-4 h-4" />
                           </a>
@@ -191,13 +191,13 @@ export function MemberReviewModal({ isOpen, onClose, groups, onUpdate }: MemberR
                             value={membersInput}
                             onChange={(e) => setMembersInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSave(group)}
-                            className="w-full md:w-36 px-4 py-3 bg-white border-2 border-emerald-500 rounded-2xl text-sm font-black text-slate-900 focus:outline-none shadow-lg shadow-emerald-50"
+                            className="w-full md:w-36 px-4 py-3 bg-white border-2 border-primary rounded-2xl text-sm font-black text-slate-900 focus:outline-none shadow-lg shadow-green-50"
                           />
                           <div className="flex gap-2">
                             <button 
                               onClick={() => handleSave(group)}
                               disabled={loadingId === group.id}
-                              className="flex-1 md:flex-none h-12 px-5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-200 transition-all active:scale-95 disabled:opacity-50"
+                              className="flex-1 md:flex-none h-12 px-5 bg-primary hover:bg-primary text-white rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-green-200 transition-all active:scale-95 disabled:opacity-50"
                             >
                               {loadingId === group.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                               Confirmar
@@ -216,7 +216,7 @@ export function MemberReviewModal({ isOpen, onClose, groups, onUpdate }: MemberR
                             setEditingId(group.id);
                             setMembersInput(formatNumber(group.quantidade_membros || 0));
                           }}
-                          className="w-full md:w-auto h-14 px-8 bg-slate-900 hover:bg-emerald-600 text-white rounded-[1.25rem] flex items-center justify-center gap-3 font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-slate-200 active:scale-95"
+                          className="w-full md:w-auto h-14 px-8 bg-slate-900 hover:bg-primary text-white rounded-[1.25rem] flex items-center justify-center gap-3 font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-slate-200 active:scale-95"
                         >
                           Atualizar Membros
                           <ChevronRight className="w-4 h-4" />

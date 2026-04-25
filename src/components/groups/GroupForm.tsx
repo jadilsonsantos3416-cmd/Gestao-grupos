@@ -382,7 +382,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                             className={cn(
                               "flex-1 py-2 rounded-xl border font-black text-[8px] uppercase tracking-widest transition-all",
                               formData.perfil_compartilhando === s 
-                                ? (s === 'Ativo' ? "bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-50" :
+                                ? (s === 'Ativo' ? "bg-primary border-primary text-white shadow-lg shadow-green-50" :
                                   "bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-50")
                                 : "border-slate-50 bg-slate-50/50 text-slate-400 hover:border-slate-100"
                             )}
@@ -488,7 +488,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                     type="date" 
                     value={formData.data_vencimento || ''}
                     onChange={e => setFormData({...formData, data_vencimento: e.target.value})}
-                    className="w-full bg-transparent border-0 focus:ring-0 p-0 text-xs font-black text-emerald-600"
+                    className="w-full bg-transparent border-0 focus:ring-0 p-0 text-xs font-black text-primary"
                   />
                 </FormField>
               </div>
@@ -504,7 +504,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                         setShowValorSuggestions(true);
                       }}
                       onFocus={() => setShowValorSuggestions(true)}
-                      className="w-full bg-transparent border-0 focus:ring-0 p-0 text-base font-black text-emerald-600 font-mono tracking-tighter"
+                      className="w-full bg-transparent border-0 focus:ring-0 p-0 text-base font-black text-primary font-mono tracking-tighter"
                       placeholder="0,00"
                     />
                   </FormField>
@@ -527,7 +527,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                             onClick={() => selectValor(v)}
                             className={cn(
                               "w-full px-6 py-4 text-left hover:bg-slate-50 border-b border-slate-50 last:border-0 font-mono text-sm font-black transition-colors",
-                              formData.valor === v ? "text-emerald-600 bg-emerald-50/50" : "text-slate-600"
+                              formData.valor === v ? "text-primary bg-green-50/50" : "text-slate-600"
                             )}
                           >
                             R$ {v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -569,7 +569,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
             disabled={isSaving}
             className={cn(
               "flex-[2] py-5 px-6 text-white font-black text-[10px] uppercase tracking-widest rounded-[2rem] shadow-2xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3",
-              isSaving ? "bg-slate-300 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200"
+              isSaving ? "bg-slate-300 cursor-not-allowed" : "bg-primary hover:bg-accent shadow-green-200"
             )}
           >
             {isSaving ? (
@@ -590,11 +590,11 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
 function FormField({ label, icon: Icon, children }: any) {
   return (
     <div className="relative group">
-      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block transition-colors group-focus-within:text-emerald-600">
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block transition-colors group-focus-within:text-primary">
         {label}
       </label>
-      <div className="flex items-center gap-4 px-5 py-4 bg-slate-50/50 rounded-2xl border-2 border-transparent transition-all group-focus-within:border-emerald-100 group-focus-within:bg-white group-focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-        <Icon className="w-5 h-5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+      <div className="flex items-center gap-4 px-5 py-4 bg-slate-50/50 rounded-2xl border-2 border-transparent transition-all group-focus-within:border-green-100 group-focus-within:bg-white group-focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <Icon className="w-5 h-5 text-slate-300 group-focus-within:text-primary transition-colors" />
         <div className="flex-1">
           {children}
         </div>

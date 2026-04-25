@@ -323,11 +323,11 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
       <div className="flex flex-col gap-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 w-4 h-4 md:w-5 md:h-5 transition-colors" />
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary w-4 h-4 md:w-5 md:h-5 transition-colors" />
             <input 
               type="text" 
               placeholder="Pesquisar por nome do grupo..."
-              className="w-full bg-white border border-slate-100 pl-12 md:pl-14 pr-6 py-3.5 md:py-5 rounded-2xl md:rounded-[2.5rem] shadow-sm focus:ring-4 focus:ring-emerald-50 focus:border-emerald-200 outline-none font-bold text-xs md:text-sm text-slate-600 placeholder:text-slate-300 transition-all"
+              className="w-full bg-white border border-slate-100 pl-12 md:pl-14 pr-6 py-3.5 md:py-5 rounded-2xl md:rounded-[2.5rem] shadow-sm focus:ring-4 focus:ring-green-50 focus:border-green-200 outline-none font-bold text-xs md:text-sm text-slate-600 placeholder:text-slate-300 transition-all"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
@@ -395,7 +395,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
 
             <button 
               onClick={() => setIsPostTodayModalOpen(true)}
-              className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-slate-900 text-white rounded-xl md:rounded-2xl shadow-lg shadow-slate-200 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
+              className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-slate-900 text-white rounded-xl md:rounded-2xl shadow-lg shadow-slate-200 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-primary active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
             >
               <Trophy className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
               <span className="truncate">Postar Hoje</span>
@@ -411,9 +411,9 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
 
             <button 
               onClick={() => exportToCSV(filteredGroups, `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`)}
-              className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-white border border-slate-100 rounded-xl md:rounded-2xl shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:border-emerald-200 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
+              className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-white border border-slate-100 rounded-xl md:rounded-2xl shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:border-green-200 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
             >
-              <Download className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform shrink-0" />
+              <Download className="w-4 h-4 text-primary group-hover:scale-110 transition-transform shrink-0" />
               <span className="truncate">Exportar</span>
             </button>
           </div>
@@ -449,7 +449,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                   <tr className="bg-slate-50/50">
                     <td colSpan={7} className="px-8 py-3">
                       <div className="flex items-center gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 capitalize">
                           Nicho: {nicho}
                         </span>
@@ -473,7 +473,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500" />
                         )}
                         <div className="flex flex-col max-w-[250px]">
-                          <span className="font-black text-slate-900 group-hover:text-emerald-600 transition-colors text-base truncate" title={group.nome_grupo}>
+                          <span className="font-black text-slate-900 group-hover:text-primary transition-colors text-base truncate" title={group.nome_grupo}>
                             {group.nome_grupo}
                           </span>
                           <div className="flex items-center gap-4 mt-2">
@@ -491,14 +491,14 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                                <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
                                <div className="relative flex items-center gap-1 group/nicho-select min-w-[80px]">
                                  {processingAction?.id === group.id && processingAction?.field === 'nicho' ? (
-                                   <Loader2 className="w-2.5 h-2.5 text-emerald-500 animate-spin" />
+                                   <Loader2 className="w-2.5 h-2.5 text-primary animate-spin" />
                                  ) : (
                                    <>
                                      <select
                                        value={group.nicho || 'Geral'}
                                        onChange={(e) => handleUpdateNiche(group, e.target.value)}
                                        disabled={!!processingAction}
-                                       className="appearance-none bg-transparent border-0 p-0 pr-4 text-[10px] text-slate-400 font-bold uppercase tracking-wider focus:ring-0 cursor-pointer hover:text-emerald-600 transition-colors w-full"
+                                       className="appearance-none bg-transparent border-0 p-0 pr-4 text-[10px] text-slate-400 font-bold uppercase tracking-wider focus:ring-0 cursor-pointer hover:text-primary transition-colors w-full"
                                      >
                                        {allAvailableNiches.map(n => (
                                          <option key={n} value={n}>{n}</option>
@@ -525,13 +525,13 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                                   if (e.key === 'Enter') handleUpdateMembers(group);
                                   if (e.key === 'Escape') setEditingMembersId(null);
                                 }}
-                                className="w-24 px-2 py-1 bg-white border-2 border-emerald-500 rounded-lg text-center text-sm font-black text-slate-900 focus:outline-none shadow-lg shadow-emerald-100"
+                                className="w-24 px-2 py-1 bg-white border-2 border-primary rounded-lg text-center text-sm font-black text-slate-900 focus:outline-none shadow-lg shadow-green-100"
                               />
                             </div>
                             <div className="flex gap-2 mt-2">
                               <button 
                                 onClick={() => handleUpdateMembers(group)}
-                                className="px-3 py-1 bg-emerald-500 text-white rounded-md text-[8px] font-black uppercase tracking-widest hover:bg-emerald-600 active:scale-90 transition-all"
+                                className="px-3 py-1 bg-primary text-white rounded-md text-[8px] font-black uppercase tracking-widest hover:bg-primary active:scale-90 transition-all"
                               >
                                 Salvar
                               </button>
@@ -552,11 +552,11 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                             className="flex flex-col items-center cursor-pointer group/membros-edit"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-xl font-black text-slate-900 font-mono tracking-tighter group-hover/membros-edit:text-emerald-600 transition-colors">
+                              <span className="text-xl font-black text-slate-900 font-mono tracking-tighter group-hover/membros-edit:text-primary transition-colors">
                                 {formatNumber(group.quantidade_membros)}
                               </span>
                               {processingAction?.id === group.id && processingAction?.field === 'membros' && (
-                                <Loader2 className="w-3 h-3 text-emerald-500 animate-spin" />
+                                <Loader2 className="w-3 h-3 text-primary animate-spin" />
                               )}
                             </div>
                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Membros</span>
@@ -578,7 +578,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                             group.quantidade_membros! >= 30000 && group.priorityInfo.score < 3 
                               ? "bg-rose-100 text-rose-700 border-rose-200"
                               : group.priorityInfo.score >= 8 
-                                ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                                ? "bg-green-100 text-accent border-green-200"
                                 : group.priorityInfo.score >= 4
                                   ? "bg-blue-100 text-blue-700 border-blue-200"
                                   : "bg-slate-100 text-slate-500 border-slate-200"
@@ -602,15 +602,15 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                             onClick={() => handleToggleField(group, 'perfil')}
                             disabled={!!processingAction}
                             title={group.perfil_compartilhando === 'Ativo' ? "Perfil Ativo - Clique para Desativar" : "Perfil Inativo - Clique para Ativar"}
-                            className="group/btn flex items-center gap-2 bg-slate-50 hover:bg-white px-3 py-1.5 rounded-xl border border-slate-100 hover:border-emerald-200 transition-all w-full max-w-[120px] justify-between shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="group/btn flex items-center gap-2 bg-slate-50 hover:bg-white px-3 py-1.5 rounded-xl border border-slate-100 hover:border-green-200 transition-all w-full max-w-[120px] justify-between shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                            >
-                              <span className="text-[9px] font-black text-slate-400 group-hover/btn:text-emerald-600 uppercase tracking-widest">Post</span>
+                              <span className="text-[9px] font-black text-slate-400 group-hover/btn:text-primary uppercase tracking-widest">Post</span>
                               {processingAction?.id === group.id && processingAction?.field === 'perfil' ? (
-                                <Loader2 className="w-2 h-2 text-emerald-500 animate-spin" />
+                                <Loader2 className="w-2 h-2 text-primary animate-spin" />
                               ) : (
                                 <div className={cn("w-2 h-2 rounded-full transition-all", 
                                   group.perfil_compartilhando === 'Ativo' 
-                                    ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" 
+                                    ? "bg-primary shadow-[0_0_8px_rgba(16,185,129,0.5)]" 
                                     : "bg-rose-400"
                                 )} />
                               )}
@@ -642,13 +642,13 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                               <div className="flex items-center gap-2 mt-1">
                                  <span className="text-[10px] text-slate-400 font-bold font-mono">{group.whatsapp}</span>
                                  <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                 <span className="text-[10px] font-black text-emerald-600 font-mono">{formatCurrency(group.valor)}</span>
+                                 <span className="text-[10px] font-black text-primary font-mono">{formatCurrency(group.valor)}</span>
                               </div>
                             </>
                           ) : (
                             <div className="flex items-center gap-2">
-                               <div className="w-2 h-2 rounded-full bg-emerald-100 animate-pulse" />
-                               <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] italic">Disponível</span>
+                               <div className="w-2 h-2 rounded-full bg-green-100 animate-pulse" />
+                               <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] italic">Disponível</span>
                             </div>
                           )}
                         </div>
@@ -660,7 +660,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                         <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
                           <button 
                             onClick={() => onEdit(group)}
-                            className="p-3 bg-white border border-slate-100 hover:border-emerald-200 rounded-2xl text-slate-400 hover:text-emerald-600 transition-all shadow-sm"
+                            className="p-3 bg-white border border-slate-100 hover:border-green-200 rounded-2xl text-slate-400 hover:text-primary transition-all shadow-sm"
                             title="Editar Grupo"
                           >
                             <Edit2 className="w-4 h-4" />
@@ -684,64 +684,39 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
       </div>
 
       {/* Mobile Card Layout */}
-      <div className="lg:hidden space-y-8 pb-20">
+      <div className="lg:hidden space-y-6 pb-20 p-1 md:p-0">
         {sortedNiches.map(nicho => (
-          <div key={nicho} className="space-y-4">
-            <h3 className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 flex items-center gap-2 ml-4">
-               <span className="w-1 h-1 rounded-full bg-emerald-500" />
+          <div key={nicho} className="space-y-3">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 flex items-center gap-2 ml-4 mb-2">
+               <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
                Nicho: {nicho || 'Geral'}
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {(groupedGroups[nicho] || []).map(group => (
                 <div key={group.id} className={cn(
-                  "bg-white p-4 md:p-8 rounded-2xl md:rounded-[3rem] border transition-all relative overflow-hidden",
-                  (group.perfil_compartilhando || 'Inativo') === 'Inativo' ? "border-rose-200 bg-rose-50/10 shadow-rose-50" : "border-slate-100 shadow-xl shadow-slate-100/50"
+                  "bg-white p-5 rounded-[2rem] border transition-all relative overflow-hidden active:scale-[0.98] group",
+                  (group.perfil_compartilhando || 'Inativo') === 'Inativo' ? "border-rose-100 bg-rose-50/5" : "border-slate-100 shadow-xl shadow-slate-100/40"
                 )}>
-                   {/* Priority Indicator */}
-                   <div className={cn(
-                     "absolute left-0 top-0 bottom-0 w-1.5 md:w-2",
-                     group.priorityInfo?.prioridade === 'Alta' ? "bg-rose-500" : 
-                     group.priorityInfo?.prioridade === 'Média' ? "bg-amber-500" : "bg-slate-200"
-                   )} />
-
-                   <div className="flex flex-col gap-4 md:gap-8">
-                     <div className="flex justify-between items-start">
-                       <div className="flex-1">
-                          <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2 md:mb-3">
+                   <div className="flex flex-col gap-4">
+                     <div className="flex justify-between items-start gap-4">
+                       <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-3">
                             <span className={cn(
-                              "text-[7px] md:text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 md:px-3 md:py-1 rounded-full",
-                              group.priorityInfo?.prioridade === 'Alta' ? "bg-rose-600 text-white shadow-lg shadow-rose-200" :
-                              group.priorityInfo?.prioridade === 'Média' ? "bg-amber-500 text-white shadow-lg shadow-amber-100" :
+                              "text-[8px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full",
+                              group.priorityInfo?.prioridade === 'Alta' ? "bg-rose-600 text-white" :
+                              group.priorityInfo?.prioridade === 'Média' ? "bg-amber-500 text-white" :
                               "bg-slate-100 text-slate-400"
                             )}>
                               {group.priorityInfo?.prioridade || 'Baixa'}
                             </span>
-                            <span className="text-[7px] md:text-[8px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 md:px-3 md:py-1 rounded-full border border-slate-100">
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-full border border-slate-100">
                                {group.priorityInfo?.score || 0} pts
                             </span>
-                            <span className={cn(
-                              "text-[7px] md:text-[8px] font-black uppercase tracking-widest px-2 py-0.5 md:px-3 md:py-1 rounded-full border",
-                              group.quantidade_membros! >= 30000 && group.priorityInfo.score < 3 
-                                ? "bg-rose-100 text-rose-700 border-rose-200"
-                                : group.priorityInfo.score >= 8 
-                                  ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                                  : group.priorityInfo.score >= 4
-                                    ? "bg-blue-100 text-blue-700 border-blue-200"
-                                    : "bg-slate-100 text-slate-500 border-slate-200"
-                            )}>
-                              {group.quantidade_membros! >= 30000 && group.priorityInfo.score < 3 
-                                ? "Baixo Engaj."
-                                : group.priorityInfo.score >= 8 
-                                  ? "Alto Desem."
-                                  : group.priorityInfo.score >= 4
-                                    ? "Médio Desem."
-                                    : "Baixo Desem."}
-                            </span>
                           </div>
-                          <h4 className="text-sm md:text-xl font-black text-slate-900 leading-tight mb-1 md:mb-2 truncate" title={group.nome_grupo || ''}>{group.nome_grupo || 'Sem Nome'}</h4>
-                          <div className="flex flex-wrap items-center gap-2 md:gap-4">
+                          <h4 className="text-base font-black text-slate-900 leading-tight mb-1 truncate" title={group.nome_grupo || ''}>{group.nome_grupo || 'Sem Nome'}</h4>
+                          <div className="flex items-center gap-3">
                             {editingMembersId === group.id ? (
-                              <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-emerald-500 shadow-lg shadow-emerald-50">
+                              <div className="flex items-center gap-2 bg-white px-2 py-0.5 rounded-lg border border-primary shadow-lg shadow-green-50">
                                 <input
                                   autoFocus
                                   type="text"
@@ -754,11 +729,8 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                                   onBlur={() => {
                                     setTimeout(() => setEditingMembersId(null), 200);
                                   }}
-                                  className="w-20 bg-transparent border-0 p-0 text-[10px] font-black uppercase tracking-wider focus:ring-0"
+                                  className="w-16 bg-transparent border-0 p-0 text-[10px] font-black focus:ring-0"
                                 />
-                                <button onClick={() => handleUpdateMembers(group)} className="text-emerald-500">
-                                  <ArrowUpDown className="w-3 h-3" />
-                                </button>
                               </div>
                             ) : (
                               <button 
@@ -767,122 +739,86 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                                   setEditingMembersId(group.id);
                                   setMembersInputValue(formatNumber(group.quantidade_membros || 0));
                                 }}
-                                className="flex items-center gap-2 group/mobile-membros shrink-0"
+                                className="text-[10px] text-slate-400 font-black uppercase tracking-widest hover:text-primary transition-colors"
                               >
-                                <p className="text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-[0.15em] group-hover/mobile-membros:text-emerald-600 transition-colors">
-                                  {formatNumber(group.quantidade_membros || 0)} MEMBROS
-                                </p>
-                                {processingAction?.id === group.id && processingAction?.field === 'membros' && (
-                                  <Loader2 className="w-2.5 h-2.5 text-emerald-500 animate-spin" />
-                                )}
+                                {formatNumber(group.quantidade_membros || 0)} MEMBROS
                               </button>
                             )}
-                            
-                            <div className="flex items-center gap-1 px-2 py-0.5 md:px-3 md:py-1 bg-slate-50 rounded-lg border border-slate-100 group/nicho-mobile relative">
-                              <div className="w-1 h-1 rounded-full bg-slate-300" />
-                              {processingAction?.id === group.id && processingAction?.field === 'nicho' ? (
-                                <Loader2 className="w-2.5 h-2.5 text-emerald-500 animate-spin" />
-                              ) : (
-                                <div className="relative flex items-center gap-1">
-                                  <select
-                                    value={group.nicho || 'Geral'}
-                                    onChange={(e) => handleUpdateNiche(group, e.target.value)}
-                                    disabled={!!processingAction}
-                                    className="appearance-none bg-transparent border-0 p-0 pr-3 text-[8px] md:text-[9px] text-slate-400 font-black uppercase tracking-wider focus:ring-0 cursor-pointer"
-                                  >
-                                    {allAvailableNiches.map(n => (
-                                      <option key={n} value={n}>{n}</option>
-                                    ))}
-                                  </select>
-                                  <ChevronDown className="w-2.5 h-2.5 absolute right-0 pointer-events-none text-slate-300" />
-                                </div>
-                              )}
-                            </div>
-
-                            {group.link_grupo && (
-                              <a 
-                                href={ensureAbsoluteUrl(group.link_grupo)} 
-                                target="_blank" 
-                                rel="noreferrer"
-                                className="text-[8px] md:text-[10px] text-blue-600 font-black uppercase tracking-widest flex items-center gap-1"
-                              >
-                                Link <ExternalLink className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                              </a>
-                            )}
+                            <div className="w-1 h-1 rounded-full bg-slate-200" />
+                            <ExpiryBadge dareStr={group.data_vencimento} status={group.status} />
                           </div>
                        </div>
-                       <div className="flex gap-2 shrink-0">
-                          <button onClick={() => onEdit(group)} className="p-2 md:p-4 bg-slate-50 text-slate-400 hover:text-emerald-600 rounded-xl md:rounded-[1.5rem] transition-colors"><Edit2 className="w-4 h-4 md:w-5 md:h-5" /></button>
+                       
+                       <div className="flex flex-col gap-2">
+                         <button 
+                           onClick={() => onEdit(group)}
+                           className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-100 hover:text-primary transition-all border border-slate-100"
+                         >
+                           <Edit2 className="w-4 h-4" />
+                         </button>
+                         <button 
+                           onClick={() => setConfirmDeleteId(group.id)}
+                           className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-100 hover:text-rose-600 transition-all border border-slate-100"
+                         >
+                           <Trash2 className="w-4 h-4" />
+                         </button>
                        </div>
                      </div>
 
-                     <div className="grid grid-cols-2 gap-4 md:gap-8 pt-4 md:pt-8 border-t border-slate-50">
-                        <div className="space-y-3">
-                          <div className="space-y-0.5">
-                            <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Locatário</p>
-                            <p className={cn(
-                              "text-xs md:text-sm font-black uppercase tracking-tight truncate",
-                              group.locatario ? "text-slate-900" : "text-emerald-500 italic"
-                            )}>
-                              {group.locatario || 'Disponível'}
-                            </p>
-                            {group.whatsapp && <p className="text-[9px] md:text-[10px] font-bold text-slate-300 font-mono">{group.whatsapp}</p>}
-                          </div>
-                          <div className="space-y-0.5">
-                            <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Custo</p>
-                            <p className="text-xs md:text-sm font-black font-mono text-emerald-600">{formatCurrency(group.valor || 0)}</p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3 text-right">
-                          <div className="space-y-0.5">
-                            <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Fim</p>
-                            <ExpiryBadge dareStr={group.data_vencimento || ''} status={group.status || 'Disponível'} compact />
-                          </div>
-                          <div className="space-y-1.5 flex flex-col items-end">
-                            <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Config</p>
-                             <div className="flex gap-2">
-                               <button 
-                                onClick={(e) => { e.stopPropagation(); handleToggleField(group, 'perfil'); }}
-                                disabled={!!processingAction}
-                                className="relative active:scale-90 transition-transform p-1 -m-1"
-                               >
-                                 <div className={cn("w-4 h-4 rounded-full flex items-center justify-center transition-all", 
-                                   (group.perfil_compartilhando || 'Inativo') === 'Ativo' 
-                                     ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" 
-                                     : "bg-rose-400"
-                                 )}>
-                                   {processingAction?.id === group.id && processingAction?.field === 'perfil' && (
-                                     <Loader2 className="w-2 h-2 text-white animate-spin" />
-                                   )}
-                                 </div>
-                               </button>
-                               <button 
-                                onClick={(e) => { e.stopPropagation(); handleToggleField(group, 'shopee'); }}
-                                disabled={!!processingAction}
-                                className="relative active:scale-90 transition-transform p-1 -m-1"
-                               >
-                                 <div className={cn("w-4 h-4 rounded-full flex items-center justify-center transition-all", 
-                                   (group.uso_shopee || 'Inativo') === 'Ativo' 
-                                     ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]" 
-                                     : "bg-slate-200"
-                                 )}>
-                                   {processingAction?.id === group.id && processingAction?.field === 'shopee' && (
-                                     <Loader2 className="w-2 h-2 text-white animate-spin" />
-                                   )}
-                                 </div>
-                               </button>
-                            </div>
-                          </div>
-                        </div>
+                     <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-50">
+                       <button 
+                         onClick={() => handleToggleField(group, 'perfil')}
+                         className={cn(
+                           "flex items-center justify-between px-4 py-3 rounded-2xl border transition-all",
+                           group.perfil_compartilhando === 'Ativo' 
+                             ? "bg-green-50 border-green-100 text-accent font-bold" 
+                             : "bg-slate-50 border-slate-100 text-slate-400"
+                         )}
+                       >
+                         <span className="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
+                         <div className={cn("w-2.5 h-2.5 rounded-full",
+                           group.perfil_compartilhando === 'Ativo' ? "bg-primary shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-slate-300"
+                         )} />
+                       </button>
+                       <button 
+                         onClick={() => handleToggleField(group, 'shopee')}
+                         className={cn(
+                           "flex items-center justify-between px-4 py-3 rounded-2xl border transition-all",
+                           group.uso_shopee === 'Ativo' 
+                             ? "bg-blue-50 border-blue-100 text-blue-700 font-bold" 
+                             : "bg-slate-50 border-slate-100 text-slate-400"
+                         )}
+                       >
+                         <span className="text-[9px] font-black uppercase tracking-widest text-center">Shopee</span>
+                         <div className={cn("w-2.5 h-2.5 rounded-full",
+                           group.uso_shopee === 'Ativo' ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" : "bg-slate-300"
+                         )} />
+                       </button>
                      </div>
 
-                     <button 
-                       onClick={() => setConfirmDeleteId(group.id)}
-                       className="w-full py-3 md:py-5 bg-rose-50 text-rose-600 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] rounded-xl md:rounded-2xl hover:bg-rose-600 hover:text-white transition-all border border-rose-100"
-                     >
-                       Remover Grupo
-                     </button>
+                     {group.locatario && (
+                       <div className="bg-slate-50 p-4 rounded-2xl flex items-center justify-between border border-slate-100">
+                         <div className="flex flex-col">
+                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Locatário</span>
+                           <span className="text-xs font-black text-slate-900 truncate max-w-[120px]">{group.locatario}</span>
+                         </div>
+                         <div className="flex flex-col text-right">
+                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Valor</span>
+                           <span className="text-xs font-black text-primary font-mono">{formatCurrency(group.valor)}</span>
+                         </div>
+                       </div>
+                     )}
+
+                     {group.link_grupo && (
+                        <a 
+                          href={ensureAbsoluteUrl(group.link_grupo)} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl hover:bg-primary transition-all shadow-xl shadow-slate-100"
+                        >
+                          Acessar Grupo <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                     )}
                    </div>
                 </div>
               ))}
@@ -890,9 +826,9 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
           </div>
         ))}
       </div>
-      
+
       {filteredGroups.length === 0 && (
-        <div className="bg-white p-12 rounded-[2rem] border border-dashed border-gray-200 text-center">
+        <div className="bg-white p-12 rounded-[2rem] border border-dashed border-gray-200 text-center mx-4 my-8">
           <p className="text-gray-400 font-medium italic">Nenhum grupo encontrado com os filtros atuais.</p>
         </div>
       )}
@@ -975,12 +911,12 @@ function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
       onClick={handleClick}
       className={cn(
         "flex items-center gap-2 md:gap-3 bg-white px-4 md:px-5 h-12 lg:h-14 rounded-xl md:rounded-2xl border transition-all group w-full lg:w-auto xl:flex-1 min-w-[140px] cursor-pointer outline-none relative",
-        value !== 'Todos' ? "border-emerald-200 bg-emerald-50/10 shadow-sm shadow-emerald-50" : "border-slate-100 shadow-sm hover:border-emerald-200"
+        value !== 'Todos' ? "border-green-200 bg-green-50/10 shadow-sm shadow-green-50" : "border-slate-100 shadow-sm hover:border-green-200"
       )}
     >
       <Filter className={cn(
         "w-3 md:w-3.5 h-3 md:h-3.5 shrink-0 transition-colors",
-        value !== 'Todos' ? "text-emerald-500" : "text-slate-300 group-hover:text-emerald-500"
+        value !== 'Todos' ? "text-primary" : "text-slate-300 group-hover:text-primary"
       )} />
       <div className="flex items-center gap-1.5 md:gap-2 flex-1 min-w-0 pointer-events-none">
         <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none shrink-0">{label}:</span>
@@ -993,7 +929,7 @@ function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
           }}
           onClick={e => e.stopPropagation()}
           className={cn(
-            "bg-transparent border-0 focus:ring-0 p-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 cursor-pointer w-full truncate pointer-events-auto pr-6",
+            "bg-transparent border-0 focus:ring-0 p-0 text-[10px] font-black uppercase tracking-widest text-primary cursor-pointer w-full truncate pointer-events-auto pr-6",
             isCapitalize && "capitalize"
           )}
         >

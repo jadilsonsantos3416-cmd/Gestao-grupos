@@ -166,7 +166,7 @@ export function CampaignForm({ onClose, onSave, editingCampaign, groups }: Campa
                       className={cn(
                         "flex-1 py-2.5 md:py-3 rounded-xl border font-black text-[8px] md:text-[9px] uppercase tracking-widest transition-all",
                         formData.status === s 
-                          ? (s === 'Ativa' ? "bg-emerald-600 border-emerald-600 text-white shadow-xl shadow-emerald-50" : "bg-rose-600 border-rose-600 text-white shadow-xl shadow-rose-50")
+                          ? (s === 'Ativa' ? "bg-primary border-primary text-white shadow-xl shadow-green-50" : "bg-rose-600 border-rose-600 text-white shadow-xl shadow-rose-50")
                           : "bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-200"
                       )}
                     >
@@ -181,7 +181,7 @@ export function CampaignForm({ onClose, onSave, editingCampaign, groups }: Campa
                    value={formData.slug || ''}
                    readOnly={!!editingCampaign}
                    onChange={e => setFormData({...formData, slug: e.target.value.replace(/[^a-zA-Z0-9]/g, '')})}
-                   className="w-full bg-transparent border-0 focus:ring-0 p-0 text-[10px] md:text-[11px] font-black uppercase tracking-widest text-emerald-600 placeholder:text-slate-200"
+                   className="w-full bg-transparent border-0 focus:ring-0 p-0 text-[10px] md:text-[11px] font-black uppercase tracking-widest text-primary placeholder:text-slate-200"
                    placeholder={editingCampaign ? formData.slug : "Automático"}
                  />
               </FormField>
@@ -214,7 +214,7 @@ export function CampaignForm({ onClose, onSave, editingCampaign, groups }: Campa
             disabled={isSaving}
             className={cn(
               "flex-[2] py-3.5 md:py-5 px-4 md:px-6 text-white font-black text-[9px] md:text-[10px] uppercase tracking-widest rounded-[2rem] shadow-2xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 md:gap-3",
-              isSaving ? "bg-slate-300 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200"
+              isSaving ? "bg-slate-300 cursor-not-allowed" : "bg-primary hover:bg-accent shadow-green-200"
             )}
           >
             {isSaving ? "Gravando..." : editingCampaign ? "Atualizar" : "Criar"}
@@ -228,14 +228,14 @@ export function CampaignForm({ onClose, onSave, editingCampaign, groups }: Campa
 function FormField({ label, icon: Icon, children, readOnly }: any) {
   return (
     <div className="relative group">
-      <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 md:mb-1.5 block transition-colors group-focus-within:text-emerald-600">
+      <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1 md:mb-1.5 block transition-colors group-focus-within:text-primary">
         {label}
       </label>
       <div className={cn(
-        "flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3 md:py-4 rounded-xl md:rounded-2xl border-2 transition-all group-focus-within:border-emerald-100 group-focus-within:bg-white group-focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+        "flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3 md:py-4 rounded-xl md:rounded-2xl border-2 transition-all group-focus-within:border-green-100 group-focus-within:bg-white group-focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
         readOnly ? "bg-slate-100 border-transparent opacity-70" : "bg-slate-50/50 border-transparent"
       )}>
-        <Icon className={cn("w-4 h-4 md:w-5 md:h-5 transition-colors", readOnly ? "text-slate-200" : "text-slate-300 group-focus-within:text-emerald-500")} />
+        <Icon className={cn("w-4 h-4 md:w-5 md:h-5 transition-colors", readOnly ? "text-slate-200" : "text-slate-300 group-focus-within:text-primary")} />
         <div className="flex-1">
           {children}
         </div>
