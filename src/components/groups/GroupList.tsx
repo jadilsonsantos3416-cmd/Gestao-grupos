@@ -275,8 +275,8 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
           </div>
         </div>
 
-        <div className="flex flex-col xl:flex-row items-center justify-between gap-6 pb-2">
-          <div className="flex gap-3 overflow-x-auto pb-4 xl:pb-0 w-full xl:w-auto no-scrollbar">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 pb-4 md:pb-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:flex lg:flex-wrap xl:flex-nowrap gap-2 md:gap-3 w-full lg:w-auto">
             <FilterBadge 
               label="Nicho" 
               value={nichoFilter} 
@@ -308,15 +308,15 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
               options={priorities} 
               onChange={v => handleFilterChange(setPriorityFilter, v)} 
             />
+            
+            <button 
+              onClick={() => exportToCSV(filteredGroups, `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`)}
+              className="h-12 lg:h-14 flex items-center justify-center gap-2 px-6 bg-white border border-slate-100 rounded-xl md:rounded-2xl shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:border-emerald-200 active:scale-95 transition-all shrink-0 w-full lg:w-auto group"
+            >
+              <Download className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform shrink-0" />
+              <span>Exportar CSV</span>
+            </button>
           </div>
-
-          <button 
-            onClick={() => exportToCSV(filteredGroups, `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`)}
-            className="w-full xl:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-white border border-slate-100 rounded-[2rem] shadow-sm text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:border-slate-200 active:scale-95 transition-all"
-          >
-            <Download className="w-4 h-4 text-emerald-600" />
-            Exportar CSV
-          </button>
         </div>
       </div>
 
@@ -717,21 +717,23 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
 
 function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
   return (
-    <div className="flex items-center gap-2 md:gap-3 bg-white px-3.5 md:px-5 py-2.5 md:py-4 rounded-[2rem] border border-slate-100 shadow-sm hover:border-emerald-200 transition-all group shrink-0">
-      <Filter className="w-3 md:w-3.5 h-3 md:h-3.5 text-slate-300 group-hover:text-emerald-500" />
-      <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{label}:</span>
-      <select 
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className={cn(
-          "bg-transparent border-0 focus:ring-0 p-0 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-emerald-600 cursor-pointer",
-          isCapitalize && "capitalize"
-        )}
-      >
-        {options.map((opt: string) => (
-          <option key={opt} value={opt} className={cn(isCapitalize && "capitalize")}>{opt}</option>
-        ))}
-      </select>
+    <div className="flex items-center gap-2 md:gap-3 bg-white px-4 md:px-5 h-12 lg:h-14 rounded-xl md:rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 transition-all group shrink-0 w-full lg:w-auto">
+      <Filter className="w-3 md:w-3.5 h-3 md:h-3.5 text-slate-300 group-hover:text-emerald-500 shrink-0" />
+      <div className="flex items-center gap-1.5 md:gap-2 flex-1 min-w-0">
+        <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none shrink-0">{label}:</span>
+        <select 
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className={cn(
+            "bg-transparent border-0 focus:ring-0 p-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 cursor-pointer w-full truncate",
+            isCapitalize && "capitalize"
+          )}
+        >
+          {options.map((opt: string) => (
+            <option key={opt} value={opt} className={cn(isCapitalize && "capitalize")}>{opt}</option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }
