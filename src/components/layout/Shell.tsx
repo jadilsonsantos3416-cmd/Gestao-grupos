@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, MessageSquare, Plus, Menu, X, Landmark, FileUp, Sparkles, Trophy, Brain, Megaphone } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquare, Plus, Menu, X, Landmark, FileUp, Sparkles, Trophy, Brain, Megaphone, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { QuickFilter } from '@/src/types';
@@ -26,6 +26,16 @@ export function Shell({
   onCleanupData
 }: ShellProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar_collapsed');
+    return saved === 'true';
+  });
+
+  const toggleSidebar = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    localStorage.setItem('sidebar_collapsed', String(newState));
+  };
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -55,20 +65,37 @@ export function Shell({
       </header>
 
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex flex-col w-72 bg-white border-r border-slate-200 sticky top-0 h-screen">
-        <div className="p-8 border-b border-slate-50">
+      <motion.aside 
+        initial={false}
+        animate={{ width: isCollapsed ? 80 : 288 }}
+        className="hidden md:flex flex-col bg-white border-r border-slate-200 sticky top-0 h-screen overflow-hidden group/sidebar"
+      >
+        <div className={cn("p-6 md:p-8 border-b border-slate-50 relative", isCollapsed && "px-4")}>
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-600 p-2.5 rounded-xl shadow-lg shadow-emerald-100">
+            <div className="bg-emerald-600 p-2.5 rounded-xl shadow-lg shadow-emerald-100 shrink-0">
               <Landmark className="w-6 h-6 text-white" />
             </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold text-xl tracking-tight leading-none text-slate-900">Grupos FB</span>
-              <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mt-1.5 whitespace-nowrap">Gestão de Grupos</span>
-            </div>
+            {!isCollapsed && (
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex flex-col"
+              >
+                <span className="font-extrabold text-xl tracking-tight leading-none text-slate-900">Grupos FB</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mt-1.5 whitespace-nowrap">Gestão de Grupos</span>
+              </motion.div>
+            )}
           </div>
+
+          <button 
+            onClick={toggleSidebar}
+            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-emerald-600 shadow-sm z-50 transition-colors opacity-0 group-hover/sidebar:opacity-100"
+          >
+            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </div>
 
-        <nav className="flex-1 p-6 space-y-1.5 pt-8">
+        <nav className={cn("flex-1 p-6 space-y-1.5 pt-8", isCollapsed && "p-3")}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -79,45 +106,66 @@ export function Shell({
                   setActiveTab(item.id);
                   setActiveFilter('all');
                 }}
+                title={isCollapsed ? item.label : ""}
                 className={cn(
-                  "w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-200 font-semibold text-sm",
+                  "w-full flex items-center transition-all duration-200 font-semibold text-sm",
+                  isCollapsed ? "justify-center p-3.5 rounded-xl" : "gap-3.5 px-4 py-3.5 rounded-2xl",
                   isActive 
                     ? "bg-slate-950 text-white shadow-md shadow-slate-200 scale-[1.02]" 
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 )}
               >
-                <Icon className={cn("w-5 h-5", isActive ? "text-emerald-400" : "text-slate-400")} />
-                {item.label}
+                <Icon className={cn("w-5 h-5 shrink-0", isActive ? "text-emerald-400" : "text-slate-400")} />
+                {!isCollapsed && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -5 }}
+                    animate={{ opacity: 1, x: 0 }}
+                  >
+                    {item.label}
+                  </motion.span>
+                )}
               </button>
             );
           })}
         </nav>
 
-        <div className="p-6 border-t border-slate-50 space-y-3">
+        <div className={cn("p-6 border-t border-slate-50 space-y-3", isCollapsed && "p-3")}>
           <button 
             onClick={onCleanupData}
-            className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:border-emerald-500 hover:text-emerald-700 font-bold py-3 rounded-2xl transition-all active:scale-95 text-xs shadow-sm"
+            title={isCollapsed ? "Faxina de Dados" : ""}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:border-emerald-500 hover:text-emerald-700 font-bold rounded-2xl transition-all active:scale-95 text-xs shadow-sm shadow-emerald-50/50",
+              isCollapsed ? "h-12 w-12 mx-auto rounded-xl" : "py-3"
+            )}
           >
-            <Sparkles className="w-4 h-4 text-emerald-500" />
-            Faxina de Dados
+            <Sparkles className={cn("text-emerald-500 shrink-0", isCollapsed ? "w-5 h-5" : "w-4 h-4")} />
+            {!isCollapsed && <span>Faxina de Dados</span>}
           </button>
           
           <button 
             onClick={onImportGroups}
-            className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold py-3 rounded-2xl transition-all active:scale-95 text-sm"
+            title={isCollapsed ? "Importar" : ""}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold rounded-2xl transition-all active:scale-95 text-sm",
+              isCollapsed ? "h-12 w-12 mx-auto rounded-xl" : "py-3"
+            )}
           >
-            <FileUp className="w-5 h-5 text-slate-400" />
-            Importar
+            <FileUp className={cn("text-slate-400 shrink-0", isCollapsed ? "w-6 h-6" : "w-5 h-5")} />
+            {!isCollapsed && <span>Importar</span>}
           </button>
           <button 
             onClick={onAddGroup}
-            className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-3xl shadow-xl shadow-emerald-100 transition-all active:scale-95 text-sm"
+            title={isCollapsed ? "Novo Grupo" : ""}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-[1.5rem] shadow-xl shadow-emerald-100 transition-all active:scale-95 text-sm",
+              isCollapsed ? "h-12 w-12 mx-auto rounded-xl" : "py-4 rounded-3xl"
+            )}
           >
-            <Plus className="w-5 h-5" />
-            Novo Grupo
+            <Plus className={cn("shrink-0", isCollapsed ? "w-6 h-6" : "w-5 h-5")} />
+            {!isCollapsed && <span>Novo Grupo</span>}
           </button>
         </div>
-      </aside>
+      </motion.aside>
 
       {/* Mobile Side Menu Backdrop */}
       <AnimatePresence>

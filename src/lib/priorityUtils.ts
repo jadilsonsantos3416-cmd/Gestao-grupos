@@ -37,8 +37,12 @@ export function getGroupPriority(group: Group): PriorityInfo {
   if (!group) return { prioridade: 'Baixa', score: 0 };
   
   if (group.prioridade_postagem && group.score_postagem !== undefined) {
+    // Normalizar para garantir que 'Media' vire 'Média' se vir do Firebase antigo ou inconsistente
+    let prioridade = group.prioridade_postagem as string;
+    if (prioridade === 'Media') prioridade = 'Média';
+    
     return {
-      prioridade: group.prioridade_postagem,
+      prioridade: prioridade as PriorityLevel,
       score: group.score_postagem
     };
   }

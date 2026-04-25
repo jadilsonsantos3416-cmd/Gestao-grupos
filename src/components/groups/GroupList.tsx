@@ -919,16 +919,40 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
 }
 
 function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
+  const selectRef = React.useRef<HTMLSelectElement>(null);
+
+  const handleClick = () => {
+    if (selectRef.current) {
+      selectRef.current.focus();
+      // On some mobile devices, we might need to trigger click to open
+      // selectRef.current.click(); 
+    }
+  };
+
   return (
-    <div className="flex items-center gap-2 md:gap-3 bg-white px-4 md:px-5 h-12 lg:h-14 rounded-xl md:rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 transition-all group w-full lg:w-auto xl:flex-1 min-w-[140px]">
-      <Filter className="w-3 md:w-3.5 h-3 md:h-3.5 text-slate-300 group-hover:text-emerald-500 shrink-0" />
-      <div className="flex items-center gap-1.5 md:gap-2 flex-1 min-w-0">
+    <div 
+      onClick={handleClick}
+      className={cn(
+        "flex items-center gap-2 md:gap-3 bg-white px-4 md:px-5 h-12 lg:h-14 rounded-xl md:rounded-2xl border transition-all group w-full lg:w-auto xl:flex-1 min-w-[140px] cursor-pointer outline-none ring-offset-2 focus-within:ring-2 focus-within:ring-emerald-100",
+        value !== 'Todos' ? "border-emerald-200 bg-emerald-50/10 shadow-sm shadow-emerald-50" : "border-slate-100 shadow-sm hover:border-emerald-200"
+      )}
+    >
+      <Filter className={cn(
+        "w-3 md:w-3.5 h-3 md:h-3.5 shrink-0 transition-colors",
+        value !== 'Todos' ? "text-emerald-500" : "text-slate-300 group-hover:text-emerald-500"
+      )} />
+      <div className="flex items-center gap-1.5 md:gap-2 flex-1 min-w-0 pointer-events-none">
         <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none shrink-0">{label}:</span>
         <select 
+          ref={selectRef}
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={e => {
+            e.stopPropagation();
+            onChange(e.target.value);
+          }}
+          onClick={e => e.stopPropagation()}
           className={cn(
-            "bg-transparent border-0 focus:ring-0 p-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 cursor-pointer w-full truncate",
+            "bg-transparent border-0 focus:ring-0 p-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 cursor-pointer w-full truncate pointer-events-auto",
             isCapitalize && "capitalize"
           )}
         >
