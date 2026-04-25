@@ -10,7 +10,8 @@ export function formatNumber(num: number | null | undefined): string {
   return new Intl.NumberFormat('pt-BR').format(num);
 }
 
-export function formatCurrency(num: number): string {
+export function formatCurrency(num: number | null | undefined): string {
+  if (num === null || num === undefined) return 'R$ 0,00';
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',

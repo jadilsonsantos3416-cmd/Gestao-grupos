@@ -20,11 +20,33 @@ export function useGroups() {
       const groupsData: Group[] = [];
       snapshot.forEach((doc) => {
         const data = doc.data();
-        groupsData.push({
-          ...data,
+        if (!data) return;
+
+        // Ensure all fields have fallbacks to prevent crashes in components
+        const normalizedGroup: Group = {
           id: doc.id,
+          group_id: data.group_id || "",
+          nome_grupo: data.nome_grupo || "Sem Nome",
+          link_grupo: data.link_grupo || "",
+          nicho: data.nicho || "Geral",
+          status: data.status || "Disponível",
+          perfil_compartilhando: data.perfil_compartilhando || "Inativo",
+          uso_shopee: data.uso_shopee || "Inativo",
+          locatario: data.locatario || "",
+          whatsapp: data.whatsapp || "",
+          data_inicio: data.data_inicio || "",
+          data_vencimento: data.data_vencimento || "",
+          valor: Number(data.valor) || 0,
+          quantidade_membros: data.quantidade_membros !== undefined ? Number(data.quantidade_membros) : 0,
+          observacoes: data.observacoes || "",
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt || new Date().toISOString(),
-        } as Group);
+          prioridade_postagem: data.prioridade_postagem,
+          score_postagem: data.score_postagem,
+          growth_tier: data.growth_tier,
+          ai_analysis: data.ai_analysis
+        };
+        
+        groupsData.push(normalizedGroup);
       });
       setGroups(groupsData);
       setIsLoaded(true);

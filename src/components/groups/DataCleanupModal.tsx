@@ -28,14 +28,20 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
   const [view, setView] = useState<'detect' | 'confirm'>('detect');
   
   const analyzedData = useMemo(() => {
+    if (!Array.isArray(groups)) return [];
     return groups.map(g => {
+      if (!g) return null;
+      
+      const groupName = g.nome_grupo || '';
+      const groupMembros = Number(g.quantidade_membros) || 0;
+
       // 1. Check for member patterns in the name
       // Match numbers like 50.000, 50k, 50 mil, etc.
       const membersRegex = /(\d+(?:[.,]\d+)?)\s*(mil|k|membros|seguidores)?\b/gi;
-      const matches = Array.from(g.nome_grupo.matchAll(membersRegex));
+      const matches = Array.from(groupName.matchAll(membersRegex));
       
-      let proposedName = g.nome_grupo;
-      let proposedMembers = g.quantidade_membros;
+      let proposedName = groupName;
+      let proposedMembers = groupMembros;
       let status: 'correct' | 'needs_fix' | 'manual' = 'correct';
 
       if (matches.length > 0) {
@@ -44,8 +50,8 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
         if (bestMatch) {
           const extractedVal = parseMembers(bestMatch[0]);
           // Only propose if extracted value is different from current or if units were used
-          if (extractedVal !== g.quantidade_membros || bestMatch[2]) {
-            proposedName = g.nome_grupo.replace(bestMatch[0], '').trim();
+          if (extractedVal !== groupMembros || bestMatch[2]) {
+            proposedName = groupName.replace(bestMatch[0], '').trim();
             // Remove trailing dashes/dots
             proposedName = proposedName.replace(/[-–—/]\s*$/g, '').trim();
             proposedMembers = extractedVal;
@@ -67,19 +73,19 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
       }
 
       // If it looks identical to original, it's correct
-      if (proposedName === g.nome_grupo && Object.is(proposedMembers, g.quantidade_membros)) {
+      if (proposedName === groupName && Object.is(proposedMembers, groupMembros)) {
         status = 'correct';
       }
 
       return {
         id: g.id,
-        originalName: g.nome_grupo,
-        originalMembers: g.quantidade_membros,
+        originalName: groupName,
+        originalMembers: groupMembros,
         proposedName,
         proposedMembers,
         status
       };
-    });
+    }).filter(item => item !== null) as CleanupItem[];
   }, [groups]);
 
   const toggleSelect = (id: string) => {

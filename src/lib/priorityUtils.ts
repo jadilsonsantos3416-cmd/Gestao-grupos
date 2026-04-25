@@ -8,10 +8,10 @@ export interface PriorityInfo {
 }
 
 export function calculatePriority(group: Partial<Group>): PriorityInfo {
-  const membros = Number(group.quantidade_membros) || 0;
-  const perfilAtivo = group.perfil_compartilhando === 'Ativo';
-  const shopeeAtivo = group.uso_shopee === 'Ativo';
-  const nicho = group.nicho || '';
+  const membros = Number(group?.quantidade_membros) || 0;
+  const perfilAtivo = group?.perfil_compartilhando === 'Ativo';
+  const shopeeAtivo = group?.uso_shopee === 'Ativo';
+  const nicho = group?.nicho || '';
 
   // Calculate Score
   let score = 0;
@@ -43,6 +43,8 @@ export function calculatePriority(group: Partial<Group>): PriorityInfo {
 }
 
 export function getGroupPriority(group: Group): PriorityInfo {
+  if (!group) return { prioridade: 'Baixa', score: 0 };
+  
   if (group.prioridade_postagem && group.score_postagem !== undefined) {
     return {
       prioridade: group.prioridade_postagem,

@@ -10,14 +10,17 @@ interface DashboardProps {
   groups: Group[];
 }
 
-export function Dashboard({ groups }: DashboardProps) {
+export function Dashboard({ groups = [] }: DashboardProps) {
   const [selectedPriority, setSelectedPriority] = useState<PriorityLevel | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const groupsWithPriority = useMemo(() => groups.map(g => ({
-    ...g,
-    priorityInfo: getGroupPriority(g)
-  })), [groups]);
+  const groupsWithPriority = useMemo(() => {
+    if (!Array.isArray(groups)) return [];
+    return groups.map(g => ({
+      ...g,
+      priorityInfo: getGroupPriority(g)
+    }));
+  }, [groups]);
 
   // Click outside listener
   useEffect(() => {
@@ -49,17 +52,17 @@ export function Dashboard({ groups }: DashboardProps) {
     total: groups.length,
     alugados: groups.filter(g => g.status === 'Alugado').length,
     disponiveis: groups.filter(g => g.status === 'Disponível').length,
-    vencemHoje: groups.filter(g => g.status === 'Alugado' && isToday(parseISO(g.data_vencimento))).length,
-    vencemAmanha: groups.filter(g => g.status === 'Alugado' && isTomorrow(parseISO(g.data_vencimento))).length,
-    vencidos: groups.filter(g => g.status === 'Alugado' && isPast(parseISO(g.data_vencimento)) && !isToday(parseISO(g.data_vencimento))).length,
-    totalMembros: groups.reduce((acc, g) => acc + (g.quantidade_membros || 0), 0),
+    vencemHoje: groups.filter(g => g.status === 'Alugado' && g.data_vencimento && isToday(parseISO(g.data_vencimento))).length,
+    vencemAmanha: groups.filter(g => g.status === 'Alugado' && g.data_vencimento && isTomorrow(parseISO(g.data_vencimento))).length,
+    vencidos: groups.filter(g => g.status === 'Alugado' && g.data_vencimento && isPast(parseISO(g.data_vencimento)) && !isToday(parseISO(g.data_vencimento))).length,
+    totalMembros: groups.reduce((acc, g) => acc + (Number(g.quantidade_membros) || 0), 0),
     perfilAtivo: groups.filter(g => g.perfil_compartilhando === 'Ativo').length,
     perfilInativo: groups.filter(g => g.perfil_compartilhando === 'Inativo' || !g.perfil_compartilhando).length,
     shopeeAtivo: groups.filter(g => g.uso_shopee === 'Ativo').length,
     shopeeInativo: groups.filter(g => g.uso_shopee === 'Inativo' || !g.uso_shopee).length,
-    priorityAlta: groupsWithPriority.filter(g => g.priorityInfo.prioridade === 'Alta').length,
-    priorityMedia: groupsWithPriority.filter(g => g.priorityInfo.prioridade === 'Média').length,
-    priorityBaixa: groupsWithPriority.filter(g => g.priorityInfo.prioridade === 'Baixa').length,
+    priorityAlta: groupsWithPriority.filter(g => g.priorityInfo?.prioridade === 'Alta').length,
+    priorityMedia: groupsWithPriority.filter(g => g.priorityInfo?.prioridade === 'Média').length,
+    priorityBaixa: groupsWithPriority.filter(g => g.priorityInfo?.prioridade === 'Baixa').length,
   };
 
   const alertItems = [
@@ -431,14 +434,14 @@ function ChecklistItem({ title, status, description }: { title: string, status: 
 }
 
 function NicheGrid({ groups }: { groups: Group[] }) {
-  const niches = Array.from(new Set(groups.map(g => g.nicho)));
+  const niches = Array.from(new Set(groups.map(g => g?.nicho || 'Geral')));
   const nicheStats = niches.map(nicho => {
-    const nicheGroups = groups.filter(g => g.nicho === nicho);
+    const nicheGroups = groups.filter(g => (g?.nicho || 'Geral') === nicho);
     return {
       nicho,
       total: nicheGroups.length,
       alugados: nicheGroups.filter(g => g.status === 'Alugado').length,
-      membros: nicheGroups.reduce((acc, g) => acc + (g.quantidade_membros || 0), 0),
+      membros: nicheGroups.reduce((acc, g) => acc + (Number(g.quantidade_membros) || 0), 0),
     };
   }).sort((a, b) => b.membros - a.membros);
 

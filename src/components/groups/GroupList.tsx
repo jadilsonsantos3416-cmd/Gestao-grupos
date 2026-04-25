@@ -21,7 +21,7 @@ interface GroupWithPriority extends Group {
   priorityInfo: PriorityInfo;
 }
 
-export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuickFilterChange }: GroupListProps) {
+export function GroupList({ groups = [], onEdit, onDelete, activeQuickFilter, onQuickFilterChange }: GroupListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [renterSearch, setRenterSearch] = useState('');
   const [nichoFilter, setNichoFilter] = useState('Todos');
@@ -34,9 +34,17 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const niches = ['Todos', ...Array.from(new Set(groups.map(g => g.nicho)))].sort();
+  if (!Array.isArray(groups)) {
+    return (
+      <div className="bg-white p-12 rounded-[2rem] border border-dashed border-gray-200 text-center">
+        <p className="text-gray-400 font-medium italic">Erro ao carregar dados dos grupos. Por favor, recarregue a página.</p>
+      </div>
+    );
+  }
+
+  const niches = ['Todos', ...Array.from(new Set((groups || []).map(g => g?.nicho || 'Geral')))].sort();
   const statuses = ['Todos', 'Alugado', 'Disponível'];
-  const renters = ['Todos', ...Array.from(new Set(groups.filter(g => g.locatario).map(g => g.locatario)))].sort();
+  const renters = ['Todos', ...Array.from(new Set((groups || []).filter(g => g?.locatario).map(g => g.locatario)))].sort();
   const perfis = ['Todos', 'Ativo', 'Inativo'];
   const shopees = ['Todos', 'Ativo', 'Inativo'];
 
@@ -46,10 +54,14 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
 
   // Add priority info to groups for sorting and filtering
   const groupsWithPriority = useMemo(() => {
-    return groups.map(g => ({
-      ...g,
-      priorityInfo: getGroupPriority(g)
-    })) as GroupWithPriority[];
+    if (!Array.isArray(groups)) return [];
+    return groups.map(g => {
+      if (!g) return null;
+      return {
+        ...g,
+        priorityInfo: getGroupPriority(g)
+      };
+    }).filter(g => g !== null) as GroupWithPriority[];
   }, [groups]);
 
   // Handle Quick Filters from Sidebar
@@ -108,21 +120,21 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
 
   const filteredGroups = groupsWithPriority
     .filter(g => 
-      g.nome_grupo.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      g.locatario.toLowerCase().includes(renterSearch.toLowerCase()) &&
-      (nichoFilter === 'Todos' || g.nicho === nichoFilter) &&
-      (statusFilter === 'Todos' || g.status === statusFilter) &&
-      (perfilFilter === 'Todos' || g.perfil_compartilhando === perfilFilter) &&
-      (shopeeFilter === 'Todos' || g.uso_shopee === shopeeFilter) &&
+      (g.nome_grupo || '').toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (g.locatario || '').toLowerCase().includes(renterSearch.toLowerCase()) &&
+      (nichoFilter === 'Todos' || (g.nicho || 'Geral') === nichoFilter) &&
+      (statusFilter === 'Todos' || (g.status || 'Disponível') === statusFilter) &&
+      (perfilFilter === 'Todos' || (g.perfil_compartilhando || 'Inativo') === perfilFilter) &&
+      (shopeeFilter === 'Todos' || (g.uso_shopee || 'Inativo') === shopeeFilter) &&
       (priorityFilter === 'Todos' || g.priorityInfo.prioridade === priorityFilter) &&
-      (renterFilter === 'Todos' || g.locatario === renterFilter) &&
-      (!onlyReadyForShopee || (g.perfil_compartilhando === 'Ativo' && g.uso_shopee === 'Ativo'))
+      (renterFilter === 'Todos' || (g.locatario || '') === renterFilter) &&
+      (!onlyReadyForShopee || ((g.perfil_compartilhando || 'Inativo') === 'Ativo' && (g.uso_shopee || 'Inativo') === 'Ativo'))
     )
     .sort((a, b) => {
       // Handle Sorting
       if (sortField === 'nome_grupo') {
-        const valA = a.nome_grupo.toLowerCase();
-        const valB = b.nome_grupo.toLowerCase();
+        const valA = (a.nome_grupo || '').toLowerCase();
+        const valB = (b.nome_grupo || '').toLowerCase();
         return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
       }
       
@@ -139,20 +151,20 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
       }
 
       if (sortField === 'prioridade') {
-        const valA = priorityOrder[a.priorityInfo.prioridade];
-        const valB = priorityOrder[b.priorityInfo.prioridade];
+        const valA = priorityOrder[a.priorityInfo?.prioridade || 'Baixa'];
+        const valB = priorityOrder[b.priorityInfo?.prioridade || 'Baixa'];
         return sortOrder === 'asc' ? valA - valB : valB - valA;
       }
 
       if (sortField === 'score') {
-        const valA = a.priorityInfo.score;
-        const valB = b.priorityInfo.score;
+        const valA = a.priorityInfo?.score || 0;
+        const valB = b.priorityInfo?.score || 0;
         return sortOrder === 'asc' ? valB - valA : valA - valB;
       }
 
       // Default grouping sort: Nicho
-      const nichoA = a.nicho.toLowerCase();
-      const nichoB = b.nicho.toLowerCase();
+      const nichoA = (a.nicho || 'Geral').toLowerCase();
+      const nichoB = (b.nicho || 'Geral').toLowerCase();
       if (nichoA < nichoB) return -1;
       if (nichoA > nichoB) return 1;
 
@@ -162,8 +174,8 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
       if (memB !== memA) return memB - memA;
 
       // Tertiary sort: Nome do Grupo
-      const nameA = a.nome_grupo.toLowerCase();
-      const nameB = b.nome_grupo.toLowerCase();
+      const nameA = (a.nome_grupo || '').toLowerCase();
+      const nameB = (b.nome_grupo || '').toLowerCase();
       return nameA.localeCompare(nameB);
     });
 
@@ -424,19 +436,19 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
           <div key={nicho} className="space-y-4">
             <h3 className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 flex items-center gap-2 ml-4">
                <span className="w-1 h-1 rounded-full bg-emerald-500" />
-               Nicho: {nicho}
+               Nicho: {nicho || 'Geral'}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-1">
-              {groupedGroups[nicho].map(group => (
+              {(groupedGroups[nicho] || []).map(group => (
                 <div key={group.id} className={cn(
                   "bg-white p-4 md:p-8 rounded-2xl md:rounded-[3rem] border transition-all relative overflow-hidden",
-                  group.perfil_compartilhando === 'Inativo' ? "border-rose-200 bg-rose-50/10 shadow-rose-50" : "border-slate-100 shadow-xl shadow-slate-100/50"
+                  (group.perfil_compartilhando || 'Inativo') === 'Inativo' ? "border-rose-200 bg-rose-50/10 shadow-rose-50" : "border-slate-100 shadow-xl shadow-slate-100/50"
                 )}>
                    {/* Priority Indicator */}
                    <div className={cn(
                      "absolute left-0 top-0 bottom-0 w-1.5 md:w-2",
-                     group.priorityInfo.prioridade === 'Alta' ? "bg-rose-500" : 
-                     group.priorityInfo.prioridade === 'Média' ? "bg-amber-500" : "bg-slate-200"
+                     group.priorityInfo?.prioridade === 'Alta' ? "bg-rose-500" : 
+                     group.priorityInfo?.prioridade === 'Média' ? "bg-amber-500" : "bg-slate-200"
                    )} />
 
                    <div className="flex flex-col gap-4 md:gap-8">
@@ -445,19 +457,19 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
                           <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2 md:mb-3">
                             <span className={cn(
                               "text-[7px] md:text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 md:px-3 md:py-1 rounded-full",
-                              group.priorityInfo.prioridade === 'Alta' ? "bg-rose-600 text-white shadow-lg shadow-rose-200" :
-                              group.priorityInfo.prioridade === 'Média' ? "bg-amber-500 text-white shadow-lg shadow-amber-100" :
+                              group.priorityInfo?.prioridade === 'Alta' ? "bg-rose-600 text-white shadow-lg shadow-rose-200" :
+                              group.priorityInfo?.prioridade === 'Média' ? "bg-amber-500 text-white shadow-lg shadow-amber-100" :
                               "bg-slate-100 text-slate-400"
                             )}>
-                              {group.priorityInfo.prioridade}
+                              {group.priorityInfo?.prioridade || 'Baixa'}
                             </span>
                             <span className="text-[7px] md:text-[8px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 md:px-3 md:py-1 rounded-full border border-slate-100">
-                               {group.priorityInfo.score} pts
+                               {group.priorityInfo?.score || 0} pts
                             </span>
                           </div>
-                          <h4 className="text-sm md:text-xl font-black text-slate-900 leading-tight mb-1 md:mb-2 truncate" title={group.nome_grupo}>{group.nome_grupo}</h4>
+                          <h4 className="text-sm md:text-xl font-black text-slate-900 leading-tight mb-1 md:mb-2 truncate" title={group.nome_grupo || ''}>{group.nome_grupo || 'Sem Nome'}</h4>
                           <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                            <p className="text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-[0.15em]">{formatNumber(group.quantidade_membros)} MEMBROS</p>
+                            <p className="text-[8px] md:text-[10px] text-slate-400 font-black uppercase tracking-[0.15em]">{formatNumber(group.quantidade_membros || 0)} MEMBROS</p>
                             {group.link_grupo && (
                               <a 
                                 href={ensureAbsoluteUrl(group.link_grupo)} 
@@ -489,20 +501,20 @@ export function GroupList({ groups, onEdit, onDelete, activeQuickFilter, onQuick
                           </div>
                           <div className="space-y-0.5">
                             <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Custo</p>
-                            <p className="text-xs md:text-sm font-black font-mono text-emerald-600">{formatCurrency(group.valor)}</p>
+                            <p className="text-xs md:text-sm font-black font-mono text-emerald-600">{formatCurrency(group.valor || 0)}</p>
                           </div>
                         </div>
 
                         <div className="space-y-3 text-right">
                           <div className="space-y-0.5">
                             <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Fim</p>
-                            <ExpiryBadge dareStr={group.data_vencimento} status={group.status} compact />
+                            <ExpiryBadge dareStr={group.data_vencimento || ''} status={group.status || 'Disponível'} compact />
                           </div>
                           <div className="space-y-1.5 flex flex-col items-end">
                             <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">Config</p>
                             <div className="flex gap-1.5">
-                               <div className={cn("w-1.5 h-1.5 rounded-full", group.perfil_compartilhando === 'Ativo' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" : "bg-rose-400")} />
-                               <div className={cn("w-1.5 h-1.5 rounded-full", group.uso_shopee === 'Ativo' ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]" : "bg-slate-200")} />
+                               <div className={cn("w-1.5 h-1.5 rounded-full", (group.perfil_compartilhando || 'Inativo') === 'Ativo' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" : "bg-rose-400")} />
+                               <div className={cn("w-1.5 h-1.5 rounded-full", (group.uso_shopee || 'Inativo') === 'Ativo' ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]" : "bg-slate-200")} />
                             </div>
                           </div>
                         </div>

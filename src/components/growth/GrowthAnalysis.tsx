@@ -40,7 +40,9 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
   const priorityNiches = ["Evangélico", "Receitas", "Musa", "Beleza / Cabelo", "Agro / Notícias"];
 
   const analyzedGroups = useMemo(() => {
+    if (!Array.isArray(groups)) return [];
     return groups.map(group => {
+      if (!group) return null;
       let score = 0;
       const membros = Number(group.quantidade_membros) || 0;
       
@@ -48,14 +50,15 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
       if (membros >= 30000) score += 3;
       else if (membros >= 10000) score += 2;
       
-      if (group.perfil_compartilhando === 'Ativo') score += 3;
-      if (group.uso_shopee === 'Ativo') score += 3;
+      if ((group.perfil_compartilhando || 'Inativo') === 'Ativo') score += 3;
+      if ((group.uso_shopee || 'Inativo') === 'Ativo') score += 3;
       
-      if (priorityNiches.some(n => group.nicho?.toLowerCase().includes(n.toLowerCase()))) {
+      const currentNicho = (group.nicho || 'Geral').toLowerCase();
+      if (priorityNiches.some(n => currentNicho.includes(n.toLowerCase()))) {
         score += 2;
       }
       
-      if (group.status === 'Disponível') score += 1;
+      if ((group.status || 'Disponível') === 'Disponível') score += 1;
 
       // Potential Classification
       let potential: GrowthTier = 'Low';
@@ -64,11 +67,14 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
 
       // Recommended Action
       let action = "Revisar depois";
-      if (group.perfil_compartilhando === 'Ativo' && group.uso_shopee === 'Ativo') {
+      const isPerfilAtivo = (group.perfil_compartilhando || 'Inativo') === 'Ativo';
+      const isShopeeAtivo = (group.uso_shopee || 'Inativo') === 'Ativo';
+
+      if (isPerfilAtivo && isShopeeAtivo) {
         action = "Postar link da Shopee";
-      } else if ((group.perfil_compartilhando === 'Inativo' || !group.perfil_compartilhando) && membros >= 30000) {
+      } else if (!isPerfilAtivo && membros >= 30000) {
         action = "Ativar perfil compartilhando";
-      } else if ((group.uso_shopee === 'Inativo' || !group.uso_shopee) && group.perfil_compartilhando === 'Ativo') {
+      } else if (!isShopeeAtivo && isPerfilAtivo) {
         action = "Ativar uso para Shopee";
       }
 
@@ -78,7 +84,7 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
         localPotential: potential,
         recommendedAction: action
       };
-    });
+    }).filter(g => g !== null) as any[];
   }, [groups]);
 
   // Autopilot Categories

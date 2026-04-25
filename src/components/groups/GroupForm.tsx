@@ -108,9 +108,16 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
 
   useEffect(() => {
     if (editingGroup) {
-      setFormData(editingGroup);
-      setRenterSearch(editingGroup.locatario);
-      setNichoSearch(editingGroup.nicho);
+      setFormData({
+        ...formData,
+        ...editingGroup,
+        nicho: editingGroup.nicho || 'Geral',
+        status: editingGroup.status || 'Disponível',
+        perfil_compartilhando: editingGroup.perfil_compartilhando || 'Inativo',
+        uso_shopee: editingGroup.uso_shopee || 'Inativo'
+      });
+      setRenterSearch(editingGroup.locatario || '');
+      setNichoSearch(editingGroup.nicho || 'Geral');
     }
   }, [editingGroup]);
 
@@ -136,7 +143,15 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
       const normalizedNicho = niches.find(n => n.toLowerCase() === nichoSearch.trim().toLowerCase()) || nichoSearch.trim();
       let finalLocatario = renterSearch.trim();
 
-      const finalData = { ...formData, nicho: normalizedNicho, locatario: finalLocatario };
+      const finalData = { 
+        ...formData, 
+        nicho: normalizedNicho || 'Geral', 
+        locatario: finalLocatario || '',
+        status: formData.status || 'Disponível',
+        perfil_compartilhando: formData.perfil_compartilhando || 'Inativo',
+        uso_shopee: formData.uso_shopee || 'Inativo',
+        quantidade_membros: Number(formData.quantidade_membros) || 0
+      };
       
       await onSave(finalData);
       onClose();

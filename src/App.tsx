@@ -10,6 +10,7 @@ import { RankingPage } from '@/src/components/ranking/RankingPage';
 import { GrowthAnalysis } from '@/src/components/growth/GrowthAnalysis';
 import { CampaignsPage } from '@/src/components/campaigns/CampaignsPage';
 import { RedirectPage } from '@/src/components/campaigns/RedirectPage';
+import { ErrorBoundary } from '@/src/components/common/ErrorBoundary';
 import { useGroups } from '@/src/hooks/useGroups';
 import { Group, QuickFilter } from '@/src/types';
 import { AnimatePresence } from 'motion/react';
@@ -100,66 +101,86 @@ export default function App() {
   }
 
   return (
-    <Shell 
-      activeTab={activeTab} 
-      setActiveTab={setActiveTab}
-      activeFilter={activeFilter}
-      setActiveFilter={setActiveFilter}
-      onAddGroup={openNewGroupForm}
-      onImportGroups={() => setIsImporterOpen(true)}
-      onCleanupData={() => setIsCleanupOpen(true)}
-    >
-      <AnimatePresence mode="wait">
-        {activeTab === 'dashboard' && (
-          <Dashboard groups={groups} />
-        )}
-        {activeTab === 'groups' && (
-          <GroupList 
-            groups={groups} 
-            onEdit={handleEdit} 
-            onDelete={deleteGroup} 
-            activeQuickFilter={activeFilter}
-            onQuickFilterChange={setActiveFilter}
-          />
-        )}
-        {activeTab === 'whatsapp' && (
-          <WhatsAppTab groups={groups} />
-        )}
-        {activeTab === 'ranking' && (
-          <RankingPage groups={groups} activeFilter={activeFilter} />
-        )}
-        {activeTab === 'growth' && (
-          <GrowthAnalysis groups={groups} updateGroup={updateGroup} />
-        )}
-        {activeTab === 'campaigns' && (
-          <CampaignsPage groups={groups} />
-        )}
-      </AnimatePresence>
+    <ErrorBoundary>
+      <Shell 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab}
+        activeFilter={activeFilter}
+        setActiveFilter={setActiveFilter}
+        onAddGroup={openNewGroupForm}
+        onImportGroups={() => setIsImporterOpen(true)}
+        onCleanupData={() => setIsCleanupOpen(true)}
+      >
+        <AnimatePresence mode="wait">
+          {activeTab === 'dashboard' && (
+            <ErrorBoundary>
+              <Dashboard groups={groups} />
+            </ErrorBoundary>
+          )}
+          {activeTab === 'groups' && (
+            <ErrorBoundary>
+              <GroupList 
+                groups={groups} 
+                onEdit={handleEdit} 
+                onDelete={deleteGroup} 
+                activeQuickFilter={activeFilter}
+                onQuickFilterChange={setActiveFilter}
+              />
+            </ErrorBoundary>
+          )}
+          {activeTab === 'whatsapp' && (
+            <ErrorBoundary>
+              <WhatsAppTab groups={groups} />
+            </ErrorBoundary>
+          )}
+          {activeTab === 'ranking' && (
+            <ErrorBoundary>
+              <RankingPage groups={groups} activeFilter={activeFilter} />
+            </ErrorBoundary>
+          )}
+          {activeTab === 'growth' && (
+            <ErrorBoundary>
+              <GrowthAnalysis groups={groups} updateGroup={updateGroup} />
+            </ErrorBoundary>
+          )}
+          {activeTab === 'campaigns' && (
+            <ErrorBoundary>
+              <CampaignsPage groups={groups} />
+            </ErrorBoundary>
+          )}
+        </AnimatePresence>
 
-      <AnimatePresence>
-        {isFormOpen && (
-          <GroupForm 
-            onClose={() => setIsFormOpen(false)} 
-            onSave={handleSaveGroup}
-            editingGroup={editingGroup}
-            existingGroups={groups}
-          />
-        )}
-        {isImporterOpen && (
-          <BulkImporter 
-            onClose={() => setIsImporterOpen(false)}
-            onImport={handleBulkImport}
-            existingGroups={groups}
-          />
-        )}
-        {isCleanupOpen && (
-          <DataCleanupModal 
-            onClose={() => setIsCleanupOpen(false)}
-            groups={groups}
-            onApply={handleMassUpdate}
-          />
-        )}
-      </AnimatePresence>
-    </Shell>
+        <AnimatePresence>
+          {isFormOpen && (
+            <ErrorBoundary>
+              <GroupForm 
+                onClose={() => setIsFormOpen(false)} 
+                onSave={handleSaveGroup}
+                editingGroup={editingGroup}
+                existingGroups={groups}
+              />
+            </ErrorBoundary>
+          )}
+          {isImporterOpen && (
+            <ErrorBoundary>
+              <BulkImporter 
+                onClose={() => setIsImporterOpen(false)}
+                onImport={handleBulkImport}
+                existingGroups={groups}
+              />
+            </ErrorBoundary>
+          )}
+          {isCleanupOpen && (
+            <ErrorBoundary>
+              <DataCleanupModal 
+                onClose={() => setIsCleanupOpen(false)}
+                groups={groups}
+                onApply={handleMassUpdate}
+              />
+            </ErrorBoundary>
+          )}
+        </AnimatePresence>
+      </Shell>
+    </ErrorBoundary>
   );
 }
