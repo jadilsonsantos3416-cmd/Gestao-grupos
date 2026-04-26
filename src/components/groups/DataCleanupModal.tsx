@@ -154,7 +154,7 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
         {/* Header */}
         <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-green-50 to-white">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-100">
+            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-100/50">
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
@@ -170,7 +170,7 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
         <div className="flex-1 overflow-hidden flex flex-col p-8">
           {filtered.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4">
-              <div className="w-20 h-20 bg-green-50 text-green-600 rounded-[2rem] flex items-center justify-center">
+              <div className="w-20 h-20 bg-green-50 text-primary rounded-[2rem] flex items-center justify-center">
                 <ShieldCheck className="w-10 h-10" />
               </div>
               <div>
@@ -201,7 +201,7 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
                              if (selectedIds.size === filtered.length) setSelectedIds(new Set());
                              else setSelectedIds(new Set(filtered.map(f => f.id)));
                            }}
-                           className="w-4 h-4 rounded text-green-600 focus:ring-green-500 cursor-pointer"
+                           className="w-4 h-4 rounded text-primary focus:ring-primary cursor-pointer"
                          />
                        </th>
                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
@@ -224,7 +224,7 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
                                e.stopPropagation();
                                toggleSelect(item.id);
                              }}
-                             className="w-4 h-4 rounded text-green-600 focus:ring-green-500 cursor-pointer"
+                             className="w-4 h-4 rounded text-primary focus:ring-primary cursor-pointer"
                            />
                          </td>
                          <td className="px-6 py-4 whitespace-nowrap">
@@ -249,8 +249,8 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
                          </td>
                          <td className="px-6 py-4">
                            <div className="flex flex-col">
-                             <span className="text-sm font-bold text-green-700">{item.proposedName}</span>
-                             <span className="text-[10px] font-mono text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full self-start mt-1">
+                             <span className="text-sm font-bold text-accent">{item.proposedName}</span>
+                             <span className="text-[10px] font-mono text-primary font-bold bg-green-50 px-2 py-0.5 rounded-full self-start mt-1">
                                Membros: {item.proposedMembers.toLocaleString()}
                              </span>
                            </div>
@@ -291,7 +291,7 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
                          <td className="px-6 py-4">
                            <div className="bg-green-50/50 p-3 rounded-xl border border-green-100/50">
                              <p className="text-sm font-bold text-green-800">Novo Nome: <span className="font-black underline scale-105 inline-block">{item.proposedName}</span></p>
-                             <p className="text-[10px] font-black text-green-600 uppercase tracking-widest mt-1">Novos Membros: {item.proposedMembers.toLocaleString()}</p>
+                             <p className="text-[10px] font-black text-primary uppercase tracking-widest mt-1">Novos Membros: {item.proposedMembers.toLocaleString()}</p>
                            </div>
                          </td>
                          <td className="px-6 py-4">
@@ -301,7 +301,7 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
                              className={cn(
                                "w-full px-4 py-2 rounded-xl text-xs font-bold border outline-none transition-all cursor-pointer",
                                decisions[item.id] === 'approve' 
-                                 ? "bg-green-600 text-white border-green-600" 
+                                 ? "bg-primary text-white border-primary" 
                                  : "bg-red-600 text-white border-red-600"
                              )}
                            >
@@ -327,7 +327,7 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
                 </>
               ) : (
                 <>
-                  <span className="text-green-600">{approvedCount}</span> melhorias aprovadas de <span className="text-blue-600">{selectedCount}</span>
+                  <span className="text-primary">{approvedCount}</span> melhorias aprovadas de <span className="text-blue-600">{selectedCount}</span>
                 </>
               )}
             </span>
@@ -351,7 +351,7 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
                 <button 
                   onClick={handleApply}
                   disabled={isApplying}
-                  className="px-8 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold rounded-2xl shadow-lg shadow-green-100 transition-all flex items-center gap-2"
+                  className="px-8 py-3 bg-primary hover:bg-accent disabled:opacity-50 text-white font-bold rounded-2xl shadow-lg shadow-green-100/50 transition-all flex items-center gap-2"
                 >
                   {isApplying ? (
                     <>Aplicando... <RefreshCw className="w-5 h-5 animate-spin" /></>

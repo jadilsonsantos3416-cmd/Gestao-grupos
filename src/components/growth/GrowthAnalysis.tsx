@@ -190,7 +190,7 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
 
   const getTierIcon = (tier?: GrowthTier) => {
     switch (tier) {
-      case 'High': return <TrendingUp className="w-5 h-5 text-green-500" />;
+      case 'High': return <TrendingUp className="w-5 h-5 text-primary" />;
       case 'Medium': return <BarChart3 className="w-5 h-5 text-blue-500" />;
       case 'Low': return <TrendingDown className="w-5 h-5 text-gray-400" />;
       default: return <Sparkles className="w-5 h-5 text-purple-400" />;
@@ -199,7 +199,7 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
 
   const getTierColor = (tier?: GrowthTier) => {
     switch (tier) {
-      case 'High': return "bg-green-50 text-green-700 border-green-100";
+      case 'High': return "bg-green-50 text-accent border-green-100";
       case 'Medium': return "bg-blue-50 text-blue-700 border-blue-100";
       case 'Low': return "bg-gray-50 text-gray-600 border-gray-100";
       default: return "bg-purple-50 text-purple-700 border-purple-100";
@@ -270,7 +270,7 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
               <span className="text-2xl font-black text-gray-900 font-mono">{stats.total}</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-black text-green-500 uppercase tracking-widest mb-1">Alto Potencial</span>
+              <span className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Alto Potencial</span>
               <span className="text-2xl font-black text-gray-900 font-mono">{stats.high}</span>
             </div>
             <div className="flex flex-col">
@@ -389,7 +389,7 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
           <AutopilotCard 
             title="Oportunidades" 
             count={autopilotCategories.oportunidades.length} 
-            icon={<Sparkles className="w-6 h-6 text-green-500" />}
+            icon={<Sparkles className="w-6 h-6 text-primary" />}
             color="green"
             description="30k+ disponíveis para locação."
             onClick={() => {
@@ -441,7 +441,7 @@ export function GrowthAnalysis({ groups, updateGroup }: GrowthAnalysisProps) {
                         <div className="flex items-center gap-2 mt-1">
                           <span className={cn(
                             "text-[8px] font-black px-2 py-0.5 rounded-full",
-                            group.status === 'Disponível' ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                            group.status === 'Disponível' ? "bg-green-100 text-accent" : "bg-orange-100 text-orange-700"
                           )}>
                             {group.status}
                           </span>
@@ -566,7 +566,7 @@ function AutopilotCard({ title, count, icon, color, description, onClick, isActi
     red: "bg-red-50 border-red-100 group-hover:border-red-200 ring-red-500",
     blue: "bg-blue-50 border-blue-100 group-hover:border-blue-200 ring-blue-500",
     orange: "bg-orange-50 border-orange-100 group-hover:border-orange-200 ring-orange-500",
-    green: "bg-green-50 border-green-100 group-hover:border-green-200 ring-green-500"
+    green: "bg-green-50 border-green-100 group-hover:border-green-200 ring-primary"
   };
 
   return (

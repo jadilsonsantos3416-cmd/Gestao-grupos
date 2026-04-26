@@ -137,7 +137,7 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
         <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group hover:border-green-200 transition-colors">
           <div className="relative z-10 flex flex-col h-full">
             <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-green-500 fill-green-500" /> Modo Automático
+              <Sparkles className="w-4 h-4 text-primary fill-primary" /> Modo Automático
             </h3>
             
             <p className="text-xs font-bold text-gray-500 mb-8 leading-relaxed">
@@ -169,7 +169,7 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
                   "w-full flex items-center justify-center gap-3 font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl transition-all active:scale-95 border-2",
                   activeFilter === 'all'
                     ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
-                    : "bg-white text-green-600 border-green-600 hover:bg-green-50"
+                    : "bg-white text-primary border-primary hover:bg-green-50"
                 )}
               >
                 <Filter className="w-3.5 h-3.5" /> Analisar Apenas Filtrados
@@ -197,7 +197,7 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
               <div className="lg:w-48 flex flex-col justify-center">
                 <button
                   onClick={handleAnalyzeJson}
-                  className="w-full flex flex-col items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-black text-[10px] uppercase tracking-widest py-6 rounded-2xl shadow-lg shadow-green-100 transition-all active:scale-95"
+                  className="w-full flex flex-col items-center justify-center gap-2 bg-primary hover:bg-accent text-white font-black text-[10px] uppercase tracking-widest py-6 rounded-2xl shadow-lg shadow-green-100/50 transition-all active:scale-95"
                 >
                   <Play className="w-6 h-6 fill-current" />
                   Rodar JSON
@@ -249,7 +249,7 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
                     onClick={copyToClipboard}
                     className={cn(
                       "flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-md active:scale-95",
-                      isCopied ? "bg-primary text-white shadow-green-100" : "bg-slate-900 text-white hover:bg-slate-800"
+                      isCopied ? "bg-primary text-white shadow-green-100/50" : "bg-slate-900 text-white hover:bg-slate-800"
                     )}
                   >
                     {isCopied ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
@@ -266,7 +266,7 @@ export function RankingPage({ groups = [], activeFilter = 'all' }: RankingPagePr
                     </h4>
                     <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Classificação baseada em alcance real e engajamento</p>
                   </div>
-                  <span className="shrink-0 self-start sm:self-center text-[10px] font-black bg-primary text-white px-6 py-2 rounded-full uppercase tracking-widest shadow-lg shadow-green-100">
+                  <span className="shrink-0 self-start sm:self-center text-[10px] font-black bg-primary text-white px-6 py-2 rounded-full uppercase tracking-widest shadow-lg shadow-green-100/50">
                     🏆 Ranking Automático
                   </span>
                 </div>

@@ -298,7 +298,7 @@ export function CampaignsPage({ groups }: CampaignsPageProps) {
                           onClick={() => copyToClipboard(`https://gestao-grupos.vercel.app/l/${camp.slug}`, camp.id)}
                           className={cn(
                             "p-3 rounded-xl transition-all shadow-sm",
-                            copySuccess === camp.id ? "bg-primary text-white shadow-green-200" : "bg-white text-slate-400 hover:text-blue-600 border border-slate-100 hover:border-blue-100"
+                            copySuccess === camp.id ? "bg-primary text-white shadow-green-200/50" : "bg-white text-slate-400 hover:text-blue-600 border border-slate-100 hover:border-blue-100"
                           )}
                         >
                           {copySuccess === camp.id ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}

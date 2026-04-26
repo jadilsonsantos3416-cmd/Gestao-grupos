@@ -177,7 +177,7 @@ export function CopyGeneratorModal({ campaign, group, onClose }: CopyGeneratorMo
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                   copyAllSuccess 
-                    ? "bg-green-600 text-white" 
+                    ? "bg-primary text-white" 
                     : "bg-gray-900 text-white hover:bg-black"
                 )}
               >
@@ -219,7 +219,7 @@ export function CopyGeneratorModal({ campaign, group, onClose }: CopyGeneratorMo
                         onClick={() => copyToClipboard(v.text, v.id)}
                         className={cn(
                           "p-2.5 rounded-xl transition-all",
-                          copySuccess === v.id ? "bg-green-100 text-green-600" : "bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600"
+                          copySuccess === v.id ? "bg-green-100 text-primary" : "bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600"
                         )}
                         title="Copiar texto"
                       >

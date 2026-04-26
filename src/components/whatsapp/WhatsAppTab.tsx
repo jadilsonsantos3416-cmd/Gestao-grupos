@@ -124,12 +124,12 @@ export function WhatsAppTab({ groups }: WhatsAppTabProps) {
             onClick={selectAll}
             className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-white border border-gray-100 rounded-3xl shadow-sm text-sm font-bold text-gray-600 hover:bg-gray-50 active:scale-95 transition-all"
           >
-            {selectedRenters.length === filteredRenters.length && filteredRenters.length > 0 ? <CheckSquare className="w-5 h-5 text-green-600" /> : <Square className="w-5 h-5" />}
+            {selectedRenters.length === filteredRenters.length && filteredRenters.length > 0 ? <CheckSquare className="w-5 h-5 text-primary" /> : <Square className="w-5 h-5" />}
             {selectedRenters.length === filteredRenters.length && filteredRenters.length > 0 ? "Desmarcar Todos" : "Selecionar Todos"}
           </button>
           <button 
             onClick={() => setShowMsgEditor(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-green-600 text-white rounded-3xl shadow-lg shadow-green-100 text-sm font-bold hover:bg-green-700 active:scale-95 transition-all"
+            className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-primary text-white rounded-3xl shadow-lg shadow-green-100/50 text-sm font-bold hover:bg-accent active:scale-95 transition-all"
           >
             <MessageCircle className="w-5 h-5" />
             Configurar Mensagem
@@ -150,7 +150,7 @@ export function WhatsAppTab({ groups }: WhatsAppTabProps) {
               key={phone}
               className={cn(
                 "group relative bg-white rounded-3xl border transition-all duration-300",
-                isSelected ? "border-green-500 shadow-md ring-1 ring-green-500" : "border-gray-100 shadow-sm hover:border-green-200"
+                isSelected ? "border-primary shadow-md ring-1 ring-primary" : "border-gray-100 shadow-sm hover:border-green-200"
               )}
             >
               <div className="flex items-center p-5 gap-4">
@@ -158,7 +158,7 @@ export function WhatsAppTab({ groups }: WhatsAppTabProps) {
                   onClick={() => toggleSelect(phone)}
                   className="shrink-0 p-1 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  {isSelected ? <CheckSquare className="w-6 h-6 text-green-600" /> : <Square className="w-6 h-6 text-gray-300" />}
+                  {isSelected ? <CheckSquare className="w-6 h-6 text-primary" /> : <Square className="w-6 h-6 text-gray-300" />}
                 </button>
 
                 <div className="flex-1 min-w-0">
@@ -190,7 +190,7 @@ export function WhatsAppTab({ groups }: WhatsAppTabProps) {
 
                 <button 
                   onClick={() => sendWhatsApp(renter)}
-                  className="shrink-0 w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center hover:bg-green-600 hover:text-white transition-all active:scale-90"
+                  className="shrink-0 w-12 h-12 bg-green-50 text-primary rounded-2xl flex items-center justify-center hover:bg-primary hover:text-white transition-all active:scale-90"
                   title="Enviar mensagem individual"
                 >
                   <Send className="w-5 h-5" />
@@ -222,7 +222,7 @@ export function WhatsAppTab({ groups }: WhatsAppTabProps) {
           >
             <div className="flex flex-col pr-6 border-r">
               <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Selecionados</span>
-              <span className="text-sm font-bold text-green-600">{selectedRenters.length} clientes</span>
+              <span className="text-sm font-bold text-primary">{selectedRenters.length} clientes</span>
             </div>
             <button 
               onClick={() => {
@@ -235,7 +235,7 @@ export function WhatsAppTab({ groups }: WhatsAppTabProps) {
                   }, idx * 1000); // Stagger by 1s to avoid browser blocks
                 });
               }}
-              className="flex items-center gap-2 bg-green-600 text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-green-100 hover:bg-green-700 transition-all active:scale-95"
+              className="flex items-center gap-2 bg-primary text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-green-100/50 hover:bg-accent transition-all active:scale-95"
             >
               <Send className="w-5 h-5" />
               Enviar Cobrança Web
@@ -279,7 +279,7 @@ export function WhatsAppTab({ groups }: WhatsAppTabProps) {
                 </button>
                 <button 
                   onClick={() => setShowMsgEditor(false)}
-                  className="flex-1 py-4 font-bold bg-green-600 text-white rounded-2xl shadow-lg shadow-green-100 hover:bg-green-700 transition-all active:scale-95"
+                  className="flex-1 py-4 font-bold bg-primary text-white rounded-2xl shadow-lg shadow-green-100/50 hover:bg-accent transition-all active:scale-95"
                 >
                   Salvar
                 </button>

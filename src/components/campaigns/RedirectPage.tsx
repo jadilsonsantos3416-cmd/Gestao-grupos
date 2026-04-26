@@ -138,7 +138,7 @@ export function RedirectPage() {
           {status === 'loading' && (
             <div className="space-y-6">
               <div className="relative w-16 h-16 mx-auto">
-                <Loader2 className="w-16 h-16 text-green-600 animate-spin" />
+                <Loader2 className="w-16 h-16 text-primary animate-spin" />
               </div>
               <div>
                 <h1 className="text-2xl font-black text-gray-900 mb-2">Redirecionando...</h1>

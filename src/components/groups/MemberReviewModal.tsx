@@ -93,7 +93,7 @@ export function MemberReviewModal({ isOpen, onClose, groups, onUpdate }: MemberR
         <div className="p-6 md:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-green-200">
+              <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-green-200/50">
                 <CheckCircle2 className="w-6 h-6 text-white" />
               </div>
               <h2 className="text-2xl font-black text-slate-900 tracking-tight">Revisar Membros</h2>
@@ -197,7 +197,7 @@ export function MemberReviewModal({ isOpen, onClose, groups, onUpdate }: MemberR
                             <button 
                               onClick={() => handleSave(group)}
                               disabled={loadingId === group.id}
-                              className="flex-1 md:flex-none h-12 px-5 bg-primary hover:bg-primary text-white rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-green-200 transition-all active:scale-95 disabled:opacity-50"
+                              className="flex-1 md:flex-none h-12 px-5 bg-primary hover:bg-primary text-white rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-green-200/50 transition-all active:scale-95 disabled:opacity-50"
                             >
                               {loadingId === group.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                               Confirmar

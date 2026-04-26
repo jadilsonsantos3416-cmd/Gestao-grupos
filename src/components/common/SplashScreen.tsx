@@ -18,7 +18,7 @@ export const SplashScreen = ({ isVisible }: { isVisible: boolean }) => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="flex flex-col items-center"
           >
-            <div className="w-20 h-20 bg-primary rounded-[2rem] flex items-center justify-center shadow-xl shadow-green-200 mb-6">
+            <div className="w-20 h-20 bg-primary rounded-[2rem] flex items-center justify-center shadow-xl shadow-green-200/50 mb-6">
               <Facebook className="w-10 h-10 text-white" />
             </div>
             

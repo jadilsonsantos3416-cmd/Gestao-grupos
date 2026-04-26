@@ -525,7 +525,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                                   if (e.key === 'Enter') handleUpdateMembers(group);
                                   if (e.key === 'Escape') setEditingMembersId(null);
                                 }}
-                                className="w-24 px-2 py-1 bg-white border-2 border-primary rounded-lg text-center text-sm font-black text-slate-900 focus:outline-none shadow-lg shadow-green-100"
+                                className="w-24 px-2 py-1 bg-white border-2 border-primary rounded-lg text-center text-sm font-black text-slate-900 focus:outline-none shadow-lg shadow-green-100/50"
                               />
                             </div>
                             <div className="flex gap-2 mt-2">

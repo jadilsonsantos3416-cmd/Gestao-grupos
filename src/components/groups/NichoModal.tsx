@@ -117,7 +117,7 @@ export function NichoModal({ isOpen, onClose, nichos, onUpdate, initialAddMode }
                 <button 
                   type="submit"
                   disabled={isSaving || !nome.trim()}
-                  className="flex-1 bg-primary hover:bg-accent text-white font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-green-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 bg-primary hover:bg-accent text-white font-black text-[10px] uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-green-100/50 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   {editingId ? 'Salvar Edição' : 'Criar Nicho'}

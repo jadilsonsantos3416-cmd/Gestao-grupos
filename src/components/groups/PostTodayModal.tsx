@@ -65,7 +65,7 @@ export function PostTodayModal({ isOpen, onClose, groups, onUpdate }: PostTodayM
         {/* Header */}
         <div className="p-6 md:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-green-200">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-green-200/50">
               <Trophy className="w-6 h-6 text-white" />
             </div>
             <div>

@@ -569,7 +569,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
             disabled={isSaving}
             className={cn(
               "flex-[2] py-5 px-6 text-white font-black text-[10px] uppercase tracking-widest rounded-[2rem] shadow-2xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3",
-              isSaving ? "bg-slate-300 cursor-not-allowed" : "bg-primary hover:bg-accent shadow-green-200"
+              isSaving ? "bg-slate-300 cursor-not-allowed" : "bg-primary hover:bg-accent shadow-green-200/50"
             )}
           >
             {isSaving ? (

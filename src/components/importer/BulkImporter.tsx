@@ -102,13 +102,13 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
 
         {/* Steps */}
         <div className="bg-gray-50/50 px-8 py-3 flex items-center gap-4 border-b border-gray-100">
-          <div className={cn("text-xs font-black uppercase tracking-widest flex items-center gap-2", step === 'input' ? "text-green-600" : "text-gray-400")}>
-            <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] border-2", step === 'input' ? "border-green-600 bg-green-50" : "border-gray-300")}>1</span>
+          <div className={cn("text-xs font-black uppercase tracking-widest flex items-center gap-2", step === 'input' ? "text-primary" : "text-gray-400")}>
+            <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] border-2", step === 'input' ? "border-primary bg-green-50" : "border-gray-300")}>1</span>
             Colar Lista
           </div>
           <div className="w-8 h-px bg-gray-200" />
-          <div className={cn("text-xs font-black uppercase tracking-widest flex items-center gap-2", step === 'preview' ? "text-green-600" : "text-gray-400")}>
-            <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] border-2", step === 'preview' ? "border-green-600 bg-green-50" : "border-gray-300")}>2</span>
+          <div className={cn("text-xs font-black uppercase tracking-widest flex items-center gap-2", step === 'preview' ? "text-primary" : "text-gray-400")}>
+            <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] border-2", step === 'preview' ? "border-primary bg-green-50" : "border-gray-300")}>2</span>
             Revisar e Importar
           </div>
         </div>
@@ -155,7 +155,7 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                   <button 
                     onClick={handleAnalyze}
                     disabled={!rawText.trim()}
-                    className="flex-[2] py-4 px-6 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold rounded-2xl shadow-lg shadow-green-100 transition-all flex items-center justify-center gap-2"
+                    className="flex-[2] py-4 px-6 bg-primary hover:bg-accent disabled:opacity-50 text-white font-bold rounded-2xl shadow-lg shadow-green-100/50 transition-all flex items-center justify-center gap-2"
                   >
                     Analisar Lista <Upload className="w-5 h-5" />
                   </button>
@@ -185,7 +185,7 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                       Total: <span className="text-gray-900">{parsedData.length} grupos</span>
                     </span>
                     <div className="flex gap-2">
-                       <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                       <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-primary bg-green-50 px-3 py-1 rounded-full">
                          <CheckCircle className="w-3 h-3" /> {parsedData.filter(g => g.status_analise === 'OK').length} OK
                        </span>
                        <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
@@ -236,7 +236,7 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                                   </select>
                                 </div>
                               ) : item.status_analise === 'OK' ? (
-                                <div className="flex items-center gap-1 text-green-500 font-bold text-[10px] uppercase tracking-wider">
+                                <div className="flex items-center gap-1 text-primary font-bold text-[10px] uppercase tracking-wider">
                                   <CheckCircle className="w-4 h-4" /> OK
                                 </div>
                               ) : (
@@ -311,7 +311,7 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                             ) : (
                               <span className={cn(
                                 "text-[10px] font-black uppercase px-2 py-0.5 rounded-full inline-block",
-                                item.perfil_compartilhando === 'Ativo' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                                item.perfil_compartilhando === 'Ativo' ? "bg-green-100 text-accent" : "bg-red-100 text-red-700"
                               )}>
                                 {item.perfil_compartilhando === 'Ativo' ? 'Perfil Ativo' : 'Perfil Inativo'}
                               </span>
@@ -330,7 +330,7 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                             ) : (
                               <span className={cn(
                                 "text-[10px] font-black uppercase px-2 py-0.5 rounded-full inline-block",
-                                item.uso_shopee === 'Ativo' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
+                                item.uso_shopee === 'Ativo' ? "bg-green-100 text-accent" : "bg-gray-100 text-gray-400"
                               )}>
                                 {item.uso_shopee === 'Ativo' ? 'Shopee Ativo' : 'Shopee Inativo'}
                               </span>
@@ -361,7 +361,7 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                           <td className="px-6 py-4 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                               {editingId === item.id_temp ? (
-                                 <button onClick={() => setEditingId(null)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all" title="Salvar">
+                                 <button onClick={() => setEditingId(null)} className="p-2 text-primary hover:bg-green-50 rounded-lg transition-all" title="Salvar">
                                    <Save className="w-4 h-4" />
                                  </button>
                               ) : (
@@ -391,7 +391,7 @@ export function BulkImporter({ onClose, onImport, existingGroups }: BulkImporter
                    </button>
                    <button 
                      onClick={startImport}
-                     className="flex-[2] py-4 bg-green-600 text-white font-bold rounded-2xl shadow-lg shadow-green-100 hover:bg-green-700 transition-all active:scale-95 flex items-center justify-center gap-2"
+                     className="flex-[2] py-4 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-green-100/50 hover:bg-accent transition-all active:scale-95 flex items-center justify-center gap-2"
                    >
                      Confirmar Importação de {parsedData.length} Grupos
                    </button>

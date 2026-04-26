@@ -51,7 +51,7 @@ export function Shell({
       {/* Mobile Header */}
       <header className="md:hidden bg-white/80 backdrop-blur-lg border-b border-slate-100 px-5 py-4 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <div className="bg-primary p-2 rounded-xl shadow-lg shadow-green-100">
+          <div className="bg-primary p-2 rounded-xl shadow-lg shadow-green-100/50">
             <Landmark className="w-5 h-5 text-white" />
           </div>
           <span className="font-black text-xl tracking-tight text-slate-900">Grupos <span className="text-primary">FB</span></span>
@@ -72,7 +72,7 @@ export function Shell({
       >
         <div className={cn("p-6 md:p-8 border-b border-slate-50 relative", isCollapsed && "px-4")}>
           <div className="flex items-center gap-3">
-            <div className="bg-primary p-2.5 rounded-xl shadow-lg shadow-green-100 shrink-0">
+            <div className="bg-primary p-2.5 rounded-xl shadow-lg shadow-green-100/50 shrink-0">
               <Landmark className="w-6 h-6 text-white" />
             </div>
             {!isCollapsed && (
@@ -115,7 +115,7 @@ export function Shell({
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 )}
               >
-                <Icon className={cn("w-5 h-5 shrink-0", isActive ? "text-emerald-400" : "text-slate-400")} />
+                <Icon className={cn("w-5 h-5 shrink-0", isActive ? "text-primary" : "text-slate-400")} />
                 {!isCollapsed && (
                   <motion.span
                     initial={{ opacity: 0, x: -5 }}
@@ -134,7 +134,7 @@ export function Shell({
             onClick={onCleanupData}
             title={isCollapsed ? "Faxina de Dados" : ""}
             className={cn(
-              "w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:border-primary hover:text-accent font-bold rounded-2xl transition-all active:scale-95 text-xs shadow-sm shadow-green-50/50",
+              "w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:border-primary hover:text-accent font-bold rounded-2xl transition-all active:scale-95 text-xs shadow-sm shadow-slate-100",
               isCollapsed ? "h-12 w-12 mx-auto rounded-xl" : "py-3"
             )}
           >
@@ -146,7 +146,7 @@ export function Shell({
             onClick={onImportGroups}
             title={isCollapsed ? "Importar" : ""}
             className={cn(
-              "w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold rounded-2xl transition-all active:scale-95 text-sm",
+              "w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold rounded-2xl transition-all active:scale-95 text-sm shadow-sm shadow-slate-100",
               isCollapsed ? "h-12 w-12 mx-auto rounded-xl" : "py-3"
             )}
           >
@@ -157,7 +157,7 @@ export function Shell({
             onClick={onAddGroup}
             title={isCollapsed ? "Novo Grupo" : ""}
             className={cn(
-              "w-full flex items-center justify-center gap-2 bg-primary hover:bg-accent text-white font-bold rounded-[1.5rem] shadow-xl shadow-green-100 transition-all active:scale-95 text-sm",
+              "w-full flex items-center justify-center gap-2 bg-primary hover:bg-accent text-white font-bold rounded-[1.5rem] shadow-xl shadow-green-100/50/50 transition-all active:scale-95 text-sm",
               isCollapsed ? "h-12 w-12 mx-auto rounded-xl" : "py-4 rounded-3xl"
             )}
           >
@@ -195,7 +195,7 @@ export function Shell({
                 <div className="bg-primary p-2 rounded-xl">
                   <Landmark className="w-6 h-6 text-white" />
                 </div>
-                <span className="font-extrabold text-2xl tracking-tight text-slate-900">Grupos FB</span>
+                <span className="font-extrabold text-2xl tracking-tight text-slate-900">Grupos <span className="text-primary">FB</span></span>
               </div>
             </div>
 
@@ -218,7 +218,7 @@ export function Shell({
                         : "text-slate-500 hover:bg-slate-100"
                     )}
                   >
-                    <Icon className={cn("w-6 h-6", isActive ? "text-emerald-400" : "text-slate-400")} />
+                    <Icon className={cn("w-6 h-6", isActive ? "text-primary" : "text-slate-400")} />
                     {item.label}
                   </button>
                 );
@@ -233,7 +233,7 @@ export function Shell({
                 }}
                 className="w-full flex items-center justify-center gap-3 bg-green-50 text-accent font-bold py-4 rounded-2xl"
               >
-                <Sparkles className="w-5 h-5" />
+                <Sparkles className="w-5 h-5 font-bold" />
                 Faxina de Dados
               </button>
 
@@ -252,7 +252,7 @@ export function Shell({
                   onAddGroup();
                   setIsMenuOpen(false);
                 }}
-                className="w-full flex items-center justify-center gap-3 bg-primary text-white font-bold py-5 rounded-[2rem] shadow-xl shadow-green-100"
+                className="w-full flex items-center justify-center gap-3 bg-primary text-white font-bold py-5 rounded-[2rem] shadow-xl shadow-green-100/50/50"
               >
                 <Plus className="w-6 h-6 transition-transform group-active:scale-90" />
                 Novo Grupo

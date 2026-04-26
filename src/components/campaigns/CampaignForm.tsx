@@ -214,7 +214,7 @@ export function CampaignForm({ onClose, onSave, editingCampaign, groups }: Campa
             disabled={isSaving}
             className={cn(
               "flex-[2] py-3.5 md:py-5 px-4 md:px-6 text-white font-black text-[9px] md:text-[10px] uppercase tracking-widest rounded-[2rem] shadow-2xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 md:gap-3",
-              isSaving ? "bg-slate-300 cursor-not-allowed" : "bg-primary hover:bg-accent shadow-green-200"
+              isSaving ? "bg-slate-300 cursor-not-allowed" : "bg-primary hover:bg-accent shadow-green-200/50"
             )}
           >
             {isSaving ? "Gravando..." : editingCampaign ? "Atualizar" : "Criar"}
