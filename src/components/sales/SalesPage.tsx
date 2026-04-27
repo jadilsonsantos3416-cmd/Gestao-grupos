@@ -103,19 +103,20 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
 
     const headers = ['NOME', 'LINK', 'PUBLICO', 'VALOR'];
     const rows = sortedGroups.map(group => [
-      `"${(group.nome_grupo || '').replace(/"/g, '""')}"`,
-      `"${getFullLink(group).replace(/"/g, '""')}"`,
+      (group.nome_grupo || '').replace(/;/g, ' '),
+      getFullLink(group),
       group.quantidade_membros || 0,
-      `"${(group.valor_venda || '').replace(/"/g, '""')}"`
+      (group.valor_venda || '').replace(/;/g, ' ')
     ]);
 
     const csvContent = [
-      headers.join(','),
-      ...rows.map(r => r.join(','))
+      headers.join(';'),
+      ...rows.map(r => r.join(';'))
     ].join('\n');
 
     // Add BOM for Excel compatibility
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
