@@ -3,6 +3,7 @@ import { Download, Tag, Edit2, XCircle, ExternalLink, MessageSquare, Plus, Searc
 import { Group } from '@/src/types';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import * as XLSX from 'xlsx';
 
 interface SalesPageProps {
   groups: Group[];
@@ -30,7 +31,19 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
     const matchesNiche = selectedNiche === 'Todos' || (g.nicho || 'Geral') === selectedNiche;
 
     return matchesSearch && matchesNiche;
-  }).sort((a, b) => (a.para_venda === b.para_venda ? 0 : a.para_venda ? 1 : -1));
+  }).sort((a, b) => {
+    // 1. Prioridade: Quem NÃO está para venda ainda sobe (ficam no topo)
+    if (a.para_venda !== b.para_venda) {
+      return a.para_venda ? 1 : -1;
+    }
+
+    // 2. Se o nicho selecionado for 'Musa', ordenar por membros decrescente
+    if (selectedNiche === 'Musa') {
+      return (b.quantidade_membros || 0) - (a.quantidade_membros || 0);
+    }
+
+    return 0;
+  });
 
   const handleAddGroupToSale = async (group: Group) => {
     if (isProcessing) return;
@@ -65,37 +78,53 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
     }
   };
 
-  const exportToCSV = () => {
+  const getFullLink = (group: Group) => {
+    if (group.link_grupo && group.link_grupo.startsWith('http')) {
+      return group.link_grupo;
+    }
+    if (group.group_id) {
+      return `https://www.facebook.com/groups/${group.group_id}/`;
+    }
+    return group.link_grupo || '';
+  };
+
+  const exportToExcel = () => {
     if (salesGroups.length === 0) {
       alert("Nenhum grupo para exportar");
       return;
     }
 
-    const headers = ['nome', 'link', 'nicho', 'membros', 'valor_venda', 'status_venda', 'observacoes_venda'];
-    const rows = salesGroups.map(g => [
-      g.nome_grupo,
-      g.link_grupo,
-      g.nicho,
-      g.quantidade_membros || 0,
-      g.valor_venda || '',
-      g.status_venda || 'Disponível',
-      g.observacoes_venda || ''
-    ]);
+    // Sort by members count descending as requested
+    const sortedGroups = [...salesGroups].sort((a, b) => 
+      (b.quantidade_membros || 0) - (a.quantidade_membros || 0)
+    );
 
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
-    ].join('\n');
+    // Prepare data for Excel
+    const data = sortedGroups.map(group => ({
+      'NOME': group.nome_grupo || '',
+      'LINK': getFullLink(group),
+      'PUBLICO': group.quantidade_membros || 0,
+      'VALOR': group.valor_venda || ''
+    }));
 
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `grupos-pra-venda.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(data);
+
+    // Set column widths for better "professional" look
+    const colWidths = [
+      { wch: 40 }, // NOME
+      { wch: 50 }, // LINK
+      { wch: 15 }, // PUBLICO
+      { wch: 15 }, // VALOR
+    ];
+    worksheet['!cols'] = colWidths;
+
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Grupos Selecionados");
+
+    // Generate and download file
+    XLSX.writeFile(workbook, "grupos-venda.xlsx");
   };
 
   const handleRemoveFromSale = (group: Group) => {
@@ -132,7 +161,7 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
       {/* Export Button as a Card */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <button 
-          onClick={exportToCSV}
+          onClick={exportToExcel}
           className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-100/40 flex items-center gap-4 group hover:scale-[1.01] transition-all active:scale-[0.99]"
         >
           <div className="p-3 bg-green-50 rounded-2xl group-hover:bg-primary transition-colors">
@@ -140,7 +169,7 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
           </div>
           <div className="text-left">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">Ação Rápida</p>
-            <span className="text-lg font-black text-slate-900 tracking-tight">EXPORTAR LISTA EM CSV</span>
+            <span className="text-lg font-black text-slate-900 tracking-tight">EXPORTAR TABELA EXCEL</span>
           </div>
         </button>
 
@@ -175,6 +204,28 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
               />
               <div className="absolute top-full left-0 right-0 mt-3 bg-white rounded-[2rem] border border-slate-100 shadow-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
                 <div className="p-4 border-b border-slate-50 bg-slate-50/50 flex flex-col gap-3">
+                  {/* Quick Filters */}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap ml-1">Acesso Rápido:</span>
+                    <div className="flex gap-2">
+                      {['Todos', 'Musa'].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setSelectedNiche(n)}
+                          className={cn(
+                            "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
+                            selectedNiche === n 
+                              ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-200" 
+                              : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
+                          )}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Niche Filter */}
                   <div className="relative">
                     <button
@@ -288,7 +339,7 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
                             ) : group.para_venda ? (
                               <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-primary rounded-xl border border-green-100 animate-in zoom-in duration-300">
                                 <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span className="text-[9px] font-black uppercase tracking-widest">Adicionado</span>
+                                <span className="text-[9px] font-black uppercase tracking-widest">Já adicionado</span>
                               </div>
                             ) : (
                               <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover/item:bg-primary group-hover/item:text-white transition-all group-hover/item:scale-110 active:scale-95 shadow-sm">
