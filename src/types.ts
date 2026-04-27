@@ -9,6 +9,7 @@ export type ShopeeStatus = 'Ativo' | 'Inativo';
 export type GrowthTier = 'High' | 'Medium' | 'Low' | 'Pending';
 
 export type PriorityLevel = 'Alta' | 'Média' | 'Baixa';
+export type SaleStatus = 'Disponível' | 'Vendido' | 'Reservado';
 
 export interface Group {
   id: string;
@@ -33,6 +34,11 @@ export interface Group {
   score_postagem?: number;
   ultima_revisao_membros?: string;
   ultimo_post?: string;
+  // Sale fields
+  para_venda?: boolean;
+  valor_venda?: string;
+  status_venda?: SaleStatus;
+  observacoes_venda?: string;
 }
 
 export interface Renter {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Group, GroupStatus, Renter, Nicho } from '@/src/types';
-import { X, Search, Phone, User, Calendar, DollarSign, Users, Type, Link, FileText, AlertCircle } from 'lucide-react';
+import { X, Search, Phone, User, Calendar, DollarSign, Users, Type, Link, FileText, AlertCircle, Tag } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, addMonths, parseISO } from 'date-fns';
@@ -46,6 +46,10 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
     perfil_compartilhando: 'Inativo',
     uso_shopee: 'Inativo',
     observacoes: '',
+    para_venda: false,
+    valor_venda: '',
+    status_venda: 'Disponível',
+    observacoes_venda: '',
   });
 
   const duplicateGroup = React.useMemo(() => {
@@ -135,7 +139,11 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
         nicho: editingGroup.nicho || 'Geral',
         status: editingGroup.status || 'Disponível',
         perfil_compartilhando: editingGroup.perfil_compartilhando || 'Inativo',
-        uso_shopee: editingGroup.uso_shopee || 'Inativo'
+        uso_shopee: editingGroup.uso_shopee || 'Inativo',
+        para_venda: editingGroup.para_venda || false,
+        valor_venda: editingGroup.valor_venda || '',
+        status_venda: editingGroup.status_venda || 'Disponível',
+        observacoes_venda: editingGroup.observacoes_venda || '',
       });
       setRenterSearch(editingGroup.locatario || '');
       setNichoSearch(editingGroup.nicho || 'Geral');
@@ -537,6 +545,86 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                     )}
                   </AnimatePresence>
                 </div>
+            </div>
+
+            {/* Sale Info */}
+            <div className="space-y-6 md:col-span-2 bg-slate-50/30 p-8 rounded-[2rem] border border-slate-100 mt-4">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-50 pb-3 flex items-center gap-2">
+                <Tag className="w-3 h-3" />
+                Grupos pra Venda
+              </h3>
+
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-black text-slate-600 uppercase tracking-widest">Disponível para Venda?</span>
+                <div className="flex gap-2">
+                  {[true, false].map((val) => (
+                    <button
+                      key={String(val)}
+                      type="button"
+                      onClick={() => setFormData({...formData, para_venda: val})}
+                      className={cn(
+                        "px-6 py-2 rounded-xl border font-black text-[9px] uppercase tracking-widest transition-all",
+                        formData.para_venda === val
+                          ? (val ? "bg-primary border-primary text-white shadow-lg shadow-green-50" : "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-100")
+                          : "border-slate-200 bg-white text-slate-400 hover:border-slate-300"
+                      )}
+                    >
+                      {val ? 'SIM' : 'NÃO'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {formData.para_venda && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-dashed border-slate-200"
+                >
+                  <FormField label="Valor de Venda" icon={DollarSign}>
+                    <input 
+                      type="text" 
+                      value={formData.valor_venda || ''}
+                      onChange={e => setFormData({...formData, valor_venda: e.target.value})}
+                      className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-black text-primary placeholder:text-slate-200 font-mono"
+                      placeholder="Ex: R$ 500,00"
+                    />
+                  </FormField>
+
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Status da Venda</label>
+                    <div className="flex gap-2">
+                      {['Disponível', 'Reservado', 'Vendido'].map(s => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setFormData({...formData, status_venda: s as any})}
+                          className={cn(
+                            "flex-1 py-3 text-[8px] font-black uppercase tracking-widest rounded-xl border transition-all",
+                            formData.status_venda === s
+                              ? "bg-slate-900 border-slate-900 text-white shadow-md shadow-slate-200"
+                              : "border-slate-100 bg-white text-slate-300 hover:border-slate-200"
+                          )}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <FormField label="Observações de Venda" icon={FileText}>
+                      <textarea 
+                        rows={2}
+                        value={formData.observacoes_venda || ''}
+                        onChange={e => setFormData({...formData, observacoes_venda: e.target.value})}
+                        className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm font-bold text-slate-600 resize-none placeholder:text-slate-200"
+                        placeholder="Info que aparecerá na exportação/lista..."
+                      />
+                    </FormField>
+                  </div>
+                </motion.div>
+              )}
             </div>
           </div>
 

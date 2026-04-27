@@ -34,6 +34,11 @@ export type GrupoData = {
   score_postagem?: number;
   ultima_revisao_membros?: string;
   ultimo_post?: string;
+  para_venda?: boolean;
+  valor_venda?: string;
+  status_venda?: string;
+  observacoes_venda?: string;
+  atualizado_em?: string;
 };
 
 const gruposRef = collection(db, "grupos");
@@ -178,6 +183,11 @@ export async function atualizarGrupo(id: string, updates: Partial<GrupoData>) {
   if (updates.observacoes !== undefined) payload.observacoes = updates.observacoes || "";
   if (updates.ultima_revisao_membros !== undefined) payload.ultima_revisao_membros = updates.ultima_revisao_membros || null;
   if (updates.ultimo_post !== undefined) payload.ultimo_post = updates.ultimo_post || null;
+  if (updates.para_venda !== undefined) payload.para_venda = updates.para_venda;
+  if (updates.valor_venda !== undefined) payload.valor_venda = updates.valor_venda || "";
+  if (updates.status_venda !== undefined) payload.status_venda = updates.status_venda || "Disponível";
+  if (updates.observacoes_venda !== undefined) payload.observacoes_venda = updates.observacoes_venda || "";
+  if (updates.atualizado_em !== undefined) payload.atualizado_em = updates.atualizado_em;
 
   // Always recalculate priority on update if any relevant field changed
   const priorityInfo = calculatePriority({

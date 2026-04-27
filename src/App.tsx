@@ -9,6 +9,7 @@ import { DataCleanupModal } from '@/src/components/groups/DataCleanupModal';
 import { RankingPage } from '@/src/components/ranking/RankingPage';
 import { GrowthAnalysis } from '@/src/components/growth/GrowthAnalysis';
 import { CampaignsPage } from '@/src/components/campaigns/CampaignsPage';
+import { SalesPage } from '@/src/components/sales/SalesPage';
 import { RedirectPage } from '@/src/components/campaigns/RedirectPage';
 import { ErrorBoundary } from '@/src/components/common/ErrorBoundary';
 import { SplashScreen } from '@/src/components/common/SplashScreen';
@@ -167,6 +168,15 @@ export default function App() {
               {activeTab === 'campaigns' && (
                 <ErrorBoundary>
                   <CampaignsPage groups={groups} />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'sales' && (
+                <ErrorBoundary>
+                  <SalesPage 
+                    groups={groups} 
+                    onEdit={handleEdit} 
+                    onUpdate={updateGroup}
+                  />
                 </ErrorBoundary>
               )}
             </React.Fragment>

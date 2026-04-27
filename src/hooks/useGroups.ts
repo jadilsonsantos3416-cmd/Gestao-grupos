@@ -45,7 +45,12 @@ export function useGroups() {
           growth_tier: data.growth_tier,
           ai_analysis: data.ai_analysis,
           ultima_revisao_membros: data.ultima_revisao_membros,
-          ultimo_post: data.ultimo_post
+          ultimo_post: data.ultimo_post,
+          // Sale fields
+          para_venda: !!data.para_venda,
+          valor_venda: data.valor_venda || "",
+          status_venda: data.status_venda || "Disponível",
+          observacoes_venda: data.observacoes_venda || ""
         };
         
         groupsData.push(normalizedGroup);
