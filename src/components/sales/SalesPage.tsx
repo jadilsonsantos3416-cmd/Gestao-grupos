@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Download, Tag, Edit2, XCircle, ExternalLink, MessageSquare, Plus, Search, CheckCircle2, AlertCircle, ChevronDown, Loader2 } from 'lucide-react';
 import { Group } from '@/src/types';
 import { cn } from '@/src/lib/utils';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface SalesPageProps {
   groups: Group[];
@@ -12,16 +13,23 @@ interface SalesPageProps {
 export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedNiche, setSelectedNiche] = useState<string>('Todos');
+  const [isNicheDropdownOpen, setIsNicheDropdownOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
   const salesGroups = groups.filter(g => g.para_venda);
   
+  const uniqueNiches = Array.from(new Set(groups.map(g => g.nicho || 'Geral'))).sort();
+
   const filteredAvailableGroups = groups.filter(g => {
     const matchesSearch = 
       g.nome_grupo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       g.nicho?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       g.link_grupo?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
+    
+    const matchesNiche = selectedNiche === 'Todos' || (g.nicho || 'Geral') === selectedNiche;
+
+    return matchesSearch && matchesNiche;
   }).sort((a, b) => (a.para_venda === b.para_venda ? 0 : a.para_venda ? 1 : -1));
 
   const handleAddGroupToSale = async (group: Group) => {
@@ -166,7 +174,72 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
                 onClick={() => setIsDropdownOpen(false)}
               />
               <div className="absolute top-full left-0 right-0 mt-3 bg-white rounded-[2rem] border border-slate-100 shadow-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
-                <div className="p-4 border-b border-slate-50 bg-slate-50/50">
+                <div className="p-4 border-b border-slate-50 bg-slate-50/50 flex flex-col gap-3">
+                  {/* Niche Filter */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsNicheDropdownOpen(!isNicheDropdownOpen)}
+                      className="w-full bg-white border border-slate-100 rounded-2xl py-3 px-4 flex items-center justify-between shadow-sm group hover:border-primary transition-all"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nicho:</span>
+                        <span className="text-xs font-black text-slate-900">{selectedNiche}</span>
+                      </div>
+                      <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", isNicheDropdownOpen && "rotate-180")} />
+                    </button>
+
+                    <AnimatePresence>
+                      {isNicheDropdownOpen && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-[60]" 
+                            onClick={() => setIsNicheDropdownOpen(false)} 
+                          />
+                          <motion.div
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 5 }}
+                            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-slate-100 shadow-xl z-[70] overflow-hidden"
+                          >
+                            <div className="max-h-48 overflow-y-auto custom-scrollbar p-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedNiche('Todos');
+                                  setIsNicheDropdownOpen(false);
+                                }}
+                                className={cn(
+                                  "w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-colors",
+                                  selectedNiche === 'Todos' ? "bg-primary text-white" : "text-slate-400 hover:bg-slate-50"
+                                )}
+                              >
+                                Todos
+                              </button>
+                              {uniqueNiches.map(niche => (
+                                <button
+                                  key={niche}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedNiche(niche);
+                                    setIsNicheDropdownOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-colors",
+                                    selectedNiche === niche ? "bg-primary text-white" : "text-slate-400 hover:bg-slate-50"
+                                  )}
+                                >
+                                  {niche}
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Search Input */}
                   <div className="relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input 
