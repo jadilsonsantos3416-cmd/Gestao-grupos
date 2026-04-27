@@ -27,25 +27,31 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
   const handleAddGroupToSale = async (group: Group) => {
     if (isProcessing) return;
     
+    // Safety check to prevent duplication in the list
     if (group.para_venda) {
-      alert("Esse grupo já está na lista de venda");
+      alert("Este grupo já está na lista de venda.");
       return;
     }
 
     setIsProcessing(group.id);
     try {
+      // Explicitly update document in 'grupos' collection with required fields
       await onUpdate(group.id, { 
         para_venda: true,
         status_venda: 'Disponível',
-        // Preserve existing values if they exist
+        // Use existing values if they exist, otherwise empty string as requested
         valor_venda: group.valor_venda || '',
         observacoes_venda: group.observacoes_venda || '',
         atualizado_em: new Date().toISOString()
       });
+      
+      // Clear search query after adding as a feedback
       setSearchQuery('');
+      
+      // The groups list will update automatically via onSnapshot in useGroups hook
     } catch (error) {
       console.error('Error adding group to sale:', error);
-      alert("Erro ao adicionar grupo para venda.");
+      alert("Erro ao adicionar grupo para venda. Tente novamente.");
     } finally {
       setIsProcessing(null);
     }
@@ -203,14 +209,16 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
                           
                           <div className="shrink-0">
                             {isProcessing === group.id ? (
-                              <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                                <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                              </div>
                             ) : group.para_venda ? (
-                              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg">
-                                <CheckCircle2 className="w-3 h-3" />
-                                <span className="text-[8px] font-black uppercase tracking-widest">Já adicionado</span>
+                              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-primary rounded-xl border border-green-100 animate-in zoom-in duration-300">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span className="text-[9px] font-black uppercase tracking-widest">Adicionado</span>
                               </div>
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover/item:bg-primary group-hover/item:text-white transition-all">
+                              <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover/item:bg-primary group-hover/item:text-white transition-all group-hover/item:scale-110 active:scale-95 shadow-sm">
                                 <Plus className="w-4 h-4" />
                               </div>
                             )}

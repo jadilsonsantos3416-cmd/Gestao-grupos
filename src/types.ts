@@ -39,6 +39,7 @@ export interface Group {
   valor_venda?: string;
   status_venda?: SaleStatus;
   observacoes_venda?: string;
+  atualizado_em?: string;
 }
 
 export interface Renter {
