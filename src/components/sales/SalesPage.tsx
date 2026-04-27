@@ -4,6 +4,8 @@ import { Group } from '@/src/types';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface SalesPageProps {
   groups: Group[];
@@ -88,6 +90,96 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
     return group.link_grupo || '';
   };
 
+  const exportToCSV = () => {
+    if (salesGroups.length === 0) {
+      alert("Nenhum grupo para exportar");
+      return;
+    }
+
+    // Sort by members count descending
+    const sortedGroups = [...salesGroups].sort((a, b) => 
+      (b.quantidade_membros || 0) - (a.quantidade_membros || 0)
+    );
+
+    const headers = ['NOME', 'LINK', 'PUBLICO', 'VALOR'];
+    const rows = sortedGroups.map(group => [
+      `"${(group.nome_grupo || '').replace(/"/g, '""')}"`,
+      `"${getFullLink(group).replace(/"/g, '""')}"`,
+      group.quantidade_membros || 0,
+      `"${(group.valor_venda || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(r => r.join(','))
+    ].join('\n');
+
+    // Add BOM for Excel compatibility
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'grupos-venda.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToPDF = () => {
+    if (salesGroups.length === 0) {
+      alert("Nenhum grupo para exportar");
+      return;
+    }
+
+    const sortedGroups = [...salesGroups].sort((a, b) => 
+      (b.quantidade_membros || 0) - (a.quantidade_membros || 0)
+    );
+
+    const doc = new jsPDF();
+    
+    // Title
+    doc.setFontSize(18);
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.text("Relatório de Grupos para Venda", 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139); // slate-400
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 14, 28);
+
+    const data = sortedGroups.map(group => [
+      group.nome_grupo || '',
+      getFullLink(group),
+      group.quantidade_membros?.toLocaleString('pt-BR') || '0',
+      group.valor_venda || ''
+    ]);
+
+    autoTable(doc, {
+      head: [['NOME', 'LINK', 'PÚBLICO', 'VALOR']],
+      body: data,
+      startY: 35,
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [22, 163, 74], // primary green
+        textColor: 255,
+        fontSize: 10,
+        fontStyle: 'bold'
+      },
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      },
+      columnStyles: {
+        0: { cellWidth: 50 },
+        1: { cellWidth: 80 },
+        2: { cellWidth: 25, halign: 'center' },
+        3: { cellWidth: 25, halign: 'center' }
+      }
+    });
+
+    doc.save('grupos-venda.pdf');
+  };
+
   const exportToExcel = () => {
     if (salesGroups.length === 0) {
       alert("Nenhum grupo para exportar");
@@ -158,20 +250,40 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
         </div>
       </header>
 
-      {/* Export Button as a Card */}
+      {/* Export Buttons */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <button 
-          onClick={exportToExcel}
-          className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-100/40 flex items-center gap-4 group hover:scale-[1.01] transition-all active:scale-[0.99]"
-        >
-          <div className="p-3 bg-green-50 rounded-2xl group-hover:bg-primary transition-colors">
-            <Download className="w-6 h-6 text-primary group-hover:text-white transition-colors" />
+        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-100/40 flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-green-50 rounded-2xl">
+              <Download className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">Ação Rápida</p>
+              <span className="text-lg font-black text-slate-900 tracking-tight">EXPORTAR LISTA</span>
+            </div>
           </div>
-          <div className="text-left">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-1">Ação Rápida</p>
-            <span className="text-lg font-black text-slate-900 tracking-tight">EXPORTAR TABELA EXCEL</span>
+          
+          <div className="grid grid-cols-3 gap-2">
+            <button 
+              onClick={exportToExcel}
+              className="flex-1 bg-slate-900 text-white py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-primary transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              Excel
+            </button>
+            <button 
+              onClick={exportToCSV}
+              className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              CSV
+            </button>
+            <button 
+              onClick={exportToPDF}
+              className="flex-1 bg-rose-50 text-rose-600 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              PDF
+            </button>
           </div>
-        </button>
+        </div>
 
         <div className="relative">
           <button 
