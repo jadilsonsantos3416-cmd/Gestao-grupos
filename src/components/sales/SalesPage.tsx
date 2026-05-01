@@ -80,14 +80,48 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
     }
   };
 
-  const getFullLink = (group: Group) => {
-    if (group.link_grupo && group.link_grupo.startsWith('http')) {
-      return group.link_grupo;
-    }
+  const normalizeFacebookGroupLink = (group: Group) => {
+    // 1. Priority: group_id
     if (group.group_id) {
-      return `https://www.facebook.com/groups/${group.group_id}/`;
+      const id = String(group.group_id).trim().replace(/\s+/g, '');
+      if (id && id.length > 0) {
+        return `https://www.facebook.com/groups/${id}/`;
+      }
     }
-    return group.link_grupo || '';
+
+    // 2. Secondary: link_grupo
+    let link = (group.link_grupo || '').trim();
+    
+    // Remove all whitespace and line breaks
+    link = link.replace(/\s+/g, '');
+
+    if (!link) return '';
+
+    // If it's just numbers (group ID)
+    if (/^\d+$/.test(link)) {
+      return `https://www.facebook.com/groups/${link}/`;
+    }
+
+    // Handle domain prefixes
+    if (link.includes('facebook.com')) {
+      if (!link.startsWith('http')) {
+        link = 'https://' + link;
+      }
+    } else if (link.includes('groups/')) {
+      link = 'https://www.facebook.com/' + (link.startsWith('/') ? link.slice(1) : link);
+    } else {
+      // If none of the above, but has content, ensure it's at least a valid start for append
+      if (!link.startsWith('http')) {
+        link = 'https://www.facebook.com/groups/' + link;
+      }
+    }
+
+    // Ensure ending slash and clean formatting
+    if (link && !link.endsWith('/')) {
+      link = link + '/';
+    }
+
+    return link;
   };
 
   const exportToCSV = () => {
@@ -103,10 +137,10 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
 
     const headers = ['NOME', 'LINK', 'PUBLICO', 'VALOR'];
     const rows = sortedGroups.map(group => [
-      (group.nome_grupo || '').replace(/;/g, ' '),
-      getFullLink(group),
+      (group.nome_grupo || '').replace(/;/g, ' ').trim(),
+      normalizeFacebookGroupLink(group),
       group.quantidade_membros || 0,
-      (group.valor_venda || '').replace(/;/g, ' ')
+      (group.valor_venda || '').replace(/;/g, ' ').trim()
     ]);
 
     const csvContent = [
@@ -114,7 +148,7 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
       ...rows.map(r => r.join(';'))
     ].join('\n');
 
-    // Add BOM for Excel compatibility
+    // Add BOM for Excel compatibility (UTF-8)
     const BOM = "\uFEFF";
     const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -150,7 +184,7 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
 
     const data = sortedGroups.map(group => [
       group.nome_grupo || '',
-      getFullLink(group),
+      normalizeFacebookGroupLink(group),
       group.quantidade_membros?.toLocaleString('pt-BR') || '0',
       group.valor_venda || ''
     ]);
@@ -195,7 +229,7 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
     // Prepare data for Excel
     const data = sortedGroups.map(group => ({
       'NOME': group.nome_grupo || '',
-      'LINK': getFullLink(group),
+      'LINK': normalizeFacebookGroupLink(group),
       'PUBLICO': group.quantidade_membros || 0,
       'VALOR': group.valor_venda || ''
     }));
@@ -548,7 +582,7 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
 
                   <div className="flex gap-2">
                     <a 
-                      href={group.link_grupo} 
+                      href={normalizeFacebookGroupLink(group)} 
                       target="_blank" 
                       rel="noreferrer"
                       className="flex-1 flex items-center justify-center gap-2 bg-slate-950 text-white font-black uppercase tracking-[0.2em] text-[8px] py-3.5 rounded-xl hover:bg-primary transition-all shadow-lg shadow-slate-100"
