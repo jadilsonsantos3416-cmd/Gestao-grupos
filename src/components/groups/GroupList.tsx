@@ -9,6 +9,8 @@ import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType, TextRun, HeadingLevel, AlignmentType, BorderStyle, VerticalAlign } from 'docx';
+import { saveAs } from 'file-saver';
 import { MemberReviewModal } from './MemberReviewModal';
 import { PostTodayModal } from './PostTodayModal';
 import { GenerateCopyModal } from './GenerateCopyModal';
@@ -169,6 +171,101 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
       setToast({ message: "Exportação concluída com sucesso", type: 'success' });
     } catch (error) {
       console.error("Erro na exportação Excel:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportWord = async () => {
+    const dataToExport = getExportData();
+    if (dataToExport.length === 0) {
+      alert("Nenhum grupo para exportar");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: [
+              new Paragraph({
+                text: "Lista de Grupos FB",
+                heading: HeadingLevel.HEADING_1,
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 200 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `Exportado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`,
+                    color: "64748b", // slate-400
+                    size: 20, // 10pt
+                  }),
+                ],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 400 },
+              }),
+              new Table({
+                width: {
+                  size: 100,
+                  type: WidthType.PERCENTAGE,
+                },
+                rows: [
+                  new TableRow({
+                    children: [
+                      new TableCell({
+                        children: [new Paragraph({ children: [new TextRun({ text: "NOME", bold: true, color: "ffffff" })], alignment: AlignmentType.CENTER })],
+                        shading: { fill: "16a34a" }, // primary green
+                        verticalAlign: VerticalAlign.CENTER,
+                      }),
+                      new TableCell({
+                        children: [new Paragraph({ children: [new TextRun({ text: "LINK", bold: true, color: "ffffff" })], alignment: AlignmentType.CENTER })],
+                        shading: { fill: "16a34a" },
+                        verticalAlign: VerticalAlign.CENTER,
+                      }),
+                      new TableCell({
+                        children: [new Paragraph({ children: [new TextRun({ text: "MEMBROS", bold: true, color: "ffffff" })], alignment: AlignmentType.CENTER })],
+                        shading: { fill: "16a34a" },
+                        verticalAlign: VerticalAlign.CENTER,
+                      }),
+                    ],
+                  }),
+                  ...dataToExport.map(g => {
+                    const item = g as any;
+                    return new TableRow({
+                      children: [
+                        new TableCell({
+                          children: [new Paragraph({ text: (item.nome_grupo || item.nome || "").replace(/\n/g, ' ').trim() })],
+                          verticalAlign: VerticalAlign.CENTER,
+                        }),
+                        new TableCell({
+                          children: [new Paragraph({ text: normalizeFacebookGroupLink(g) })],
+                          verticalAlign: VerticalAlign.CENTER,
+                        }),
+                        new TableCell({
+                          children: [new Paragraph({ text: (item.quantidade_membros || item.membros || 0).toLocaleString('pt-BR'), alignment: AlignmentType.RIGHT })],
+                          verticalAlign: VerticalAlign.CENTER,
+                        }),
+                      ],
+                    });
+                  }),
+                ],
+              }),
+            ],
+          },
+        ],
+      });
+
+      const blob = await Packer.toBlob(doc);
+      const dateSuffix = new Date().toISOString().split('T')[0];
+      saveAs(blob, `grupos_fb_${dateSuffix}.docx`);
+
+      setIsExportDropdownOpen(false);
+      setToast({ message: "Word exportado com sucesso", type: 'success' });
+    } catch (error) {
+      console.error("Erro na exportação Word:", error);
     } finally {
       setIsExporting(false);
     }
@@ -714,6 +811,13 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                       >
                         <ClipboardList className="w-3.5 h-3.5" />
                         Exportar PDF
+                      </button>
+                      <button
+                        onClick={() => handleExportWord()}
+                        className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-xl transition-all flex items-center gap-3"
+                      >
+                        <Wand2 className="w-3.5 h-3.5" />
+                        Exportar Word
                       </button>
                       <button
                         onClick={() => handleExportCSV('sheets')}
