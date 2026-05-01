@@ -85,7 +85,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
       return `https://www.facebook.com/groups/${link}/`;
     }
 
-    // Handle domain prefixes
+    // Handle domain prefixes or group patterns
     if (link.includes('facebook.com')) {
       if (!link.startsWith('http')) {
         link = 'https://' + link;
@@ -93,32 +93,26 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
     } else if (link.includes('groups/')) {
       link = 'https://www.facebook.com/' + (link.startsWith('/') ? link.slice(1) : link);
     } else {
-      // If none of the above, but has content, ensure it's at least a valid start for append
-      if (!link.startsWith('http')) {
-        link = 'https://www.facebook.com/groups/' + link;
-      }
+      // If none of the above, but has content, treat as part of a group path
+      link = 'https://www.facebook.com/groups/' + (link.startsWith('/') ? link.slice(1) : link);
     }
 
-    // Ensure ending slash and clean formatting
+    // Ensure ending slash
     if (link && !link.endsWith('/')) {
       link = link + '/';
     }
 
-    return link;
+    // Final cleanup: ensure no double slashes in path (except after https:)
+    return link.replace(/([^:]\/)\/+/g, "$1");
   };
 
   const getExportData = () => {
     if (filteredGroups.length === 0) return [];
 
-    // Sorting: High priority first, then member count descending
+    // Sorting: Strictly by member count descending (maior para o menor)
     return [...filteredGroups].sort((a, b) => {
-      const pA = priorityOrder[a.priorityInfo?.prioridade || 'Baixa'];
-      const pB = priorityOrder[b.priorityInfo?.prioridade || 'Baixa'];
-      
-      if (pA !== pB) return pA - pB;
-      
-      const mA = a.quantidade_membros || 0;
-      const mB = b.quantidade_membros || 0;
+      const mA = a.quantidade_membros || (a as any).membros || 0;
+      const mB = b.quantidade_membros || (b as any).membros || 0;
       return mB - mA;
     });
   };
@@ -133,29 +127,14 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
     setIsExporting(true);
     try {
       const BOM = "\uFEFF";
-      const headers = [
-        'NOME', 'LINK', 'NICHO', 'STATUS', 'PERFIL', 'SHOPEE', 
-        'LOCATARIO', 'WHATSAPP', 'DATA_INICIO', 'DATA_VENCIMENTO', 
-        'VALOR', 'MEMBROS', 'PRIORIDADE', 'SCORE'
-      ];
+      const headers = ['NOME', 'LINK', 'MEMBROS'];
 
       const rows = dataToExport.map(g => {
         const item = g as any;
         return [
-          (item.nome_grupo || item.nome || "").replace(/;/g, ' ').trim(),
+          (item.nome_grupo || item.nome || "").replace(/;/g, ' ').replace(/\n/g, ' ').trim(),
           normalizeFacebookGroupLink(g),
-          (item.nicho || "Sem Nicho").replace(/;/g, ' ').trim(),
-          (item.status || "Disponível").replace(/;/g, ' ').trim(),
-          (item.perfil_compartilhando || "Inativo").replace(/;/g, ' ').trim(),
-          (item.uso_shopee || "Inativo").replace(/;/g, ' ').trim(),
-          (item.locatario || "").replace(/;/g, ' ').trim(),
-          (item.whatsapp || "").replace(/;/g, ' ').trim(),
-          (item.data_inicio || "").replace(/;/g, ' ').trim(),
-          (item.data_vencimento || "").replace(/;/g, ' ').trim(),
-          (item.valor || "").toString().replace(/;/g, ' ').trim(),
-          item.quantidade_membros || item.membros || 0,
-          (item.prioridade_postagem || item.priorityInfo?.prioridade || "").replace(/;/g, ' ').trim(),
-          item.score_postagem || item.priorityInfo?.score || 0
+          item.quantidade_membros || item.membros || 0
         ];
       });
 
@@ -164,9 +143,10 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
         ...rows.map(r => r.join(';'))
       ].join('\n');
 
+      const dateSuffix = new Date().toISOString().split('T')[0];
       const fileName = type === 'sheets' 
-        ? `grupos_fb_sheets_${new Date().toISOString().split('T')[0]}.csv`
-        : `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`;
+        ? `grupos_fb_sheets_${dateSuffix}.csv`
+        : `grupos_fb_${dateSuffix}.csv`;
 
       const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
