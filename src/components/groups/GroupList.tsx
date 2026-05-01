@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Group, QuickFilter } from '@/src/types';
 import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy } from 'lucide-react';
-import { cn, formatNumber, formatCurrency, exportToCSV, ensureAbsoluteUrl, parseMembers } from '@/src/lib/utils';
+import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { ptBR } from 'date-fns/locale';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { MemberReviewModal } from './MemberReviewModal';
 import { PostTodayModal } from './PostTodayModal';
 import { GenerateCopyModal } from './GenerateCopyModal';
@@ -50,6 +52,212 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [processingAction, setProcessingAction] = useState<{ id: string, field: 'perfil' | 'shopee' | 'nicho' | 'membros' } | null>(null);
   const [editingMembersId, setEditingMembersId] = useState<string | null>(null);
   const [membersInputValue, setMembersInputValue] = useState('');
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  const normalizeFacebookGroupLink = (group: Group) => {
+    // 1. Priority: group_id
+    if (group.group_id) {
+      const id = String(group.group_id).trim().replace(/\s+/g, '');
+      if (id && id.length > 0) {
+        return `https://www.facebook.com/groups/${id}/`;
+      }
+    }
+
+    // 2. Secondary: link_grupo
+    let link = (group.link_grupo || '').trim();
+    
+    // Remove all whitespace and line breaks
+    link = link.replace(/\s+/g, '');
+
+    if (!link) return '';
+
+    // If it's just numbers (group ID)
+    if (/^\d+$/.test(link)) {
+      return `https://www.facebook.com/groups/${link}/`;
+    }
+
+    // Handle domain prefixes
+    if (link.includes('facebook.com')) {
+      if (!link.startsWith('http')) {
+        link = 'https://' + link;
+      }
+    } else if (link.includes('groups/')) {
+      link = 'https://www.facebook.com/' + (link.startsWith('/') ? link.slice(1) : link);
+    } else {
+      // If none of the above, but has content, ensure it's at least a valid start for append
+      if (!link.startsWith('http')) {
+        link = 'https://www.facebook.com/groups/' + link;
+      }
+    }
+
+    // Ensure ending slash and clean formatting
+    if (link && !link.endsWith('/')) {
+      link = link + '/';
+    }
+
+    return link;
+  };
+
+  const getExportData = () => {
+    if (filteredGroups.length === 0) return [];
+
+    // Sorting: High priority first, then member count descending
+    return [...filteredGroups].sort((a, b) => {
+      const pA = priorityOrder[a.priorityInfo?.prioridade || 'Baixa'];
+      const pB = priorityOrder[b.priorityInfo?.prioridade || 'Baixa'];
+      
+      if (pA !== pB) return pA - pB;
+      
+      const mA = a.quantidade_membros || 0;
+      const mB = b.quantidade_membros || 0;
+      return mB - mA;
+    });
+  };
+
+  const handleExportCSV = async (type: 'csv' | 'sheets') => {
+    const dataToExport = getExportData();
+    if (dataToExport.length === 0) {
+      alert("Nenhum grupo para exportar");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const BOM = "\uFEFF";
+      const headers = [
+        'NOME', 'LINK', 'NICHO', 'STATUS', 'PERFIL', 'SHOPEE', 
+        'LOCATARIO', 'WHATSAPP', 'DATA_INICIO', 'DATA_VENCIMENTO', 
+        'VALOR', 'MEMBROS', 'PRIORIDADE', 'SCORE'
+      ];
+
+      const rows = dataToExport.map(g => {
+        const item = g as any;
+        return [
+          (item.nome_grupo || item.nome || "").replace(/;/g, ' ').trim(),
+          normalizeFacebookGroupLink(g),
+          (item.nicho || "Sem Nicho").replace(/;/g, ' ').trim(),
+          (item.status || "Disponível").replace(/;/g, ' ').trim(),
+          (item.perfil_compartilhando || "Inativo").replace(/;/g, ' ').trim(),
+          (item.uso_shopee || "Inativo").replace(/;/g, ' ').trim(),
+          (item.locatario || "").replace(/;/g, ' ').trim(),
+          (item.whatsapp || "").replace(/;/g, ' ').trim(),
+          (item.data_inicio || "").replace(/;/g, ' ').trim(),
+          (item.data_vencimento || "").replace(/;/g, ' ').trim(),
+          (item.valor || "").toString().replace(/;/g, ' ').trim(),
+          item.quantidade_membros || item.membros || 0,
+          (item.prioridade_postagem || item.priorityInfo?.prioridade || "").replace(/;/g, ' ').trim(),
+          item.score_postagem || item.priorityInfo?.score || 0
+        ];
+      });
+
+      const csvContent = [
+        headers.join(';'),
+        ...rows.map(r => r.join(';'))
+      ].join('\n');
+
+      const fileName = type === 'sheets' 
+        ? `grupos_fb_sheets_${new Date().toISOString().split('T')[0]}.csv`
+        : `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`;
+
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      setIsExportDropdownOpen(false);
+      setToast({ message: "Exportação concluída com sucesso", type: 'success' });
+    } catch (error) {
+      console.error("Erro na exportação CSV:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    const dataToExport = getExportData();
+    if (dataToExport.length === 0) {
+      alert("Nenhum grupo para exportar");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const doc = new jsPDF();
+      
+      // Title
+      doc.setFontSize(18);
+      doc.setTextColor(15, 23, 42); // slate-900
+      doc.text("Lista de Grupos FB", 14, 20);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139); // slate-400
+      doc.text(`Exportado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 14, 28);
+
+      const tableData = dataToExport.map(g => {
+        const item = g as any;
+        return [
+          (item.nome_grupo || item.nome || "").substring(0, 30),
+          normalizeFacebookGroupLink(g).substring(0, 40) + "...",
+          item.nicho || 'Geral',
+          (item.quantidade_membros || item.membros || 0).toLocaleString('pt-BR'),
+          item.status || 'Disponível',
+          item.perfil_compartilhando || 'Inativo',
+          item.uso_shopee || 'Inativo',
+          formatCurrency(item.valor)
+        ];
+      });
+
+      autoTable(doc, {
+        head: [['NOME', 'LINK', 'NICHO', 'MEMBROS', 'STATUS', 'PERFIL', 'SHOPEE', 'VALOR']],
+        body: tableData,
+        startY: 35,
+        theme: 'grid',
+        headStyles: { 
+          fillColor: [22, 163, 74], // primary green
+          textColor: 255,
+          fontSize: 8,
+          fontStyle: 'bold'
+        },
+        styles: {
+          fontSize: 7,
+          cellPadding: 2,
+          overflow: 'linebreak'
+        },
+        columnStyles: {
+          0: { cellWidth: 30 },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 20 },
+          3: { cellWidth: 20 },
+          4: { cellWidth: 15 },
+          5: { cellWidth: 15 },
+          6: { cellWidth: 15 },
+          7: { cellWidth: 20 }
+        }
+      });
+
+      doc.save(`grupos_fb_${new Date().toISOString().split('T')[0]}.pdf`);
+      setIsExportDropdownOpen(false);
+      setToast({ message: "Exportação concluída com sucesso", type: 'success' });
+    } catch (error) {
+      console.error("Erro na exportação PDF:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   useEffect(() => {
     loadNichos();
@@ -319,6 +527,28 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
 
   return (
     <div className="space-y-8">
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 50, x: '-50%' }}
+            className={cn(
+              "fixed bottom-24 left-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-md",
+              toast.type === 'success' ? "bg-emerald-500/90 text-white" : "bg-rose-500/90 text-white"
+            )}
+          >
+            {toast.type === 'success' ? (
+              <Trophy className="w-4 h-4" />
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
+            <span className="text-xs font-black uppercase tracking-widest">{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Controls */}
       <div className="flex flex-col gap-6">
         <div className="flex flex-col md:flex-row gap-4">
@@ -409,13 +639,60 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
               <span className="truncate">Copys</span>
             </button>
 
-            <button 
-              onClick={() => exportToCSV(filteredGroups, `grupos_fb_${new Date().toISOString().split('T')[0]}.csv`)}
-              className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-white border border-slate-100 rounded-xl md:rounded-2xl shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:border-green-200 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
-            >
-              <Download className="w-4 h-4 text-primary group-hover:scale-110 transition-transform shrink-0" />
-              <span className="truncate">Exportar</span>
-            </button>
+            <div className="relative xl:flex-1">
+              <button 
+                onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+                disabled={isExporting}
+                className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-white border border-slate-100 rounded-xl md:rounded-2xl shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:border-green-200 active:scale-95 transition-all w-full md:w-auto xl:w-full group"
+              >
+                {isExporting ? (
+                  <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />
+                ) : (
+                  <Download className="w-4 h-4 text-primary group-hover:scale-110 transition-transform shrink-0" />
+                )}
+                <span className="truncate">{isExporting ? 'Exportando...' : 'Exportar'}</span>
+                <ChevronDown className={cn("w-3 h-3 transition-transform", isExportDropdownOpen && "rotate-180")} />
+              </button>
+
+              <AnimatePresence>
+                {isExportDropdownOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setIsExportDropdownOpen(false)} 
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-2 w-48 bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 p-2 z-50 overflow-hidden"
+                    >
+                      <button
+                        onClick={() => handleExportCSV('csv')}
+                        className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-primary rounded-xl transition-all flex items-center gap-3"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Exportar CSV
+                      </button>
+                      <button
+                        onClick={() => handleExportPDF()}
+                        className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-rose-600 rounded-xl transition-all flex items-center gap-3"
+                      >
+                        <ClipboardList className="w-3.5 h-3.5" />
+                        Exportar PDF
+                      </button>
+                      <button
+                        onClick={() => handleExportCSV('sheets')}
+                        className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-green-600 rounded-xl transition-all flex items-center gap-3"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Exportar Sheets
+                      </button>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>
@@ -477,9 +754,9 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                             {group.nome_grupo}
                           </span>
                           <div className="flex items-center gap-4 mt-2">
-                             {group.link_grupo && (
+                              {group.link_grupo && (
                               <a 
-                                href={ensureAbsoluteUrl(group.link_grupo)} 
+                                href={normalizeFacebookGroupLink(group)} 
                                 target="_blank" 
                                 rel="noreferrer"
                                 className="text-[10px] text-blue-500 hover:text-blue-700 flex items-center gap-1.5 font-black uppercase tracking-widest transition-colors"
