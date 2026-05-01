@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 import { MemberReviewModal } from './MemberReviewModal';
 import { PostTodayModal } from './PostTodayModal';
 import { GenerateCopyModal } from './GenerateCopyModal';
@@ -90,6 +91,10 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
       if (!link.startsWith('http')) {
         link = 'https://' + link;
       }
+      // Ensure www. for standard look if explicitly requested or to normalize
+      if (!link.includes('www.')) {
+        link = link.replace('facebook.com', 'www.facebook.com');
+      }
     } else if (link.includes('groups/')) {
       link = 'https://www.facebook.com/' + (link.startsWith('/') ? link.slice(1) : link);
     } else {
@@ -115,6 +120,58 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
       const mB = b.quantidade_membros || (b as any).membros || 0;
       return mB - mA;
     });
+  };
+
+  const handleExportExcel = async () => {
+    const dataToExport = getExportData();
+    if (dataToExport.length === 0) {
+      alert("Nenhum grupo para exportar");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      // Prepare data specifically for Excel
+      const data = dataToExport.map(g => {
+        const item = g as any;
+        return {
+          'NOME': (item.nome_grupo || item.nome || "").replace(/\n/g, ' ').trim(),
+          'LINK': normalizeFacebookGroupLink(g),
+          'MEMBROS': item.quantidade_membros || item.membros || 0
+        };
+      });
+
+      // Create workbook and worksheet
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Grupos FB");
+
+      // Set column widths as requested
+      worksheet['!cols'] = [
+        { wch: 38 }, // NOME
+        { wch: 60 }, // LINK
+        { wch: 15 }, // MEMBROS
+      ];
+
+      // Freeze first row
+      worksheet['!freeze'] = {
+        xSplit: 0,
+        ySplit: 1,
+        topLeftCell: 'A2',
+        activePane: 'bottomLeft',
+        state: 'frozen'
+      };
+
+      const dateSuffix = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(workbook, `grupos_fb_${dateSuffix}.xlsx`);
+      
+      setIsExportDropdownOpen(false);
+      setToast({ message: "Exportação concluída com sucesso", type: 'success' });
+    } catch (error) {
+      console.error("Erro na exportação Excel:", error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleExportCSV = async (type: 'csv' | 'sheets') => {
@@ -190,42 +247,32 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
       const tableData = dataToExport.map(g => {
         const item = g as any;
         return [
-          (item.nome_grupo || item.nome || "").substring(0, 30),
-          normalizeFacebookGroupLink(g).substring(0, 40) + "...",
-          item.nicho || 'Geral',
-          (item.quantidade_membros || item.membros || 0).toLocaleString('pt-BR'),
-          item.status || 'Disponível',
-          item.perfil_compartilhando || 'Inativo',
-          item.uso_shopee || 'Inativo',
-          formatCurrency(item.valor)
+          (item.nome_grupo || item.nome || "").substring(0, 100),
+          normalizeFacebookGroupLink(g),
+          (item.quantidade_membros || item.membros || 0).toLocaleString('pt-BR')
         ];
       });
 
       autoTable(doc, {
-        head: [['NOME', 'LINK', 'NICHO', 'MEMBROS', 'STATUS', 'PERFIL', 'SHOPEE', 'VALOR']],
+        head: [['NOME', 'LINK', 'MEMBROS']],
         body: tableData,
         startY: 35,
         theme: 'grid',
         headStyles: { 
           fillColor: [22, 163, 74], // primary green
           textColor: 255,
-          fontSize: 8,
+          fontSize: 10,
           fontStyle: 'bold'
         },
         styles: {
-          fontSize: 7,
-          cellPadding: 2,
+          fontSize: 9,
+          cellPadding: 3,
           overflow: 'linebreak'
         },
         columnStyles: {
-          0: { cellWidth: 30 },
-          1: { cellWidth: 40 },
-          2: { cellWidth: 20 },
-          3: { cellWidth: 20 },
-          4: { cellWidth: 15 },
-          5: { cellWidth: 15 },
-          6: { cellWidth: 15 },
-          7: { cellWidth: 20 }
+          0: { cellWidth: 60 },
+          1: { cellWidth: 100 },
+          2: { cellWidth: 30, halign: 'right' }
         }
       });
 
@@ -645,8 +692,15 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute right-0 mt-2 w-48 bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 p-2 z-50 overflow-hidden"
+                      className="absolute right-0 mt-2 w-56 bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 p-2 z-50 overflow-hidden"
                     >
+                      <button
+                        onClick={() => handleExportExcel()}
+                        className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-emerald-600 rounded-xl transition-all flex items-center gap-3"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Exportar Excel
+                      </button>
                       <button
                         onClick={() => handleExportCSV('csv')}
                         className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-primary rounded-xl transition-all flex items-center gap-3"
@@ -663,10 +717,10 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                       </button>
                       <button
                         onClick={() => handleExportCSV('sheets')}
-                        className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-green-600 rounded-xl transition-all flex items-center gap-3"
+                        className="w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition-all flex items-center gap-3"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
-                        Exportar Sheets
+                        Exportar Google Docs
                       </button>
                     </motion.div>
                   </>
