@@ -18,6 +18,7 @@ import { NichoModal } from './NichoModal';
 import { LocatarioModal } from './LocatarioModal';
 import { listarNichos } from '@/src/lib/nichosService';
 import { Nicho, Locatario } from '@/src/types';
+import { CLOUDINARY_BASE_URL } from '@/src/constants';
 
 interface GroupListProps {
   groups: Group[];
@@ -69,8 +70,21 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
 
   const GroupThumbnail = ({ group, size = 'desktop' }: { group: Group, size?: 'desktop' | 'mobile' }) => {
     const [hasError, setHasError] = useState(false);
-    const thumbnailUrl = group.thumbnail_grupo || (group as any).capa_grupo || (group as any).foto_capa_url || (group as any).imagem_grupo || "";
+    const [imageLoaded, setImageLoaded] = useState(false);
     
+    // Logic for thumbnail URL:
+    // 1. thumbnail_grupo (explicitly saved URL)
+    // 2. Automatic Cloudinary URL (if configured and group_id exists)
+    // 3. Legacy fields (capa_grupo, etc - fallback from before)
+    
+    let thumbnailUrl = group.thumbnail_grupo || (group as any).capa_grupo || (group as any).foto_capa_url || (group as any).imagem_grupo || "";
+    
+    // Check for automatic Cloudinary URL if thumbnail_grupo is empty
+    if (!thumbnailUrl && CLOUDINARY_BASE_URL && group.group_id) {
+      const baseUrl = CLOUDINARY_BASE_URL.endsWith('/') ? CLOUDINARY_BASE_URL.slice(0, -1) : CLOUDINARY_BASE_URL;
+      thumbnailUrl = `${baseUrl}/${group.group_id}.png`;
+    }
+
     const dimensions = size === 'desktop' ? 'w-[52px] h-[52px]' : 'w-[44px] h-[44px]';
     const borderRadius = 'rounded-[14px]';
     const textSize = size === 'desktop' ? 'text-xl' : 'text-lg';
@@ -90,13 +104,26 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
         }}
       >
         {thumbnailUrl && !hasError ? (
-          <img 
-            src={thumbnailUrl} 
-            alt={group.nome_grupo || ''} 
-            className="w-full h-full object-cover"
-            referrerPolicy="no-referrer"
-            onError={() => setHasError(true)}
-          />
+          <>
+            {!imageLoaded && (
+               <div className="absolute inset-0 bg-slate-50 animate-pulse flex items-center justify-center">
+                  <div className={cn("text-primary/20 font-black flex items-center justify-center uppercase", textSize)}>
+                    {(group.nome_grupo || (group as any).nome || 'G')[0]}
+                  </div>
+               </div>
+            )}
+            <img 
+              src={thumbnailUrl} 
+              alt={group.nome_grupo || ''} 
+              className={cn("w-full h-full object-cover transition-opacity duration-300", imageLoaded ? "opacity-100" : "opacity-0")}
+              referrerPolicy="no-referrer"
+              onLoad={() => setImageLoaded(true)}
+              onError={() => {
+                setHasError(true);
+                setImageLoaded(true);
+              }}
+            />
+          </>
         ) : (
           <div className={cn("w-full h-full text-primary font-black flex items-center justify-center uppercase", textSize)}>
             {(group.nome_grupo || (group as any).nome || 'G')[0]}
