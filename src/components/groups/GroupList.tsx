@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Group, QuickFilter } from '@/src/types';
-import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall } from 'lucide-react';
+import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -477,6 +477,43 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
     }
   };
 
+  const handleMarkForSale = async (group: Group) => {
+    if (!onUpdate) return;
+    
+    // Check if already for sale
+    if (group.para_venda) {
+      setToast({ message: "Este grupo já está na lista de venda", type: 'success' });
+      return;
+    }
+
+    setProcessingAction({ id: group.id, field: 'perfil' }); // Generic field for loading
+
+    try {
+      await onUpdate(group.id, {
+        para_venda: true,
+        status_venda: 'Disponível',
+        valor_venda: group.valor || '',
+        atualizado_em: new Date().toISOString()
+      });
+      setToast({ message: "Grupo marcado para venda!", type: 'success' });
+    } catch (error) {
+      console.error("Erro ao marcar para venda:", error);
+      setToast({ message: "Erro ao marcar para venda", type: 'error' });
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const handleCopyResume = (group: Group) => {
+    const text = `Nome: ${group.nome_grupo || group.nome || 'Sem nome'}
+Nicho: ${group.nicho || 'Geral'}
+Membros: ${formatNumber(group.quantidade_membros || 0)}
+Link: ${normalizeFacebookGroupLink(group)}`;
+
+    navigator.clipboard.writeText(text);
+    setToast({ message: "Resumo copiado com sucesso!", type: 'success' });
+  };
+
   const handleSaveLocatario = async (locatario: Locatario) => {
     if (!onUpdate || !locatarioGroup) return;
 
@@ -940,49 +977,61 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                       key={group.id} 
                       className={cn(
                         "hover:bg-slate-50/50 transition-colors group relative",
-                        group.perfil_compartilhando === 'Inativo' && "bg-rose-50/20"
+                        group.perfil_compartilhando === 'Inativo' && "bg-rose-50/10"
                       )}
                     >
                       <td className="px-8 py-8 relative">
                         {group.perfil_compartilhando === 'Inativo' && (
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500" />
                         )}
-                        <div className="flex flex-col max-w-[250px]">
-                          <span className="font-black text-slate-900 group-hover:text-primary transition-colors text-base truncate" title={group.nome_grupo}>
-                            {group.nome_grupo}
-                          </span>
-                          <div className="flex items-center gap-4 mt-2">
-                              {group.link_grupo && (
-                              <a 
-                                href={normalizeFacebookGroupLink(group)} 
-                                target="_blank" 
-                                rel="noreferrer"
-                                className="text-[10px] text-blue-500 hover:text-blue-700 flex items-center gap-1.5 font-black uppercase tracking-widest transition-colors"
-                              >
-                                Link <ExternalLink className="w-3 h-3" />
-                              </a>
+                        <div className="flex items-center gap-4">
+                          {/* Thumbnail */}
+                          <div className="w-[52px] h-[52px] rounded-[14px] bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-100 shadow-sm flex items-center justify-center">
+                            {group.thumbnail_grupo ? (
+                              <img 
+                                src={group.thumbnail_grupo} 
+                                alt={group.nome_grupo || ''} 
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(group.nome_grupo || 'G')}&background=dcfce7&color=16a34a&bold=true`;
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-emerald-50 text-primary font-black text-xl flex items-center justify-center uppercase">
+                                {(group.nome_grupo || group.nome || 'G')[0]}
+                              </div>
                             )}
-                            <div className="flex items-center gap-1.5">
-                               <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
-                               <div className="relative flex items-center gap-1 group/nicho-select min-w-[80px]">
-                                 {processingAction?.id === group.id && processingAction?.field === 'nicho' ? (
-                                   <Loader2 className="w-2.5 h-2.5 text-primary animate-spin" />
-                                 ) : (
-                                   <>
-                                     <select
-                                       value={group.nicho || 'Geral'}
-                                       onChange={(e) => handleUpdateNiche(group, e.target.value)}
-                                       disabled={!!processingAction}
-                                       className="appearance-none bg-transparent border-0 p-0 pr-4 text-[10px] text-slate-400 font-bold uppercase tracking-wider focus:ring-0 cursor-pointer hover:text-primary transition-colors w-full"
-                                     >
-                                       {allAvailableNiches.map(n => (
-                                         <option key={n} value={n}>{n}</option>
-                                       ))}
-                                     </select>
-                                     <ChevronDown className="w-2.5 h-2.5 absolute right-0 pointer-events-none text-slate-300 group-hover/nicho-select:text-emerald-400 transition-colors" />
-                                   </>
-                                 )}
-                               </div>
+                          </div>
+
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-black text-slate-900 group-hover:text-primary transition-colors text-base truncate" title={group.nome_grupo}>
+                                {group.nome_grupo}
+                              </span>
+                              {group.para_venda && (
+                                <span className="bg-amber-50 text-amber-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-100">À Venda</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4 mt-2">
+                                {group.link_grupo && (
+                                <a 
+                                  href={normalizeFacebookGroupLink(group)} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="text-[10px] text-blue-500 hover:text-blue-700 flex items-center gap-1.5 font-black uppercase tracking-widest transition-colors"
+                                >
+                                  LINK <ExternalLink className="w-3 h-3" />
+                                </a>
+                              )}
+                              <div className="flex items-center gap-1.5">
+                                 <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                                 <div className="relative flex items-center gap-1 group/nicho-select">
+                                    <span className="bg-slate-50 text-slate-500 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border border-slate-100">
+                                      {group.nicho || 'Geral'}
+                                    </span>
+                                 </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1190,20 +1239,18 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                       </td>
                       <td className="px-8 py-8 text-right">
                         <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                          <button 
-                            onClick={() => onEdit(group)}
-                            className="p-3 bg-white border border-slate-100 hover:border-green-200 rounded-2xl text-slate-400 hover:text-primary transition-all shadow-sm"
-                            title="Editar Grupo"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => setConfirmDeleteId(group.id)}
-                            className="p-3 bg-white border border-slate-100 hover:border-rose-200 rounded-2xl text-slate-400 hover:text-rose-600 transition-all shadow-sm"
-                            title="Excluir Grupo"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                           <MoreActionsDropdown 
+                            group={group} 
+                            onEdit={() => onEdit(group)} 
+                            onDelete={() => setConfirmDeleteId(group.id)}
+                            onMarkForSale={() => handleMarkForSale(group)}
+                            onCopyResume={() => handleCopyResume(group)}
+                            onAddLocatario={() => {
+                              setLocatarioGroup(group);
+                              setEditingLocatario(null);
+                              setIsLocatarioModalOpen(true);
+                            }}
+                          />
                         </div>
                       </td>
                     </motion.tr>
@@ -1226,75 +1273,85 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {(groupedGroups[nicho] || []).map(group => (
                 <div key={group.id} className={cn(
-                  "bg-white p-5 rounded-[2rem] border transition-all relative overflow-hidden active:scale-[0.98] group",
+                  "bg-white p-5 rounded-[2.5rem] border transition-all relative overflow-hidden active:scale-[0.98] group",
                   (group.perfil_compartilhando || 'Inativo') === 'Inativo' ? "border-rose-100 bg-rose-50/5" : "border-slate-100 shadow-xl shadow-slate-100/40"
                 )}>
                    <div className="flex flex-col gap-4">
-                     <div className="flex justify-between items-start gap-4">
-                       <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2 mb-3">
-                            <span className={cn(
-                              "text-[8px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full",
-                              group.priorityInfo?.prioridade === 'Alta' ? "bg-rose-600 text-white" :
-                              group.priorityInfo?.prioridade === 'Média' ? "bg-amber-500 text-white" :
-                              "bg-slate-100 text-slate-400"
-                            )}>
-                              {group.priorityInfo?.prioridade || 'Baixa'}
-                            </span>
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-full border border-slate-100">
-                               {group.priorityInfo?.score || 0} pts
-                            </span>
-                          </div>
-                          <h4 className="text-base font-black text-slate-900 leading-tight mb-1 truncate" title={group.nome_grupo || ''}>{group.nome_grupo || 'Sem Nome'}</h4>
-                          <div className="flex items-center gap-3">
-                            {editingMembersId === group.id ? (
-                              <div className="flex items-center gap-2 bg-white px-2 py-0.5 rounded-lg border border-primary shadow-lg shadow-green-50">
-                                <input
-                                  autoFocus
-                                  type="text"
-                                  value={membersInputValue}
-                                  onChange={(e) => setMembersInputValue(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleUpdateMembers(group);
-                                    if (e.key === 'Escape') setEditingMembersId(null);
-                                  }}
-                                  onBlur={() => {
-                                    setTimeout(() => setEditingMembersId(null), 200);
-                                  }}
-                                  className="w-16 bg-transparent border-0 p-0 text-[10px] font-black focus:ring-0"
-                                />
-                              </div>
-                            ) : (
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingMembersId(group.id);
-                                  setMembersInputValue(formatNumber(group.quantidade_membros || 0));
-                                }}
-                                className="text-[10px] text-slate-400 font-black uppercase tracking-widest hover:text-primary transition-colors"
-                              >
-                                {formatNumber(group.quantidade_membros || 0)} MEMBROS
-                              </button>
-                            )}
-                            <div className="w-1 h-1 rounded-full bg-slate-200" />
-                            <ExpiryBadge dareStr={group.data_vencimento} status={group.status} />
-                          </div>
-                       </div>
-                       
-                       <div className="flex flex-col gap-2">
-                         <button 
-                           onClick={() => onEdit(group)}
-                           className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-100 hover:text-primary transition-all border border-slate-100"
-                         >
-                           <Edit2 className="w-4 h-4" />
-                         </button>
-                         <button 
-                           onClick={() => setConfirmDeleteId(group.id)}
-                           className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-100 hover:text-rose-600 transition-all border border-slate-100"
-                         >
-                           <Trash2 className="w-4 h-4" />
-                         </button>
-                       </div>
+                     <div className="flex items-start gap-4">
+                        {/* Thumbnail Mobile */}
+                        <div className="w-[44px] h-[44px] rounded-[14px] bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-100 shadow-sm flex items-center justify-center">
+                          {group.thumbnail_grupo ? (
+                            <img 
+                              src={group.thumbnail_grupo} 
+                              alt={group.nome_grupo || ''} 
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(group.nome_grupo || 'G')}&background=dcfce7&color=16a34a&bold=true`;
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-emerald-50 text-primary font-black text-lg flex items-center justify-center uppercase">
+                              {(group.nome_grupo || group.nome || 'G')[0]}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                           <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                             <span className={cn(
+                               "text-[7px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full",
+                               group.priorityInfo?.prioridade === 'Alta' ? "bg-rose-600 text-white" :
+                               group.priorityInfo?.prioridade === 'Média' ? "bg-amber-500 text-white" :
+                               "bg-slate-100 text-slate-400"
+                             )}>
+                               {group.priorityInfo?.prioridade || 'Baixa'}
+                             </span>
+                             {group.para_venda && (
+                               <span className="bg-amber-50 text-amber-600 text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-100">À VENDA</span>
+                             )}
+                           </div>
+                           <h4 className="text-sm font-black text-slate-900 leading-tight mb-0.5 truncate" title={group.nome_grupo || ''}>{group.nome_grupo || 'Sem Nome'}</h4>
+                           <div className="flex items-center gap-2">
+                             <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest bg-slate-50 px-1.5 py-0.5 rounded border border-slate-50 uppercase">{group.nicho || 'Geral'}</span>
+                             <div className="w-1 h-1 rounded-full bg-slate-200" />
+                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                               {formatNumber(group.quantidade_membros || 0)} MEMBROS
+                             </span>
+                           </div>
+                        </div>
+                        
+                        <div className="relative">
+                          <MoreActionsDropdown 
+                            group={group} 
+                            onEdit={() => onEdit(group)} 
+                            onDelete={() => setConfirmDeleteId(group.id)}
+                            onMarkForSale={() => handleMarkForSale(group)}
+                            onCopyResume={() => handleCopyResume(group)}
+                            onAddLocatario={() => {
+                              setLocatarioGroup(group);
+                              setEditingLocatario(null);
+                              setIsLocatarioModalOpen(true);
+                            }}
+                          />
+                        </div>
+                     </div>
+
+                     <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest px-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-300 italic">Vencimento:</span>
+                          <ExpiryBadge dareStr={group.data_vencimento} status={group.status} compact />
+                        </div>
+                        {group.link_grupo && (
+                          <a 
+                            href={normalizeFacebookGroupLink(group)} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full border border-blue-100 flex items-center gap-1.5"
+                          >
+                            LINK <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        )}
                      </div>
 
                      <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-50">
@@ -1504,6 +1561,75 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
           />
         </>
       )}
+    </div>
+  );
+}
+
+function MoreActionsDropdown({ group, onEdit, onDelete, onMarkForSale, onCopyResume, onAddLocatario }: any) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button 
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
+        className="p-3 bg-white border border-slate-100 rounded-2xl hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all shadow-sm"
+      >
+        <MoreVertical className="w-4 h-4" />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="absolute right-0 mt-2 w-56 bg-white rounded-2xl border border-slate-100 shadow-2xl z-50 overflow-hidden p-2"
+            >
+              <button 
+                onClick={() => { onEdit(); setIsOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-primary rounded-xl transition-all"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+                Editar Grupo
+              </button>
+              <button 
+                onClick={() => { onAddLocatario(); setIsOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-blue-500 rounded-xl transition-all"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                + Locatário
+              </button>
+              <button 
+                onClick={() => { onMarkForSale(); setIsOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-amber-600 rounded-xl transition-all"
+              >
+                <Tag className="w-3.5 h-3.5" />
+                Vender Grupo
+              </button>
+              <button 
+                onClick={() => { onCopyResume(); setIsOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-xl transition-all"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                Copiar Resumo
+              </button>
+              <div className="h-px bg-slate-50 my-1" />
+              <button 
+                onClick={() => { onDelete(); setIsOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Excluir Grupo
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

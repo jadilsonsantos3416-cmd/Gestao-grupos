@@ -40,6 +40,9 @@ export type GrupoData = {
   observacoes_venda?: string;
   atualizado_em?: string;
   locatarios?: any[];
+  thumbnail_grupo?: string;
+  para_venda?: boolean;
+  valor_venda?: string | number;
 };
 
 const gruposRef = collection(db, "grupos");
@@ -190,6 +193,9 @@ export async function atualizarGrupo(id: string, updates: Partial<GrupoData>) {
   if (updates.observacoes_venda !== undefined) payload.observacoes_venda = updates.observacoes_venda || "";
   if (updates.atualizado_em !== undefined) payload.atualizado_em = updates.atualizado_em;
   if (updates.locatarios !== undefined) payload.locatarios = updates.locatarios;
+  if (updates.thumbnail_grupo !== undefined) payload.thumbnail_grupo = updates.thumbnail_grupo;
+  if (updates.para_venda !== undefined) payload.para_venda = updates.para_venda;
+  if (updates.valor_venda !== undefined) payload.valor_venda = updates.valor_venda;
 
   // Always recalculate priority on update if any relevant field changed
   const priorityInfo = calculatePriority({

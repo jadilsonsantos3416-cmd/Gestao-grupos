@@ -50,6 +50,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
     valor_venda: '',
     status_venda: 'Disponível',
     observacoes_venda: '',
+    thumbnail_grupo: '',
   });
 
   const duplicateGroup = React.useMemo(() => {
@@ -144,6 +145,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
         valor_venda: editingGroup.valor_venda || '',
         status_venda: editingGroup.status_venda || 'Disponível',
         observacoes_venda: editingGroup.observacoes_venda || '',
+        thumbnail_grupo: editingGroup.thumbnail_grupo || '',
       });
       setRenterSearch(editingGroup.locatario || '');
       setNichoSearch(editingGroup.nicho || 'Geral');
@@ -283,6 +285,16 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
                   }}
                   className="w-full bg-transparent border-0 focus:ring-0 p-0 text-xs font-bold text-blue-600 placeholder:text-slate-300"
                   placeholder="https://facebook.com/groups/..."
+                />
+              </FormField>
+
+              <FormField label="URL da Capa / Miniatura" icon={FileText}>
+                <input 
+                  type="url" 
+                  value={formData.thumbnail_grupo || ''}
+                  onChange={e => setFormData({...formData, thumbnail_grupo: e.target.value})}
+                  className="w-full bg-transparent border-0 focus:ring-0 p-0 text-xs font-bold text-slate-500 placeholder:text-slate-300"
+                  placeholder="https://exemplo.com/imagem.jpg"
                 />
               </FormField>
 
