@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Group, QuickFilter } from '@/src/types';
-import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera, CheckCircle2, X } from 'lucide-react';
+import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera, CheckCircle2, X, Users } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -66,7 +66,28 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [thumbnailModalGroup, setThumbnailModalGroup] = useState<Group | null>(null);
   const [newThumbnailUrl, setNewThumbnailUrl] = useState('');
   const [isUpdatingThumbnail, setIsUpdatingThumbnail] = useState(false);
+  const [openRenterDropdownId, setOpenRenterDropdownId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const getMergedLocatarios = (group: Group): Locatario[] => {
+    const list: Locatario[] = [...(group.locatarios || [])];
+    
+    if (group.locatario) {
+      const alreadyInList = list.some(l => l.nome.toLowerCase() === group.locatario?.toLowerCase());
+      if (!alreadyInList) {
+        list.unshift({
+          id: 'legacy-' + group.id,
+          nome: group.locatario,
+          whatsapp: group.whatsapp || '',
+          valor: String(group.valor || ''),
+          status: 'Ativo',
+          data_inicio: group.data_inicio || '',
+          data_vencimento: group.data_vencimento || ''
+        });
+      }
+    }
+    return list;
+  };
 
   const GroupThumbnail = ({ group, size = 'desktop' }: { group: Group, size?: 'desktop' | 'mobile' }) => {
     const [hasError, setHasError] = useState(false);
@@ -634,8 +655,9 @@ Link: ${normalizeFacebookGroupLink(group)}`;
   };
 
   const getEffectiveStatus = (group: Group): string => {
-    if (group.locatarios && group.locatarios.length > 0) {
-      const hasActive = group.locatarios.some(l => l.status === 'Ativo');
+    const mergedLocatarios = getMergedLocatarios(group);
+    if (mergedLocatarios.length > 0) {
+      const hasActive = mergedLocatarios.some(l => l.status === 'Ativo');
       return hasActive ? 'Alugado' : 'Disponível';
     }
     return group.status || 'Disponível';
@@ -1348,80 +1370,159 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                            </button>
                         </div>
                       </td>
-                      <td className="px-8 py-8">
-                        <div className="flex flex-col gap-3">
-                          {/* Old Locatario */}
-                          {group.locatario && (
-                            <div className="flex flex-col border-b border-slate-50 pb-2 mb-1 last:border-0 last:pb-0 last:mb-0">
-                              <span className="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{group.locatario}</span>
-                              <div className="flex items-center gap-2 mt-1">
-                                 <span className="text-[10px] text-slate-400 font-bold font-mono">{group.whatsapp}</span>
-                                 <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                 <span className="text-[10px] font-black text-primary font-mono">{formatCurrency(group.valor)}</span>
-                              </div>
-                            </div>
-                          )}
+                      <td className="px-8 py-8 relative">
+                        <div className="flex flex-col items-center justify-center">
+                          {(() => {
+                            const mergedLocatarios = getMergedLocatarios(group);
+                            const activeLocatarios = mergedLocatarios.filter(l => l.status === 'Ativo');
+                            const hasActive = activeLocatarios.length > 0;
+                            const isDropdownOpen = openRenterDropdownId === group.id;
 
-                          {/* New Locatarios Array */}
-                          {group.locatarios?.map((l) => (
-                            <div key={l.id} className="flex flex-col border-b border-slate-50 pb-2 mb-1 last:border-0 last:pb-0 last:mb-0 group/locatario">
-                              <div className="flex items-center justify-between">
-                                <span className={cn(
-                                  "text-sm font-black transition-colors uppercase tracking-tight",
-                                  l.status === 'Ativo' ? "text-slate-900 group-hover/locatario:text-blue-600" : "text-slate-400"
-                                )}>
-                                  {l.nome}
-                                </span>
-                                <div className="flex items-center gap-2 opacity-0 group-hover/locatario:opacity-100 transition-opacity">
-                                  <button 
-                                    onClick={() => {
-                                      setLocatarioGroup(group);
-                                      setEditingLocatario(l);
-                                      setIsLocatarioModalOpen(true);
+                            if (mergedLocatarios.length > 0) {
+                              return (
+                                <div className="relative">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOpenRenterDropdownId(isDropdownOpen ? null : group.id);
                                     }}
-                                    className="p-1 text-slate-400 hover:text-blue-500 transition-colors"
+                                    className={cn(
+                                      "flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border",
+                                      hasActive 
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100" 
+                                        : "bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100"
+                                    )}
                                   >
-                                    <Edit2 className="w-3 h-3" />
+                                    <Users className="w-3.5 h-3.5" />
+                                    {hasActive ? `ALUGADO · ${activeLocatarios.length}` : `${mergedLocatarios.length} LOCATÁRIO${mergedLocatarios.length > 1 ? 'S' : ''}`}
+                                    <ChevronDown className={cn("w-3 h-3 transition-transform duration-300", isDropdownOpen && "rotate-180")} />
                                   </button>
-                                  <button 
-                                    onClick={() => handleDeleteLocatario(group, l.id)}
-                                    className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
+
+                                  <AnimatePresence>
+                                    {isDropdownOpen && (
+                                      <>
+                                        <div 
+                                          className="fixed inset-0 z-40" 
+                                          onClick={() => setOpenRenterDropdownId(null)}
+                                        />
+                                        <motion.div
+                                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                          className="absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[320px] bg-white rounded-3xl border border-slate-100 shadow-2xl z-50 overflow-hidden"
+                                        >
+                                          <div className="p-2 max-h-[350px] overflow-y-auto">
+                                            <div className="px-4 py-3 border-b border-slate-50 mb-1">
+                                              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Detalhamento de Locação</span>
+                                            </div>
+                                            
+                                            {mergedLocatarios.map((l, idx) => (
+                                              <div 
+                                                key={l.id || idx} 
+                                                className="group/item flex flex-col p-4 hover:bg-slate-50 rounded-2xl transition-all border border-transparent hover:border-slate-100 mt-1"
+                                              >
+                                                <div className="flex items-start justify-between gap-4">
+                                                  <div className="min-w-0">
+                                                    <span className={cn(
+                                                      "text-sm font-black uppercase tracking-tight block truncate",
+                                                      l.status === 'Ativo' ? "text-slate-900" : "text-slate-400 font-bold"
+                                                    )}>
+                                                      {l.nome}
+                                                    </span>
+                                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                      <span className="text-[10px] text-slate-400 font-bold font-mono">{l.whatsapp}</span>
+                                                      <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                                      <span className="text-[10px] font-black text-emerald-600 font-mono">{formatCurrency(Number(l.valor))}</span>
+                                                    </div>
+                                                  </div>
+                                                  <div className="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                                    <button 
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigator.clipboard.writeText(l.whatsapp || '');
+                                                        setToast({ message: "WhatsApp copiado!", type: 'success' });
+                                                      }}
+                                                      className="p-1.5 text-slate-300 hover:text-blue-500 rounded-lg hover:bg-white transition-all shadow-sm"
+                                                      title="Copiar WhatsApp"
+                                                    >
+                                                      <Copy className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button 
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setLocatarioGroup(group);
+                                                        setEditingLocatario(l);
+                                                        setIsLocatarioModalOpen(true);
+                                                        setOpenRenterDropdownId(null);
+                                                      }}
+                                                      className="p-1.5 text-slate-300 hover:text-amber-500 rounded-lg hover:bg-white transition-all shadow-sm"
+                                                      title="Editar"
+                                                    >
+                                                      <Edit2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button 
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteLocatario(group, l.id);
+                                                      }}
+                                                      className="p-1.5 text-slate-300 hover:text-rose-500 rounded-lg hover:bg-white transition-all shadow-sm"
+                                                      title="Excluir"
+                                                    >
+                                                      <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                                
+                                                <div className="mt-2 flex items-center justify-between">
+                                                  <span className="text-[9px] font-bold text-slate-300">
+                                                    Vence {l.data_vencimento ? format(parseISO(l.data_vencimento), 'dd/MM') : 'N/D'}
+                                                  </span>
+                                                  <span className={cn(
+                                                    "text-[8px] font-black uppercase px-2 py-0.5 rounded-full border",
+                                                    l.status === 'Ativo' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                                                  )}>
+                                                    {l.status}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            ))}
+
+                                            <button 
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setLocatarioGroup(group);
+                                                setEditingLocatario(null);
+                                                setIsLocatarioModalOpen(true);
+                                                setOpenRenterDropdownId(null);
+                                              }}
+                                              className="w-full flex items-center justify-center gap-2 py-4 mt-2 text-[10px] font-black text-blue-500 uppercase tracking-widest hover:bg-blue-50/50 rounded-2xl transition-all border border-dashed border-blue-100 hover:border-solid group"
+                                            >
+                                              <UserPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                              Adicionar Locatário
+                                            </button>
+                                          </div>
+                                        </motion.div>
+                                      </>
+                                    )}
+                                  </AnimatePresence>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-2 mt-1">
-                                 <span className="text-[10px] text-slate-400 font-bold font-mono">{l.whatsapp}</span>
-                                 <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                 <span className="text-[10px] font-black text-primary font-mono">{formatCurrency(Number(l.valor))}</span>
-                                 <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                 <span className={cn(
-                                   "text-[8px] font-black uppercase px-1.5 py-0.5 rounded border",
-                                   l.status === 'Ativo' ? "bg-green-50 text-accent border-green-100" : "bg-slate-50 text-slate-400 border-slate-100"
-                                 )}>{l.status}</span>
-                              </div>
-                            </div>
-                          ))}
+                              );
+                            }
 
-                          {(!group.locatario && (!group.locatarios || group.locatarios.length === 0)) && (
-                            <div className="flex items-center gap-2">
-                               <div className="w-2 h-2 rounded-full bg-green-100 animate-pulse" />
-                               <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] italic">Disponível</span>
-                            </div>
-                          )}
-
-                          <button 
-                            onClick={() => {
-                              setLocatarioGroup(group);
-                              setEditingLocatario(null);
-                              setIsLocatarioModalOpen(true);
-                            }}
-                            className="flex items-center gap-2 text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] hover:text-blue-700 transition-colors mt-2"
-                          >
-                            <UserPlus className="w-3 h-3" />
-                            + Locatário
-                          </button>
+                            return (
+                              <button 
+                                onClick={() => {
+                                  setLocatarioGroup(group);
+                                  setEditingLocatario(null);
+                                  setIsLocatarioModalOpen(true);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black text-primary uppercase tracking-[0.2em] italic bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 transition-all shadow-sm active:scale-95"
+                              >
+                                <UserPlus className="w-3.5 h-3.5" />
+                                Disponível
+                              </button>
+                            );
+                          })()}
                         </div>
                       </td>
                       <td className="px-8 py-8 text-right">
@@ -1559,84 +1660,135 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                        </button>
                      </div>
 
-                    <div className="border-t border-slate-50 pt-3 flex flex-col gap-3">
-                       {/* Mobile Locatarios */}
-                       {group.locatario && (
-                         <div className="bg-slate-50/50 p-4 rounded-2xl flex items-center justify-between border border-slate-100">
-                           <div className="flex flex-col">
-                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Locatário (Antigo)</span>
-                             <span className="text-xs font-black text-slate-900 truncate max-w-[120px]">{group.locatario}</span>
-                           </div>
-                           <div className="flex flex-col text-right">
-                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Valor</span>
-                             <span className="text-xs font-black text-primary font-mono">{formatCurrency(group.valor)}</span>
-                           </div>
-                         </div>
-                       )}
+                     <div className="border-t border-slate-50 pt-3 flex flex-col gap-3">
+                        {(() => {
+                           const mergedLocatarios = getMergedLocatarios(group);
+                           const activeLocatarios = mergedLocatarios.filter(l => l.status === 'Ativo');
+                           const hasActive = activeLocatarios.length > 0;
+                           const isDropdownOpen = openRenterDropdownId === group.id + '-mobile';
 
-                       {group.locatarios?.map((l) => (
-                         <div key={l.id} className="bg-slate-50/50 p-4 rounded-2xl flex flex-col gap-3 border border-slate-100 group/mob-loc">
-                           <div className="flex items-center justify-between">
-                             <div className="flex flex-col">
-                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Locatário</span>
-                               <span className={cn(
-                                 "text-xs font-black truncate max-w-[120px]",
-                                 l.status === 'Ativo' ? "text-slate-900" : "text-slate-400"
-                               )}>{l.nome}</span>
-                             </div>
-                             <div className="flex items-center gap-2">
-                               <button 
-                                 onClick={() => {
-                                   setLocatarioGroup(group);
-                                   setEditingLocatario(l);
-                                   setIsLocatarioModalOpen(true);
-                                 }}
-                                 className="p-2 bg-white border border-slate-100 rounded-lg text-slate-400"
-                               >
-                                 <Edit2 className="w-3 h-3" />
-                               </button>
-                               <button 
-                                 onClick={() => handleDeleteLocatario(group, l.id)}
-                                 className="p-2 bg-white border border-slate-100 rounded-lg text-rose-400"
-                               >
-                                 <Trash2 className="w-3 h-3" />
-                               </button>
-                             </div>
-                           </div>
-                           <div className="flex items-center justify-between">
-                             <div className="flex flex-col">
-                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">WhatsApp</span>
-                               <span className="text-[10px] font-bold text-slate-500">{l.whatsapp}</span>
-                             </div>
-                             <div className="flex flex-col text-right">
-                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor</span>
-                               <span className="text-xs font-black text-primary font-mono">{formatCurrency(Number(l.valor))}</span>
-                             </div>
-                           </div>
-                           <div className="flex items-center justify-between pt-2 border-t border-slate-100/50">
-                             <div className="flex flex-col">
-                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Vencimento</span>
-                               <span className="text-[10px] font-bold text-slate-500">{l.data_vencimento ? format(parseISO(l.data_vencimento), 'dd/MM/yyyy') : '-'}</span>
-                             </div>
-                             <span className={cn(
-                               "text-[8px] font-black uppercase px-2 py-0.5 rounded border",
-                               l.status === 'Ativo' ? "bg-green-100 text-accent border-green-200" : "bg-slate-100 text-slate-400 border-slate-200"
-                             )}>{l.status}</span>
-                           </div>
-                         </div>
-                       ))}
+                           if (mergedLocatarios.length > 0) {
+                             return (
+                               <div className="relative w-full">
+                                 <button
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     setOpenRenterDropdownId(isDropdownOpen ? null : group.id + '-mobile');
+                                   }}
+                                   className={cn(
+                                     "w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border",
+                                     hasActive 
+                                       ? "bg-emerald-50 text-emerald-700 border-emerald-100 font-bold" 
+                                       : "bg-slate-50 text-slate-400 border-slate-100"
+                                   )}
+                                 >
+                                   <Users className="w-3.5 h-3.5" />
+                                   {hasActive ? `ALUGADO · ${activeLocatarios.length}` : `${mergedLocatarios.length} LOCATÁRIOS`}
+                                   <ChevronDown className={cn("w-3 h-3 transition-transform duration-300", isDropdownOpen && "rotate-180")} />
+                                 </button>
 
-                       <button 
-                         onClick={() => {
-                           setLocatarioGroup(group);
-                           setEditingLocatario(null);
-                           setIsLocatarioModalOpen(true);
-                         }}
-                         className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-slate-100 text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] hover:bg-slate-50 hover:border-blue-100 transition-all"
-                       >
-                         <UserPlus className="w-3.5 h-3.5" />
-                         Adicionar Locatário
-                       </button>
+                                 <AnimatePresence>
+                                   {isDropdownOpen && (
+                                     <>
+                                       <div 
+                                         className="fixed inset-0 z-[60]" 
+                                         onClick={() => setOpenRenterDropdownId(null)}
+                                       />
+                                       <motion.div
+                                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                          className="absolute left-0 right-0 bottom-full mb-3 bg-white rounded-3xl border border-slate-100 shadow-2xl z-[70] overflow-hidden"
+                                       >
+                                         <div className="p-2 max-h-[300px] overflow-y-auto">
+                                           {mergedLocatarios.map((l, idx) => (
+                                             <div 
+                                               key={l.id || idx} 
+                                               className="flex flex-col p-4 bg-slate-50/50 rounded-2xl mb-1 border border-slate-100"
+                                             >
+                                               <div className="flex items-start justify-between">
+                                                 <div>
+                                                   <span className="text-xs font-black uppercase tracking-tight text-slate-900">{l.nome}</span>
+                                                   <div className="flex items-center gap-2 mt-1">
+                                                      <span className="text-[10px] text-slate-400 font-bold font-mono">{l.whatsapp}</span>
+                                                      <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                                      <span className="text-[10px] font-black text-emerald-600 font-mono">{formatCurrency(Number(l.valor))}</span>
+                                                   </div>
+                                                 </div>
+                                                 <div className="flex gap-1">
+                                                   <button 
+                                                     onClick={(e) => {
+                                                       e.stopPropagation();
+                                                       setLocatarioGroup(group);
+                                                       setEditingLocatario(l);
+                                                       setIsLocatarioModalOpen(true);
+                                                       setOpenRenterDropdownId(null);
+                                                     }}
+                                                     className="p-1.5 text-slate-400 hover:text-amber-500 rounded-lg bg-white shadow-sm"
+                                                   >
+                                                     <Edit2 className="w-3.5 h-3.5" />
+                                                   </button>
+                                                   <button 
+                                                     onClick={(e) => {
+                                                       e.stopPropagation();
+                                                       handleDeleteLocatario(group, l.id);
+                                                     }}
+                                                     className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg bg-white shadow-sm"
+                                                   >
+                                                     <Trash2 className="w-3.5 h-3.5" />
+                                                   </button>
+                                                 </div>
+                                               </div>
+                                               <div className="mt-2 flex items-center justify-between">
+                                                 <span className="text-[8px] font-bold text-slate-300">
+                                                   Vence {l.data_vencimento ? format(parseISO(l.data_vencimento), 'dd/MM') : 'N/D'}
+                                                 </span>
+                                                 <span className={cn(
+                                                   "text-[8px] font-black uppercase px-2 py-0.5 rounded-full border",
+                                                   l.status === 'Ativo' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                                                 )}>
+                                                   {l.status}
+                                                  </span>
+                                               </div>
+                                             </div>
+                                           ))}
+                                           <button 
+                                             onClick={(e) => {
+                                               e.stopPropagation();
+                                               setLocatarioGroup(group);
+                                               setEditingLocatario(null);
+                                               setIsLocatarioModalOpen(true);
+                                               setOpenRenterDropdownId(null);
+                                             }}
+                                             className="w-full flex items-center justify-center gap-2 py-3 mt-1 text-[9px] font-black text-blue-500 uppercase tracking-widest bg-blue-50/30 rounded-2xl border border-dashed border-blue-100"
+                                           >
+                                             <UserPlus className="w-3.5 h-3.5" />
+                                             Adicionar Locatário
+                                           </button>
+                                         </div>
+                                       </motion.div>
+                                     </>
+                                   )}
+                                 </AnimatePresence>
+                               </div>
+                             );
+                           }
+
+                           return (
+                             <button
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 setLocatarioGroup(group);
+                                 setEditingLocatario(null);
+                                 setIsLocatarioModalOpen(true);
+                               }}
+                               className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-primary border border-emerald-100 shadow-sm transition-all"
+                             >
+                                <UserPlus className="w-3.5 h-3.5" />
+                                Disponível
+                             </button>
+                           );
+                        })()}
                      </div>
 
                      {group.link_grupo && (
