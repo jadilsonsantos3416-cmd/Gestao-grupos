@@ -3,6 +3,7 @@ import { Shell } from '@/src/components/layout/Shell';
 import { Dashboard } from '@/src/components/dashboard/Dashboard';
 import { GroupList } from '@/src/components/groups/GroupList';
 import { GroupForm } from '@/src/components/groups/GroupForm';
+import { ThumbnailManager } from '@/src/components/groups/ThumbnailManager';
 import { WhatsAppTab } from '@/src/components/whatsapp/WhatsAppTab';
 import { BulkImporter } from '@/src/components/importer/BulkImporter';
 import { DataCleanupModal } from '@/src/components/groups/DataCleanupModal';
@@ -153,6 +154,11 @@ export default function App() {
               {activeTab === 'whatsapp' && (
                 <ErrorBoundary>
                   <WhatsAppTab groups={groups} />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'thumbnails' && (
+                <ErrorBoundary>
+                  <ThumbnailManager groups={groups} updateGroup={updateGroup} />
                 </ErrorBoundary>
               )}
               {activeTab === 'ranking' && (
