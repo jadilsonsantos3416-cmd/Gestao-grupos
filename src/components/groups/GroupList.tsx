@@ -1498,6 +1498,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
               setEditingLocatario(null);
             }}
             group={locatarioGroup}
+            groups={groups}
             onSave={handleSaveLocatario}
             editingLocatario={editingLocatario}
           />
