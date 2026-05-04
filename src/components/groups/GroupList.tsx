@@ -63,6 +63,35 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [isExporting, setIsExporting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  const GroupThumbnail = ({ group, size = 'desktop' }: { group: Group, size?: 'desktop' | 'mobile' }) => {
+    const [hasError, setHasError] = useState(false);
+    const thumbnailUrl = group.thumbnail_grupo || (group as any).capa_grupo || (group as any).foto_capa_url || (group as any).imagem_grupo || "";
+    
+    const dimensions = size === 'desktop' ? 'w-[52px] h-[52px]' : 'w-[44px] h-[44px]';
+    const borderRadius = 'rounded-[14px]';
+    const textSize = size === 'desktop' ? 'text-xl' : 'text-lg';
+
+    if (thumbnailUrl && !hasError) {
+      return (
+        <div className={cn(dimensions, borderRadius, "bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-100 shadow-sm flex items-center justify-center")}>
+          <img 
+            src={thumbnailUrl} 
+            alt={group.nome_grupo || ''} 
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+            onError={() => setHasError(true)}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className={cn(dimensions, borderRadius, "bg-emerald-50 text-primary font-black flex items-center justify-center uppercase shrink-0 border border-emerald-100 shadow-sm", textSize)}>
+        {(group.nome_grupo || (group as any).nome || 'G')[0]}
+      </div>
+    );
+  };
+
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 3000);
@@ -492,7 +521,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
       await onUpdate(group.id, {
         para_venda: true,
         status_venda: 'Disponível',
-        valor_venda: group.valor || '',
+        valor_venda: String(group.valor || ''),
         atualizado_em: new Date().toISOString()
       });
       setToast({ message: "Grupo marcado para venda!", type: 'success' });
@@ -505,7 +534,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   };
 
   const handleCopyResume = (group: Group) => {
-    const text = `Nome: ${group.nome_grupo || group.nome || 'Sem nome'}
+    const text = `Nome: ${group.nome_grupo || (group as any).nome || 'Sem nome'}
 Nicho: ${group.nicho || 'Geral'}
 Membros: ${formatNumber(group.quantidade_membros || 0)}
 Link: ${normalizeFacebookGroupLink(group)}`;
@@ -986,23 +1015,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                         )}
                         <div className="flex items-center gap-4">
                           {/* Thumbnail */}
-                          <div className="w-[52px] h-[52px] rounded-[14px] bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-100 shadow-sm flex items-center justify-center">
-                            {group.thumbnail_grupo ? (
-                              <img 
-                                src={group.thumbnail_grupo} 
-                                alt={group.nome_grupo || ''} 
-                                className="w-full h-full object-cover"
-                                referrerPolicy="no-referrer"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(group.nome_grupo || 'G')}&background=dcfce7&color=16a34a&bold=true`;
-                                }}
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-emerald-50 text-primary font-black text-xl flex items-center justify-center uppercase">
-                                {(group.nome_grupo || group.nome || 'G')[0]}
-                              </div>
-                            )}
-                          </div>
+                          <GroupThumbnail group={group} size="desktop" />
 
                           <div className="flex flex-col min-w-0 flex-1">
                             <div className="flex items-center gap-2">
@@ -1279,23 +1292,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                    <div className="flex flex-col gap-4">
                      <div className="flex items-start gap-4">
                         {/* Thumbnail Mobile */}
-                        <div className="w-[44px] h-[44px] rounded-[14px] bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-100 shadow-sm flex items-center justify-center">
-                          {group.thumbnail_grupo ? (
-                            <img 
-                              src={group.thumbnail_grupo} 
-                              alt={group.nome_grupo || ''} 
-                              className="w-full h-full object-cover"
-                              referrerPolicy="no-referrer"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(group.nome_grupo || 'G')}&background=dcfce7&color=16a34a&bold=true`;
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-emerald-50 text-primary font-black text-lg flex items-center justify-center uppercase">
-                              {(group.nome_grupo || group.nome || 'G')[0]}
-                            </div>
-                          )}
-                        </div>
+                        <GroupThumbnail group={group} size="mobile" />
 
                         <div className="flex-1 min-w-0">
                            <div className="flex flex-wrap items-center gap-2 mb-1.5">

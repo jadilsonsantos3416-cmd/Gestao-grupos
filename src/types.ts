@@ -52,8 +52,6 @@ export interface Group {
   atualizado_em?: string;
   locatarios?: Locatario[];
   thumbnail_grupo?: string;
-  para_venda?: boolean;
-  valor_venda?: string | number;
 }
 
 export interface Renter {

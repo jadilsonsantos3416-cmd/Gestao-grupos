@@ -41,8 +41,6 @@ export type GrupoData = {
   atualizado_em?: string;
   locatarios?: any[];
   thumbnail_grupo?: string;
-  para_venda?: boolean;
-  valor_venda?: string | number;
 };
 
 const gruposRef = collection(db, "grupos");
@@ -133,6 +131,7 @@ export async function adicionarGrupo(grupo: GrupoData) {
     link_grupo: linkLimpo || "",
     group_id: extractGroupId(linkLimpo),
     observacoes: grupo.observacoes || "",
+    thumbnail_grupo: grupo.thumbnail_grupo || "",
     prioridade_postagem: priorityInfo.prioridade,
     score_postagem: priorityInfo.score,
     ultima_revisao_membros: grupo.ultima_revisao_membros || null,
