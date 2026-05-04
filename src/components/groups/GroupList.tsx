@@ -62,6 +62,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [editingLocatario, setEditingLocatario] = useState<Locatario | null>(null);
   const [membersInputValue, setMembersInputValue] = useState('');
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const [isRenterDropdownOpen, setIsRenterDropdownOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -833,6 +834,47 @@ Link: ${normalizeFacebookGroupLink(group)}`;
   // Get sorted niche names for display
   const sortedNiches = Object.keys(groupedGroups).sort((a, b) => a.localeCompare(b));
 
+  const uniqueRenters = useMemo(() => {
+    const renterMap = new Map<string, { nome: string, whatsapp?: string, count: number }>();
+    
+    groups.forEach(g => {
+      // 1. Check legacy locatario string
+      if (g.locatario) {
+        const nome = g.locatario.trim();
+        const existing = renterMap.get(nome.toLowerCase());
+        if (existing) {
+          existing.count++;
+        } else {
+          renterMap.set(nome.toLowerCase(), { nome, count: 1 });
+        }
+      }
+      
+      // 2. Check locatarios array
+      if (g.locatarios && g.locatarios.length > 0) {
+        g.locatarios.forEach(l => {
+          const nome = l.nome.trim();
+          const existing = renterMap.get(nome.toLowerCase());
+          if (existing) {
+            existing.count++;
+            if (!existing.whatsapp) existing.whatsapp = l.whatsapp;
+          } else {
+            renterMap.set(nome.toLowerCase(), { nome, whatsapp: l.whatsapp, count: 1 });
+          }
+        });
+      }
+    });
+
+    return Array.from(renterMap.values()).sort((a, b) => a.nome.localeCompare(b));
+  }, [groups]);
+
+  const filteredRenters = useMemo(() => {
+    if (!renterSearch) return uniqueRenters;
+    return uniqueRenters.filter(r => 
+      r.nome.toLowerCase().includes(renterSearch.toLowerCase()) || 
+      (r.whatsapp && r.whatsapp.includes(renterSearch))
+    );
+  }, [uniqueRenters, renterSearch]);
+
   const toggleSort = (field: SortField) => {
     // Note: Manual sort is now secondary to the requested automatic grouping
     if (sortField === field) {
@@ -887,8 +929,74 @@ Link: ${normalizeFacebookGroupLink(group)}`;
               placeholder="Pesquisar por locatário..."
               className="w-full bg-white border border-slate-100 pl-12 md:pl-14 pr-6 py-3.5 md:py-5 rounded-2xl md:rounded-[2.5rem] shadow-sm focus:ring-4 focus:ring-blue-50 focus:border-blue-200 outline-none font-bold text-xs md:text-sm text-slate-600 placeholder:text-slate-300 transition-all"
               value={renterSearch}
-              onChange={e => setRenterSearch(e.target.value)}
+              onChange={e => {
+                setRenterSearch(e.target.value);
+                setIsRenterDropdownOpen(true);
+              }}
+              onFocus={() => setIsRenterDropdownOpen(true)}
             />
+            
+            <AnimatePresence>
+              {isRenterDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsRenterDropdownOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute left-0 right-0 mt-2 bg-white rounded-3xl border border-slate-100 shadow-2xl z-50 overflow-hidden max-h-[400px] flex flex-col"
+                  >
+                    <div className="p-2 overflow-y-auto">
+                      <button
+                        onClick={() => {
+                          setRenterSearch('');
+                          setIsRenterDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-5 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 hover:text-primary rounded-2xl transition-all"
+                      >
+                        Todos os locatários / Limpar Filtro
+                      </button>
+                      
+                      {filteredRenters.length > 0 ? (
+                        filteredRenters.map((renter, i) => (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              setRenterSearch(renter.nome);
+                              setIsRenterDropdownOpen(false);
+                            }}
+                            className="w-full text-left px-5 py-4 hover:bg-blue-50/50 rounded-2xl transition-all group/item border border-transparent hover:border-blue-100 mt-1"
+                          >
+                            <div className="flex flex-col">
+                              <span className="text-sm font-black text-slate-700 group-hover/item:text-blue-600 transition-colors">
+                                {renter.nome}
+                              </span>
+                              <div className="flex items-center gap-2 mt-1">
+                                {renter.whatsapp && (
+                                  <>
+                                    <span className="text-[10px] font-bold text-slate-400">
+                                      {renter.whatsapp}
+                                    </span>
+                                    <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                  </>
+                                )}
+                                <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">
+                                  {renter.count} {renter.count === 1 ? 'grupo' : 'grupos'}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="py-8 text-center">
+                          <p className="text-xs font-bold text-slate-400">Nenhum locatário encontrado</p>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
