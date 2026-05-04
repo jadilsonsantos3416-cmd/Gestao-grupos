@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Group, QuickFilter } from '@/src/types';
-import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy } from 'lucide-react';
+import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -15,8 +15,9 @@ import { MemberReviewModal } from './MemberReviewModal';
 import { PostTodayModal } from './PostTodayModal';
 import { GenerateCopyModal } from './GenerateCopyModal';
 import { NichoModal } from './NichoModal';
+import { LocatarioModal } from './LocatarioModal';
 import { listarNichos } from '@/src/lib/nichosService';
-import { Nicho } from '@/src/types';
+import { Nicho, Locatario } from '@/src/types';
 
 interface GroupListProps {
   groups: Group[];
@@ -52,8 +53,11 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [nichoModalInitialAdd, setNichoModalInitialAdd] = useState(false);
   const [nichos, setNichos] = useState<Nicho[]>([]);
   const [loadingNichos, setLoadingNichos] = useState(true);
-  const [processingAction, setProcessingAction] = useState<{ id: string, field: 'perfil' | 'shopee' | 'nicho' | 'membros' } | null>(null);
+  const [processingAction, setProcessingAction] = useState<{ id: string, field: 'perfil' | 'shopee' | 'nicho' | 'membros' | 'locatario' } | null>(null);
   const [editingMembersId, setEditingMembersId] = useState<string | null>(null);
+  const [isLocatarioModalOpen, setIsLocatarioModalOpen] = useState(false);
+  const [locatarioGroup, setLocatarioGroup] = useState<Group | null>(null);
+  const [editingLocatario, setEditingLocatario] = useState<Locatario | null>(null);
   const [membersInputValue, setMembersInputValue] = useState('');
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -473,6 +477,59 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
     }
   };
 
+  const handleSaveLocatario = async (locatario: Locatario) => {
+    if (!onUpdate || !locatarioGroup) return;
+
+    const currentLocatarios = locatarioGroup.locatarios || [];
+    let updatedLocatarios: Locatario[];
+
+    const existingIndex = currentLocatarios.findIndex(l => l.id === locatario.id);
+    if (existingIndex >= 0) {
+      updatedLocatarios = [...currentLocatarios];
+      updatedLocatarios[existingIndex] = locatario;
+    } else {
+      updatedLocatarios = [...currentLocatarios, locatario];
+    }
+
+    try {
+      await onUpdate(locatarioGroup.id, { 
+        locatarios: updatedLocatarios,
+        atualizado_em: new Date().toISOString()
+      });
+      setToast({ message: "Locatário salvo com sucesso", type: 'success' });
+    } catch (error) {
+      console.error("Erro ao salvar locatário:", error);
+      setToast({ message: "Erro ao salvar locatário", type: 'error' });
+    }
+  };
+
+  const handleDeleteLocatario = async (group: Group, locatarioId: string) => {
+    if (!onUpdate) return;
+
+    if (!confirm("Tem certeza que deseja remover este locatário?")) return;
+
+    const updatedLocatarios = (group.locatarios || []).filter(l => l.id !== locatarioId);
+
+    try {
+      await onUpdate(group.id, { 
+        locatarios: updatedLocatarios,
+        atualizado_em: new Date().toISOString()
+      });
+      setToast({ message: "Locatário removido com sucesso", type: 'success' });
+    } catch (error) {
+      console.error("Erro ao remover locatário:", error);
+      setToast({ message: "Erro ao remover locatário", type: 'error' });
+    }
+  };
+
+  const getEffectiveStatus = (group: Group): string => {
+    if (group.locatarios && group.locatarios.length > 0) {
+      const hasActive = group.locatarios.some(l => l.status === 'Ativo');
+      return hasActive ? 'Alugado' : 'Disponível';
+    }
+    return group.status || 'Disponível';
+  };
+
   if (!Array.isArray(groups) || groups.length === 0) {
     if (!activeQuickFilter || activeQuickFilter === 'all') {
       return (
@@ -570,13 +627,16 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const filteredGroups = groupsWithPriority
     .filter(g => 
       (g.nome_grupo || '').toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (g.locatario || '').toLowerCase().includes(renterSearch.toLowerCase()) &&
+      (
+        (g.locatario || '').toLowerCase().includes(renterSearch.toLowerCase()) ||
+        (g.locatarios || []).some(l => l.nome.toLowerCase().includes(renterSearch.toLowerCase()))
+      ) &&
       (nichoFilter === 'Todos' || (g.nicho || 'Geral') === nichoFilter) &&
-      (statusFilter === 'Todos' || (g.status || 'Disponível') === statusFilter) &&
+      (statusFilter === 'Todos' || getEffectiveStatus(g) === statusFilter) &&
       (perfilFilter === 'Todos' || (g.perfil_compartilhando || 'Inativo') === perfilFilter) &&
       (shopeeFilter === 'Todos' || (g.uso_shopee || 'Inativo') === shopeeFilter) &&
       (priorityFilter === 'Todos' || g.priorityInfo.prioridade === priorityFilter) &&
-      (renterFilter === 'Todos' || (g.locatario || '') === renterFilter) &&
+      (renterFilter === 'Todos' || (g.locatario || '') === renterFilter || (g.locatarios || []).some(l => l.nome === renterFilter)) &&
       (!onlyReadyForShopee || ((g.perfil_compartilhando || 'Inativo') === 'Ativo' && (g.uso_shopee || 'Inativo') === 'Ativo'))
     )
     .sort((a, b) => {
@@ -1050,22 +1110,79 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                         </div>
                       </td>
                       <td className="px-8 py-8">
-                        <div className="flex flex-col">
-                          {group.locatario ? (
-                            <>
+                        <div className="flex flex-col gap-3">
+                          {/* Old Locatario */}
+                          {group.locatario && (
+                            <div className="flex flex-col border-b border-slate-50 pb-2 mb-1 last:border-0 last:pb-0 last:mb-0">
                               <span className="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{group.locatario}</span>
                               <div className="flex items-center gap-2 mt-1">
                                  <span className="text-[10px] text-slate-400 font-bold font-mono">{group.whatsapp}</span>
                                  <div className="w-1 h-1 rounded-full bg-slate-200" />
                                  <span className="text-[10px] font-black text-primary font-mono">{formatCurrency(group.valor)}</span>
                               </div>
-                            </>
-                          ) : (
+                            </div>
+                          )}
+
+                          {/* New Locatarios Array */}
+                          {group.locatarios?.map((l) => (
+                            <div key={l.id} className="flex flex-col border-b border-slate-50 pb-2 mb-1 last:border-0 last:pb-0 last:mb-0 group/locatario">
+                              <div className="flex items-center justify-between">
+                                <span className={cn(
+                                  "text-sm font-black transition-colors uppercase tracking-tight",
+                                  l.status === 'Ativo' ? "text-slate-900 group-hover/locatario:text-blue-600" : "text-slate-400"
+                                )}>
+                                  {l.nome}
+                                </span>
+                                <div className="flex items-center gap-2 opacity-0 group-hover/locatario:opacity-100 transition-opacity">
+                                  <button 
+                                    onClick={() => {
+                                      setLocatarioGroup(group);
+                                      setEditingLocatario(l);
+                                      setIsLocatarioModalOpen(true);
+                                    }}
+                                    className="p-1 text-slate-400 hover:text-blue-500 transition-colors"
+                                  >
+                                    <Edit2 className="w-3 h-3" />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteLocatario(group, l.id)}
+                                    className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                 <span className="text-[10px] text-slate-400 font-bold font-mono">{l.whatsapp}</span>
+                                 <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                 <span className="text-[10px] font-black text-primary font-mono">{formatCurrency(Number(l.valor))}</span>
+                                 <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                 <span className={cn(
+                                   "text-[8px] font-black uppercase px-1.5 py-0.5 rounded border",
+                                   l.status === 'Ativo' ? "bg-green-50 text-accent border-green-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                                 )}>{l.status}</span>
+                              </div>
+                            </div>
+                          ))}
+
+                          {(!group.locatario && (!group.locatarios || group.locatarios.length === 0)) && (
                             <div className="flex items-center gap-2">
                                <div className="w-2 h-2 rounded-full bg-green-100 animate-pulse" />
                                <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] italic">Disponível</span>
                             </div>
                           )}
+
+                          <button 
+                            onClick={() => {
+                              setLocatarioGroup(group);
+                              setEditingLocatario(null);
+                              setIsLocatarioModalOpen(true);
+                            }}
+                            className="flex items-center gap-2 text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] hover:text-blue-700 transition-colors mt-2"
+                          >
+                            <UserPlus className="w-3 h-3" />
+                            + Locatário
+                          </button>
                         </div>
                       </td>
                       <td className="px-8 py-8 text-right">
@@ -1211,18 +1328,85 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
                        </button>
                      </div>
 
-                     {group.locatario && (
-                       <div className="bg-slate-50 p-4 rounded-2xl flex items-center justify-between border border-slate-100">
-                         <div className="flex flex-col">
-                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Locatário</span>
-                           <span className="text-xs font-black text-slate-900 truncate max-w-[120px]">{group.locatario}</span>
+                    <div className="border-t border-slate-50 pt-3 flex flex-col gap-3">
+                       {/* Mobile Locatarios */}
+                       {group.locatario && (
+                         <div className="bg-slate-50/50 p-4 rounded-2xl flex items-center justify-between border border-slate-100">
+                           <div className="flex flex-col">
+                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Locatário (Antigo)</span>
+                             <span className="text-xs font-black text-slate-900 truncate max-w-[120px]">{group.locatario}</span>
+                           </div>
+                           <div className="flex flex-col text-right">
+                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Valor</span>
+                             <span className="text-xs font-black text-primary font-mono">{formatCurrency(group.valor)}</span>
+                           </div>
                          </div>
-                         <div className="flex flex-col text-right">
-                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Valor</span>
-                           <span className="text-xs font-black text-primary font-mono">{formatCurrency(group.valor)}</span>
+                       )}
+
+                       {group.locatarios?.map((l) => (
+                         <div key={l.id} className="bg-slate-50/50 p-4 rounded-2xl flex flex-col gap-3 border border-slate-100 group/mob-loc">
+                           <div className="flex items-center justify-between">
+                             <div className="flex flex-col">
+                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Locatário</span>
+                               <span className={cn(
+                                 "text-xs font-black truncate max-w-[120px]",
+                                 l.status === 'Ativo' ? "text-slate-900" : "text-slate-400"
+                               )}>{l.nome}</span>
+                             </div>
+                             <div className="flex items-center gap-2">
+                               <button 
+                                 onClick={() => {
+                                   setLocatarioGroup(group);
+                                   setEditingLocatario(l);
+                                   setIsLocatarioModalOpen(true);
+                                 }}
+                                 className="p-2 bg-white border border-slate-100 rounded-lg text-slate-400"
+                               >
+                                 <Edit2 className="w-3 h-3" />
+                               </button>
+                               <button 
+                                 onClick={() => handleDeleteLocatario(group, l.id)}
+                                 className="p-2 bg-white border border-slate-100 rounded-lg text-rose-400"
+                               >
+                                 <Trash2 className="w-3 h-3" />
+                               </button>
+                             </div>
+                           </div>
+                           <div className="flex items-center justify-between">
+                             <div className="flex flex-col">
+                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">WhatsApp</span>
+                               <span className="text-[10px] font-bold text-slate-500">{l.whatsapp}</span>
+                             </div>
+                             <div className="flex flex-col text-right">
+                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor</span>
+                               <span className="text-xs font-black text-primary font-mono">{formatCurrency(Number(l.valor))}</span>
+                             </div>
+                           </div>
+                           <div className="flex items-center justify-between pt-2 border-t border-slate-100/50">
+                             <div className="flex flex-col">
+                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Vencimento</span>
+                               <span className="text-[10px] font-bold text-slate-500">{l.data_vencimento ? format(parseISO(l.data_vencimento), 'dd/MM/yyyy') : '-'}</span>
+                             </div>
+                             <span className={cn(
+                               "text-[8px] font-black uppercase px-2 py-0.5 rounded border",
+                               l.status === 'Ativo' ? "bg-green-100 text-accent border-green-200" : "bg-slate-100 text-slate-400 border-slate-200"
+                             )}>{l.status}</span>
+                           </div>
                          </div>
-                       </div>
-                     )}
+                       ))}
+
+                       <button 
+                         onClick={() => {
+                           setLocatarioGroup(group);
+                           setEditingLocatario(null);
+                           setIsLocatarioModalOpen(true);
+                         }}
+                         className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-slate-100 text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] hover:bg-slate-50 hover:border-blue-100 transition-all"
+                       >
+                         <UserPlus className="w-3.5 h-3.5" />
+                         Adicionar Locatário
+                       </button>
+                     </div>
 
                      {group.link_grupo && (
                         <a 
@@ -1305,6 +1489,17 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
             nichos={nichos}
             onUpdate={loadNichos}
             initialAddMode={nichoModalInitialAdd}
+          />
+          <LocatarioModal
+            isOpen={isLocatarioModalOpen}
+            onClose={() => {
+              setIsLocatarioModalOpen(false);
+              setLocatarioGroup(null);
+              setEditingLocatario(null);
+            }}
+            group={locatarioGroup}
+            onSave={handleSaveLocatario}
+            editingLocatario={editingLocatario}
           />
         </>
       )}

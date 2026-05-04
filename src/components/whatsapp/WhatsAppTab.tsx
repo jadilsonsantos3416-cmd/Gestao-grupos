@@ -32,25 +32,44 @@ export function WhatsAppTab({ groups }: WhatsAppTabProps) {
   // Group groups by renter phone
   const renters: (Renter & { groups: Group[] })[] = React.useMemo(() => {
     const map = new Map<string, Renter & { groups: Group[] }>();
-    groups.forEach(g => {
-      if (g.locatario && g.status === 'Alugado') {
-        const phone = g.whatsapp.replace(/\D/g, '');
-        if (!map.has(phone)) {
-          map.set(phone, {
-            nome: g.locatario,
-            whatsapp: g.whatsapp,
-            lastValor: g.valor,
-            lastVencimento: g.data_vencimento,
-            groupCount: 1,
-            groups: [g]
-          });
-        } else {
-          const r = map.get(phone)!;
-          r.groupCount += 1;
-          r.groups.push(g);
+    
+    const addRenterToMap = (nome: string, whatsapp: string, valor: number, vencimento: string, group: Group) => {
+      const phone = (whatsapp || '').replace(/\D/g, '');
+      if (!phone) return;
+      
+      if (!map.has(phone)) {
+        map.set(phone, {
+          nome: nome,
+          whatsapp: whatsapp,
+          lastValor: valor,
+          lastVencimento: vencimento,
+          groupCount: 1,
+          groups: [group]
+        });
+      } else {
+        const r = map.get(phone)!;
+        r.groupCount += 1;
+        // Don't add same group twice for same person if they are somehow listed twice
+        if (!r.groups.some(existingG => existingG.id === group.id)) {
+          r.groups.push(group);
         }
       }
+    };
+
+    groups.forEach(g => {
+      // Old logic compatibility
+      if (g.locatario && g.status === 'Alugado') {
+        addRenterToMap(g.locatario, g.whatsapp, g.valor, g.data_vencimento, g);
+      }
+      
+      // New multi-locatario logic
+      if (g.locatarios && g.locatarios.length > 0) {
+        g.locatarios.filter(l => l.status === 'Ativo').forEach(l => {
+          addRenterToMap(l.nome, l.whatsapp, Number(l.valor) || 0, l.data_vencimento, g);
+        });
+      }
     });
+    
     return Array.from(map.values()).sort((a, b) => b.groupCount - a.groupCount);
   }, [groups]);
 

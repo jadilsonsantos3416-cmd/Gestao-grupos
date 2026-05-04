@@ -37,6 +37,7 @@ export function useGroups() {
           data_inicio: data.data_inicio || "",
           data_vencimento: data.data_vencimento || "",
           valor: Number(data.valor) || 0,
+          locatarios: data.locatarios || [],
           quantidade_membros: data.quantidade_membros !== undefined ? Number(data.quantidade_membros) : 0,
           observacoes: data.observacoes || "",
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt || new Date().toISOString(),

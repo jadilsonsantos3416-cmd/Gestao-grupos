@@ -11,6 +11,16 @@ export type GrowthTier = 'High' | 'Medium' | 'Low' | 'Pending';
 export type PriorityLevel = 'Alta' | 'Média' | 'Baixa';
 export type SaleStatus = 'Disponível' | 'Vendido' | 'Reservado';
 
+export interface Locatario {
+  id: string;
+  nome: string;
+  whatsapp: string;
+  valor: string | number;
+  data_inicio: string;
+  data_vencimento: string;
+  status: 'Ativo' | 'Inativo';
+}
+
 export interface Group {
   id: string;
   group_id: string;
@@ -40,6 +50,7 @@ export interface Group {
   status_venda?: SaleStatus;
   observacoes_venda?: string;
   atualizado_em?: string;
+  locatarios?: Locatario[];
 }
 
 export interface Renter {

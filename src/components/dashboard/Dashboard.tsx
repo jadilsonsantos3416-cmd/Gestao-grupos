@@ -48,13 +48,31 @@ export function Dashboard({ groups = [] }: DashboardProps) {
       .sort((a, b) => (Number(b.quantidade_membros) || 0) - (Number(a.quantidade_membros) || 0));
   }, [selectedPriority, groupsWithPriority]);
 
+  const isGroupRented = (g: Group) => {
+    if (g.locatarios && g.locatarios.length > 0) {
+      return g.locatarios.some(l => l.status === 'Ativo');
+    }
+    return g.status === 'Alugado';
+  };
+
+  const getGroupVencimento = (g: Group) => {
+    if (g.locatarios && g.locatarios.length > 0) {
+      // Return the earliest active expiration date or just the first one
+      const activeLocatarios = g.locatarios.filter(l => l.status === 'Ativo');
+      if (activeLocatarios.length > 0) {
+        return activeLocatarios[0].data_vencimento;
+      }
+    }
+    return g.data_vencimento;
+  };
+
   const stats = {
     total: groups.length,
-    alugados: groups.filter(g => g.status === 'Alugado').length,
-    disponiveis: groups.filter(g => g.status === 'Disponível').length,
-    vencemHoje: groups.filter(g => g.status === 'Alugado' && g.data_vencimento && isToday(parseISO(g.data_vencimento))).length,
-    vencemAmanha: groups.filter(g => g.status === 'Alugado' && g.data_vencimento && isTomorrow(parseISO(g.data_vencimento))).length,
-    vencidos: groups.filter(g => g.status === 'Alugado' && g.data_vencimento && isPast(parseISO(g.data_vencimento)) && !isToday(parseISO(g.data_vencimento))).length,
+    alugados: groups.filter(g => isGroupRented(g)).length,
+    disponiveis: groups.filter(g => !isGroupRented(g)).length,
+    vencemHoje: groups.filter(g => isGroupRented(g) && getGroupVencimento(g) && isToday(parseISO(getGroupVencimento(g)!))).length,
+    vencemAmanha: groups.filter(g => isGroupRented(g) && getGroupVencimento(g) && isTomorrow(parseISO(getGroupVencimento(g)!))).length,
+    vencidos: groups.filter(g => isGroupRented(g) && getGroupVencimento(g) && isPast(parseISO(getGroupVencimento(g)!)) && !isToday(parseISO(getGroupVencimento(g)!))).length,
     totalMembros: groups.reduce((acc, g) => acc + (Number(g.quantidade_membros) || 0), 0),
     perfilAtivo: groups.filter(g => g.perfil_compartilhando === 'Ativo').length,
     perfilInativo: groups.filter(g => g.perfil_compartilhando === 'Inativo' || !g.perfil_compartilhando).length,
@@ -437,10 +455,16 @@ function NicheGrid({ groups }: { groups: Group[] }) {
   const niches = Array.from(new Set(groups.map(g => g?.nicho || 'Geral')));
   const nicheStats = niches.map(nicho => {
     const nicheGroups = groups.filter(g => (g?.nicho || 'Geral') === nicho);
+    const alugadosCount = nicheGroups.filter(g => {
+      if (g.locatarios && g.locatarios.length > 0) {
+        return g.locatarios.some(l => l.status === 'Ativo');
+      }
+      return g.status === 'Alugado';
+    }).length;
     return {
       nicho,
       total: nicheGroups.length,
-      alugados: nicheGroups.filter(g => g.status === 'Alugado').length,
+      alugados: alugadosCount,
       membros: nicheGroups.reduce((acc, g) => acc + (Number(g.quantidade_membros) || 0), 0),
     };
   }).sort((a, b) => b.membros - a.membros);
