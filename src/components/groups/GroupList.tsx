@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Group, QuickFilter } from '@/src/types';
-import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag } from 'lucide-react';
+import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -18,6 +18,8 @@ import { NichoModal } from './NichoModal';
 import { LocatarioModal } from './LocatarioModal';
 import { listarNichos } from '@/src/lib/nichosService';
 import { Nicho, Locatario } from '@/src/types';
+import { storage } from '@/src/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface GroupListProps {
   groups: Group[];
@@ -65,15 +67,79 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
 
   const GroupThumbnail = ({ group, size = 'desktop' }: { group: Group, size?: 'desktop' | 'mobile' }) => {
     const [hasError, setHasError] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
     const thumbnailUrl = group.thumbnail_grupo || (group as any).capa_grupo || (group as any).foto_capa_url || (group as any).imagem_grupo || "";
     
     const dimensions = size === 'desktop' ? 'w-[52px] h-[52px]' : 'w-[44px] h-[44px]';
     const borderRadius = 'rounded-[14px]';
     const textSize = size === 'desktop' ? 'text-xl' : 'text-lg';
 
-    if (thumbnailUrl && !hasError) {
-      return (
-        <div className={cn(dimensions, borderRadius, "bg-slate-100 flex-shrink-0 overflow-hidden border border-slate-100 shadow-sm flex items-center justify-center")}>
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !onUpdate) return;
+
+      if (!file.type.startsWith('image/')) {
+        setToast({ message: "Por favor, selecione uma imagem válida", type: 'error' });
+        return;
+      }
+
+      setIsUploading(true);
+      try {
+        const storageRef = ref(storage, `group-thumbnails/${group.id}.jpg`);
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
+        
+        await onUpdate(group.id, {
+          thumbnail_grupo: downloadURL,
+          atualizado_em: new Date().toISOString()
+        });
+        
+        setToast({ message: "Miniatura atualizada com sucesso!", type: 'success' });
+        setHasError(false); // Reset error state to show new image
+      } catch (error) {
+        console.error("Erro no upload:", error);
+        setToast({ message: "Não foi possível atualizar a miniatura", type: 'error' });
+      } finally {
+        setIsUploading(false);
+      }
+    };
+
+    return (
+      <div 
+        className={cn(
+          dimensions, 
+          borderRadius, 
+          "relative group/thumb cursor-pointer overflow-hidden border shadow-sm transition-all active:scale-95",
+          thumbnailUrl && !hasError ? "bg-slate-100 border-slate-100" : "bg-emerald-50 border-emerald-100"
+        )}
+        onClick={(e) => {
+          e.stopPropagation();
+          fileInputRef.current?.click();
+        }}
+      >
+        <input 
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          accept="image/*"
+          onChange={handleFileChange}
+        />
+        
+        <AnimatePresence>
+          {isUploading && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-10 bg-white/80 flex items-center justify-center"
+            >
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {thumbnailUrl && !hasError ? (
           <img 
             src={thumbnailUrl} 
             alt={group.nome_grupo || ''} 
@@ -81,13 +147,15 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
             referrerPolicy="no-referrer"
             onError={() => setHasError(true)}
           />
-        </div>
-      );
-    }
+        ) : (
+          <div className={cn("w-full h-full text-primary font-black flex items-center justify-center uppercase", textSize)}>
+            {(group.nome_grupo || (group as any).nome || 'G')[0]}
+          </div>
+        )}
 
-    return (
-      <div className={cn(dimensions, borderRadius, "bg-emerald-50 text-primary font-black flex items-center justify-center uppercase shrink-0 border border-emerald-100 shadow-sm", textSize)}>
-        {(group.nome_grupo || (group as any).nome || 'G')[0]}
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+          <Camera className={cn("text-white", size === 'desktop' ? "w-5 h-5" : "w-4 h-4")} />
+        </div>
       </div>
     );
   };
