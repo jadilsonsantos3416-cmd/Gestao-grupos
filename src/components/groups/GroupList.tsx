@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Group, QuickFilter } from '@/src/types';
-import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera } from 'lucide-react';
+import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera, CheckCircle2, X } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -18,8 +18,6 @@ import { NichoModal } from './NichoModal';
 import { LocatarioModal } from './LocatarioModal';
 import { listarNichos } from '@/src/lib/nichosService';
 import { Nicho, Locatario } from '@/src/types';
-import { storage } from '@/src/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface GroupListProps {
   groups: Group[];
@@ -64,47 +62,18 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
   const [isRenterDropdownOpen, setIsRenterDropdownOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [thumbnailModalGroup, setThumbnailModalGroup] = useState<Group | null>(null);
+  const [newThumbnailUrl, setNewThumbnailUrl] = useState('');
+  const [isUpdatingThumbnail, setIsUpdatingThumbnail] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const GroupThumbnail = ({ group, size = 'desktop' }: { group: Group, size?: 'desktop' | 'mobile' }) => {
     const [hasError, setHasError] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
     const thumbnailUrl = group.thumbnail_grupo || (group as any).capa_grupo || (group as any).foto_capa_url || (group as any).imagem_grupo || "";
     
     const dimensions = size === 'desktop' ? 'w-[52px] h-[52px]' : 'w-[44px] h-[44px]';
     const borderRadius = 'rounded-[14px]';
     const textSize = size === 'desktop' ? 'text-xl' : 'text-lg';
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file || !onUpdate) return;
-
-      if (!file.type.startsWith('image/')) {
-        setToast({ message: "Por favor, selecione uma imagem válida", type: 'error' });
-        return;
-      }
-
-      setIsUploading(true);
-      try {
-        const storageRef = ref(storage, `group-thumbnails/${group.id}.jpg`);
-        await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(storageRef);
-        
-        await onUpdate(group.id, {
-          thumbnail_grupo: downloadURL,
-          atualizado_em: new Date().toISOString()
-        });
-        
-        setToast({ message: "Miniatura atualizada com sucesso!", type: 'success' });
-        setHasError(false); // Reset error state to show new image
-      } catch (error) {
-        console.error("Erro no upload:", error);
-        setToast({ message: "Não foi possível atualizar a miniatura", type: 'error' });
-      } finally {
-        setIsUploading(false);
-      }
-    };
 
     return (
       <div 
@@ -116,30 +85,10 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
         )}
         onClick={(e) => {
           e.stopPropagation();
-          fileInputRef.current?.click();
+          setThumbnailModalGroup(group);
+          setNewThumbnailUrl(group.thumbnail_grupo || '');
         }}
       >
-        <input 
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept="image/*"
-          onChange={handleFileChange}
-        />
-        
-        <AnimatePresence>
-          {isUploading && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-10 bg-white/80 flex items-center justify-center"
-            >
-              <Loader2 className="w-5 h-5 text-primary animate-spin" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {thumbnailUrl && !hasError ? (
           <img 
             src={thumbnailUrl} 
@@ -864,7 +813,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       }
     });
 
-    return Array.from(renterMap.values()).sort((a, b) => a.nome.localeCompare(b));
+    return Array.from(renterMap.values()).sort((a, b) => a.nome.localeCompare(b.nome));
   }, [groups]);
 
   const filteredRenters = useMemo(() => {
@@ -874,6 +823,31 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       (r.whatsapp && r.whatsapp.includes(renterSearch))
     );
   }, [uniqueRenters, renterSearch]);
+
+  const handleSaveThumbnail = async () => {
+    if (!thumbnailModalGroup || !onUpdate) return;
+    
+    const url = newThumbnailUrl.trim();
+    if (url && !url.startsWith('http')) {
+      setToast({ message: "Use uma URL de imagem válida (http:// ou https://)", type: 'error' });
+      return;
+    }
+
+    setIsUpdatingThumbnail(true);
+    try {
+      await onUpdate(thumbnailModalGroup.id, {
+        thumbnail_grupo: url,
+        atualizado_em: new Date().toISOString()
+      });
+      setToast({ message: "Miniatura atualizada com sucesso!", type: 'success' });
+      setThumbnailModalGroup(null);
+    } catch (error) {
+      console.error("Erro ao atualizar miniatura:", error);
+      setToast({ message: "Não foi possível atualizar a miniatura", type: 'error' });
+    } finally {
+      setIsUpdatingThumbnail(false);
+    }
+  };
 
   const toggleSort = (field: SortField) => {
     // Note: Manual sort is now secondary to the requested automatic grouping
@@ -1732,6 +1706,98 @@ Link: ${normalizeFacebookGroupLink(group)}`;
             onSave={handleSaveLocatario}
             editingLocatario={editingLocatario}
           />
+
+          {/* Modal Alterar Miniatura */}
+          <AnimatePresence>
+            {thumbnailModalGroup && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[100]"
+                  onClick={() => setThumbnailModalGroup(null)}
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl z-[101]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between mb-8">
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+                        <Camera className="w-6 h-6 text-primary" />
+                        Alterar Miniatura
+                      </h3>
+                      <p className="text-slate-400 font-bold text-xs mt-1">Insira a URL da imagem para o grupo</p>
+                    </div>
+                    <button
+                      onClick={() => setThumbnailModalGroup(null)}
+                      className="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-all"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-4 italic">
+                        URL da Imagem
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://exemplo.com/imagem.jpg"
+                        className="w-full bg-slate-50 border border-slate-100 px-6 py-4 rounded-2xl font-bold text-sm text-slate-600 placeholder:text-slate-300 focus:ring-4 focus:ring-blue-50 focus:border-blue-200 outline-none transition-all"
+                        value={newThumbnailUrl}
+                        onChange={(e) => setNewThumbnailUrl(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* Preview */}
+                    {newThumbnailUrl && newThumbnailUrl.startsWith('http') && (
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <span className="block text-[8px] font-black uppercase text-slate-400 mb-2 ml-1">Prévia:</span>
+                        <div className="w-20 h-20 rounded-xl overflow-hidden border border-white shadow-sm mx-auto">
+                          <img 
+                            src={newThumbnailUrl} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex gap-4 pt-4">
+                      <button
+                        onClick={() => setThumbnailModalGroup(null)}
+                        className="flex-1 py-4 rounded-2xl font-black uppercase tracking-widest text-xs text-slate-400 bg-slate-50 hover:bg-slate-100 transition-all active:scale-95"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleSaveThumbnail}
+                        disabled={isUpdatingThumbnail}
+                        className="flex-1 bg-primary py-4 rounded-2xl font-black uppercase tracking-widest text-xs text-white shadow-lg shadow-green-100 hover:bg-accent transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {isUpdatingThumbnail ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="w-4 h-4" />
+                        )}
+                        Salvar
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </>
       )}
     </div>
