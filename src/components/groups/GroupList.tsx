@@ -1480,41 +1480,55 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                         </div>
                       </td>
                       <td className="px-8 py-8">
-                        <div className="flex flex-col gap-2.5 items-center justify-center">
-                           <button 
-                            onClick={() => handleToggleField(group, 'perfil')}
-                            disabled={!!processingAction}
-                            title={group.perfil_compartilhando === 'Ativo' ? "Perfil Ativo - Clique para Desativar" : "Perfil Inativo - Clique para Ativar"}
-                            className="group/btn flex items-center gap-2 bg-slate-50 hover:bg-white px-3 py-1.5 rounded-xl border border-slate-100 hover:border-green-200 transition-all w-full max-w-[120px] justify-between shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                           >
-                              <span className="text-[9px] font-black text-slate-400 group-hover/btn:text-primary uppercase tracking-widest">Post</span>
-                              {processingAction?.id === group.id && processingAction?.field === 'perfil' ? (
-                                <Loader2 className="w-2 h-2 text-primary animate-spin" />
-                              ) : (
-                                <div className={cn("w-2 h-2 rounded-full transition-all", 
-                                  group.perfil_compartilhando === 'Ativo' 
-                                    ? "bg-primary shadow-[0_0_8px_rgba(16,185,129,0.5)]" 
-                                    : "bg-rose-400"
-                                )} />
+                        <div className="flex flex-col gap-2 items-center justify-center min-w-[140px]">
+                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Perfil Ativo</span>
+                           <div className="flex flex-col gap-1.5 w-full">
+                             {/* Normal */}
+                             <button 
+                              onClick={() => handleToggleField(group, 'perfil')}
+                              disabled={!!processingAction}
+                              title="Perfil compartilhando publicações normais neste grupo"
+                              className={cn(
+                                "flex items-center justify-between px-3 py-1.5 rounded-lg border transition-all active:scale-95 disabled:opacity-50",
+                                group.perfil_compartilhando === 'Ativo' 
+                                  ? "bg-emerald-50 border-emerald-100 text-emerald-700" 
+                                  : "bg-slate-50 border-slate-100 text-slate-400"
                               )}
-                           </button>
-                           <button 
-                            onClick={() => handleToggleField(group, 'shopee')}
-                            disabled={!!processingAction}
-                            title={group.uso_shopee === 'Ativo' ? "Shopee Ativo - Clique para Desativar" : "Shopee Inativo - Clique para Ativar"}
-                            className="group/btn flex items-center gap-2 bg-slate-50 hover:bg-white px-3 py-1.5 rounded-xl border border-slate-100 hover:border-blue-200 transition-all w-full max-w-[120px] justify-between shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                           >
-                              <span className="text-[9px] font-black text-slate-400 group-hover/btn:text-blue-600 uppercase tracking-widest">Shop</span>
-                              {processingAction?.id === group.id && processingAction?.field === 'shopee' ? (
-                                <Loader2 className="w-2 h-2 text-blue-500 animate-spin" />
-                              ) : (
-                                <div className={cn("w-2 h-2 rounded-full transition-all", 
-                                  group.uso_shopee === 'Ativo' 
-                                    ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" 
-                                    : "bg-slate-200"
-                                )} />
+                             >
+                                <span className="text-[9px] font-bold uppercase tracking-wider">Normal</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[8px] font-black uppercase">{group.perfil_compartilhando === 'Ativo' ? 'Ativo' : 'Inativo'}</span>
+                                  <div className={cn("w-1.5 h-1.5 rounded-full", 
+                                    group.perfil_compartilhando === 'Ativo' 
+                                      ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" 
+                                      : "bg-rose-400"
+                                  )} />
+                                </div>
+                             </button>
+
+                             {/* Shopee */}
+                             <button 
+                              onClick={() => handleToggleField(group, 'shopee')}
+                              disabled={!!processingAction}
+                              title="Perfil compartilhando links Shopee neste grupo"
+                              className={cn(
+                                "flex items-center justify-between px-3 py-1.5 rounded-lg border transition-all active:scale-95 disabled:opacity-50",
+                                group.uso_shopee === 'Ativo' 
+                                  ? "bg-blue-50 border-blue-100 text-blue-700" 
+                                  : "bg-slate-50 border-slate-100 text-slate-400"
                               )}
-                           </button>
+                             >
+                                <span className="text-[9px] font-bold uppercase tracking-wider">Shopee</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[8px] font-black uppercase">{group.uso_shopee === 'Ativo' ? 'Ativo' : 'Inativo'}</span>
+                                  <div className={cn("w-1.5 h-1.5 rounded-full", 
+                                    group.uso_shopee === 'Ativo' 
+                                      ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" 
+                                      : "bg-slate-300"
+                                  )} />
+                                </div>
+                             </button>
+                           </div>
                         </div>
                       </td>
                       <td className="px-8 py-8 relative">
@@ -1862,36 +1876,49 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                        </div>
                      )}
 
-                     <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-50">
-                       <button 
-                         onClick={() => handleToggleField(group, 'perfil')}
-                         className={cn(
-                           "flex items-center justify-between px-4 py-3 rounded-2xl border transition-all",
-                           group.perfil_compartilhando === 'Ativo' 
-                             ? "bg-green-50 border-green-100 text-accent font-bold" 
-                             : "bg-slate-50 border-slate-100 text-slate-400"
-                         )}
-                       >
-                         <span className="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
-                         <div className={cn("w-2.5 h-2.5 rounded-full",
-                           group.perfil_compartilhando === 'Ativo' ? "bg-primary shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-slate-300"
-                         )} />
-                       </button>
-                       <button 
-                         onClick={() => handleToggleField(group, 'shopee')}
-                         className={cn(
-                           "flex items-center justify-between px-4 py-3 rounded-2xl border transition-all",
-                           group.uso_shopee === 'Ativo' 
-                             ? "bg-blue-50 border-blue-100 text-blue-700 font-bold" 
-                             : "bg-slate-50 border-slate-100 text-slate-400"
-                         )}
-                       >
-                         <span className="text-[9px] font-black uppercase tracking-widest text-center">Shopee</span>
-                         <div className={cn("w-2.5 h-2.5 rounded-full",
-                           group.uso_shopee === 'Ativo' ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" : "bg-slate-300"
-                         )} />
-                       </button>
-                     </div>
+                     <div className="pt-3 border-t border-slate-50">
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 block text-center">Perfil Ativo</span>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button 
+                            onClick={() => handleToggleField(group, 'perfil')}
+                            className={cn(
+                              "flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl border transition-all active:scale-95",
+                              group.perfil_compartilhando === 'Ativo' 
+                                ? "bg-emerald-50 border-emerald-100 text-emerald-700 font-bold" 
+                                : "bg-slate-50 border-slate-100 text-slate-400"
+                            )}
+                          >
+                             <div className="flex items-center gap-2">
+                               <div className={cn("w-2 h-2 rounded-full",
+                                 group.perfil_compartilhando === 'Ativo' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-rose-400"
+                               )} />
+                               <span className="text-[9px] font-black uppercase tracking-widest">Normal</span>
+                             </div>
+                             <span className="text-[8px] font-black uppercase opacity-60">
+                               {group.perfil_compartilhando === 'Ativo' ? 'Ativo' : 'Inativo'}
+                             </span>
+                          </button>
+                          <button 
+                            onClick={() => handleToggleField(group, 'shopee')}
+                            className={cn(
+                              "flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl border transition-all active:scale-95",
+                              group.uso_shopee === 'Ativo' 
+                                ? "bg-blue-50 border-blue-100 text-blue-700 font-bold" 
+                                : "bg-slate-50 border-slate-100 text-slate-400"
+                            )}
+                          >
+                             <div className="flex items-center gap-2">
+                               <div className={cn("w-2 h-2 rounded-full",
+                                 group.uso_shopee === 'Ativo' ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" : "bg-slate-300"
+                               )} />
+                               <span className="text-[9px] font-black uppercase tracking-widest">Shopee</span>
+                             </div>
+                             <span className="text-[8px] font-black uppercase opacity-60">
+                               {group.uso_shopee === 'Ativo' ? 'Ativo' : 'Inativo'}
+                             </span>
+                          </button>
+                        </div>
+                      </div>
 
                      <div className="border-t border-slate-50 pt-3 flex flex-col gap-3">
                         {(() => {
