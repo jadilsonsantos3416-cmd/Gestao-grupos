@@ -35,6 +35,19 @@
   ::-webkit-scrollbar-thumb {
     @apply bg-gray-300 rounded-full hover:bg-gray-400 transition-colors;
   }
+
+  .grupos-table-wrapper::-webkit-scrollbar {
+    height: 5px;
+    width: 5px;
+  }
+
+  .grupos-table-wrapper::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .grupos-table-wrapper::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+  }
 }
 
 /* Chrome, Safari, Edge, Opera */

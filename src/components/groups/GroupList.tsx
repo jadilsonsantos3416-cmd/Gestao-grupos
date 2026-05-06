@@ -1218,8 +1218,9 @@ Link: ${normalizeFacebookGroupLink(group)}`;
 
       {/* Desktop Table Content */}
       <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden hidden lg:block">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="w-full overflow-x-auto overflow-y-visible grupos-table-wrapper select-none touch-pan-x">
+          <div className="min-w-[1200px] grupos-table-content">
+            <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
@@ -1711,11 +1712,13 @@ Link: ${normalizeFacebookGroupLink(group)}`;
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
       {/* Mobile Card Layout */}
-      <div className="lg:hidden space-y-6 pb-20 p-1 md:p-0">
+      <div className="lg:hidden pb-20 p-1 md:p-0 w-full overflow-x-auto overflow-y-visible select-none touch-pan-x grupos-table-wrapper">
+        <div className="min-w-[500px] space-y-6 grupos-table-content">
         {sortedNiches.map(nicho => (
           <div key={nicho} className="space-y-3">
             <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 flex items-center gap-2 ml-4 mb-2">
@@ -2067,6 +2070,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
             </div>
           </div>
         ))}
+        </div>
       </div>
 
       {filteredGroups.length === 0 && (
