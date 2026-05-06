@@ -1218,11 +1218,11 @@ Link: ${normalizeFacebookGroupLink(group)}`;
 
       {/* Desktop Table Content */}
       <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden hidden lg:block">
-        <div className="w-full overflow-x-auto overflow-y-visible grupos-table-wrapper select-none touch-pan-x">
-          <div className="min-w-[1200px] grupos-table-content">
+        <div className="relative w-full max-h-[calc(100vh-280px)] overflow-auto grupos-table-wrapper touch-pan-x">
+          <div className="min-w-[1300px] grupos-table-content">
             <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
+            <thead className="sticky top-0 z-20 bg-slate-50 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+              <tr className="border-b border-slate-100">
                 <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
                   <div className="flex items-center gap-2">Grupo <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
@@ -1717,7 +1717,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       </div>
 
       {/* Mobile Card Layout */}
-      <div className="lg:hidden pb-20 p-1 md:p-0 w-full overflow-x-auto overflow-y-visible select-none touch-pan-x grupos-table-wrapper">
+      <div className="lg:hidden pb-20 p-1 md:p-0 relative w-full max-h-[calc(100vh-280px)] overflow-auto grupos-table-wrapper touch-pan-x">
         <div className="min-w-[500px] space-y-6 grupos-table-content">
         {sortedNiches.map(nicho => (
           <div key={nicho} className="space-y-3">
