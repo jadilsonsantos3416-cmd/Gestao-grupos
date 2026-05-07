@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Group, QuickFilter } from '@/src/types';
 import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera, CheckCircle2, X, Users } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers } from '@/src/lib/utils';
@@ -36,6 +36,17 @@ interface GroupWithPriority extends Group {
 }
 
 export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuickFilter, onQuickFilterChange }: GroupListProps) {
+  const desktopFakeScrollRef = useRef<HTMLDivElement>(null);
+  const desktopTableWrapperRef = useRef<HTMLDivElement>(null);
+  const mobileFakeScrollRef = useRef<HTMLDivElement>(null);
+  const mobileTableWrapperRef = useRef<HTMLDivElement>(null);
+
+  const handleSyncScroll = (sourceRef: React.RefObject<HTMLDivElement>, targetRef: React.RefObject<HTMLDivElement>) => {
+    if (sourceRef.current && targetRef.current) {
+      targetRef.current.scrollLeft = sourceRef.current.scrollLeft;
+    }
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
   const [renterSearch, setRenterSearch] = useState('');
   const [nichoFilter, setNichoFilter] = useState('Todos');
@@ -1218,8 +1229,21 @@ Link: ${normalizeFacebookGroupLink(group)}`;
 
       {/* Desktop Table Content */}
       <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden hidden lg:block">
-        <div className="relative w-full max-h-[calc(100vh-280px)] overflow-auto grupos-table-wrapper touch-pan-x">
-          <div className="min-w-[1300px] grupos-table-content">
+        {/* Fake Horizontal Scrollbar Top */}
+        <div 
+          className="w-full overflow-x-auto overflow-y-hidden h-3 bg-slate-50/50 border-b border-slate-100 grupos-scroll-top" 
+          ref={desktopFakeScrollRef}
+          onScroll={() => handleSyncScroll(desktopFakeScrollRef, desktopTableWrapperRef)}
+        >
+          <div className="w-[1500px] h-px"></div>
+        </div>
+        
+        <div 
+          className="w-full overflow-x-auto overflow-y-visible grupos-table-wrapper touch-pan-x"
+          ref={desktopTableWrapperRef}
+          onScroll={() => handleSyncScroll(desktopTableWrapperRef, desktopFakeScrollRef)}
+        >
+          <div className="min-w-[1500px] grupos-table-content">
             <table className="w-full text-left border-collapse">
             <thead className="sticky top-0 z-20 bg-slate-50 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
               <tr className="border-b border-slate-100">
@@ -1717,8 +1741,22 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       </div>
 
       {/* Mobile Card Layout */}
-      <div className="lg:hidden pb-20 p-1 md:p-0 relative w-full max-h-[calc(100vh-280px)] overflow-auto grupos-table-wrapper touch-pan-x">
-        <div className="min-w-[500px] space-y-6 grupos-table-content">
+      <div className="lg:hidden pb-20 p-1 md:p-0">
+        {/* Fake Horizontal Scrollbar Mobile */}
+        <div 
+          className="w-full overflow-x-auto overflow-y-hidden h-3 bg-white/50 mb-2 rounded-full overflow-hidden grupos-scroll-top" 
+          ref={mobileFakeScrollRef}
+          onScroll={() => handleSyncScroll(mobileFakeScrollRef, mobileTableWrapperRef)}
+        >
+          <div className="min-w-[600px] h-px"></div>
+        </div>
+        
+        <div 
+          className="w-full overflow-x-auto overflow-y-visible touch-pan-x grupos-table-wrapper"
+          ref={mobileTableWrapperRef}
+          onScroll={() => handleSyncScroll(mobileTableWrapperRef, mobileFakeScrollRef)}
+        >
+          <div className="min-w-[600px] space-y-6 grupos-table-content">
         {sortedNiches.map(nicho => (
           <div key={nicho} className="space-y-3">
             <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 flex items-center gap-2 ml-4 mb-2">
@@ -2071,6 +2109,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
           </div>
         ))}
         </div>
+      </div>
       </div>
 
       {filteredGroups.length === 0 && (
