@@ -125,9 +125,9 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
       thumbnailUrl = `${baseUrl}/${group.group_id}.png`;
     }
 
-    const dimensions = size === 'desktop' ? 'w-[52px] h-[52px]' : 'w-[44px] h-[44px]';
-    const borderRadius = 'rounded-[14px]';
-    const textSize = size === 'desktop' ? 'text-xl' : 'text-lg';
+    const dimensions = size === 'desktop' ? 'w-10 h-10' : 'w-[44px] h-[44px]';
+    const borderRadius = 'rounded-[10px]';
+    const textSize = size === 'desktop' ? 'text-lg' : 'text-lg';
 
     return (
       <div 
@@ -1231,50 +1231,50 @@ Link: ${normalizeFacebookGroupLink(group)}`;
 
       {/* Desktop Table Content */}
       <div className="hidden lg:block">
-        <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden p-6">
+        <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden p-4">
           {/* Top Fake Scrollbar Desktop */}
           <div 
-            className="w-full overflow-x-auto overflow-y-hidden h-2.5 bg-slate-50/50 border-b border-slate-100 rounded-t-2xl grupos-scroll-top mb-4" 
+            className="w-full overflow-x-auto overflow-y-hidden h-2 bg-slate-50/50 border-b border-slate-100 rounded-t-xl grupos-scroll-top mb-3" 
             ref={desktopFakeScrollRef}
             onScroll={() => handleSyncScroll(desktopFakeScrollRef, desktopTableWrapperRef)}
           >
-            <div className="w-[1500px] h-px"></div>
+            <div className="w-[1400px] h-px"></div>
           </div>
-
+          
           <div 
             className="w-full overflow-x-auto overflow-y-visible grupos-table-wrapper touch-pan-x"
             ref={desktopTableWrapperRef}
             onScroll={() => handleSyncScroll(desktopTableWrapperRef, desktopFakeScrollRef)}
           >
-            <div className="min-w-[1500px] grupos-table-content">
-              <table className="w-full text-left border-collapse">
+            <div className="min-w-[1400px] grupos-table-content">
+              <table className="w-full text-left border-collapse table-fixed">
             <thead className="sticky top-0 z-20 bg-slate-50 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
               <tr className="border-b border-slate-100">
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
+                <th className="w-[28%] px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
                   <div className="flex items-center gap-2">Grupo <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('quantidade_membros')}>
+                <th className="w-[12%] px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('quantidade_membros')}>
                   <div className="flex items-center gap-2 text-center justify-center w-full">Membros <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('prioridade')}>
+                <th className="w-[12%] px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('prioridade')}>
                   <div className="flex items-center gap-2 text-center justify-center w-full">Prioridade <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Configuração</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Locatário / Info</th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-slate-900 transition-colors text-right" onClick={() => toggleSort('data_vencimento')}>
+                <th className="w-[14%] px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Perfil / Shopee</th>
+                <th className="w-[18%] px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Locatário / Info</th>
+                <th className="w-[10%] px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors text-right" onClick={() => toggleSort('data_vencimento')}>
                   <div className="flex items-center gap-2 justify-end">Vencimento <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
-                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Ações</th>
+                <th className="w-[6%] px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 font-medium">
               {sortedNiches.map(nicho => (
                 <React.Fragment key={nicho}>
                   <tr className="bg-slate-50/50">
-                    <td colSpan={7} className="px-8 py-3">
-                      <div className="flex items-center gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 capitalize">
+                    <td colSpan={7} className="px-4 py-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-primary animate-pulse" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 capitalize">
                           Nicho: {nicho}
                         </span>
                         <span className="text-[9px] font-bold text-slate-300 ml-auto uppercase tracking-widest">
@@ -1333,7 +1333,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                 </div>
                               ) : (
                                 <>
-                                  <span className="font-black text-slate-900 group-hover:text-primary transition-colors text-base truncate" title={group.nome_grupo}>
+                                  <span className="font-black text-slate-900 group-hover:text-primary transition-colors text-[13px] truncate" title={group.nome_grupo}>
                                     {group.nome_grupo}
                                   </span>
                                   <button 
@@ -1342,10 +1342,10 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                       setEditingGroupNameId(group.id);
                                       setTempGroupName(group.nome_grupo || '');
                                     }}
-                                    className="p-1 text-slate-300 hover:text-blue-500 rounded-md transition-all opacity-0 group-hover:opacity-100"
+                                    className="p-0.5 text-slate-300 hover:text-blue-500 rounded-md transition-all opacity-0 group-hover:opacity-100"
                                     title="Editar Nome"
                                   >
-                                    <Edit2 className="w-3 h-3" />
+                                    <Edit2 className="w-2.5 h-2.5" />
                                   </button>
                                 </>
                               )}
@@ -1353,9 +1353,9 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                 <span className="bg-amber-50 text-amber-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-100">À Venda</span>
                               )}
                             </div>
-                            <div className="flex items-center gap-4 mt-2">
+                            <div className="flex items-center gap-3 mt-1">
                               {editingGroupLinkId === group.id ? (
-                                <div className="flex items-center gap-2 flex-1 max-w-[200px]">
+                                <div className="flex items-center gap-1.5 flex-1 max-w-[150px]">
                                   <input
                                     autoFocus
                                     type="url"
@@ -1365,38 +1365,23 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                       if (e.key === 'Enter') handleSaveGroupLink(group.id);
                                       if (e.key === 'Escape') setEditingGroupLinkId(null);
                                     }}
-                                    placeholder="Cole o link do grupo..."
-                                    className="px-2 py-1 bg-white border-2 border-blue-400 rounded-lg text-[10px] font-bold text-slate-900 focus:outline-none w-full shadow-lg shadow-blue-100/50"
+                                    placeholder="Link..."
+                                    className="px-1.5 py-0.5 bg-white border border-blue-400 rounded text-[9px] font-bold text-slate-900 focus:outline-none w-full"
                                   />
-                                  <div className="flex gap-1">
-                                    <button 
-                                      onClick={() => handleSaveGroupLink(group.id)}
-                                      disabled={isSavingLink}
-                                      className="p-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all active:scale-90"
-                                    >
-                                      {isSavingLink ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-                                    </button>
-                                    <button 
-                                      onClick={() => setEditingGroupLinkId(null)}
-                                      className="p-1.5 bg-slate-100 text-slate-400 rounded-lg hover:bg-slate-200 transition-all active:scale-90"
-                                    >
-                                      <X className="w-3 h-3" />
-                                    </button>
-                                  </div>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1.5">
                                   {group.link_grupo ? (
                                     <a 
                                       href={normalizeFacebookGroupLink(group)} 
                                       target="_blank" 
                                       rel="noreferrer"
-                                      className="text-[10px] text-blue-500 hover:text-blue-700 flex items-center gap-1.5 font-black uppercase tracking-widest transition-colors"
+                                      className="text-[9px] text-blue-500 hover:text-blue-700 flex items-center gap-1 font-black uppercase tracking-widest transition-colors"
                                     >
-                                      LINK <ExternalLink className="w-3 h-3" />
+                                      LINK <ExternalLink className="w-2.5 h-2.5" />
                                     </a>
                                   ) : (
-                                    <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest italic">SEM LINK</span>
+                                    <span className="text-[9px] text-slate-300 font-black uppercase tracking-widest italic">SEM LINK</span>
                                   )}
                                   <button 
                                     onClick={(e) => {
@@ -1404,17 +1389,17 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                       setEditingGroupLinkId(group.id);
                                       setTempGroupLink(group.link_grupo || '');
                                     }}
-                                    className="p-1 text-slate-300 hover:text-blue-500 rounded-md transition-all opacity-0 group-hover:opacity-100"
+                                    className="p-0.5 text-slate-300 hover:text-blue-500 rounded-md transition-all opacity-0 group-hover:opacity-100"
                                     title="Editar Link"
                                   >
-                                    <Edit2 className="w-3 h-3" />
+                                    <Edit2 className="w-2.5 h-2.5" />
                                   </button>
                                 </div>
                               )}
                               <div className="flex items-center gap-1.5">
-                                 <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                                 <div className="w-1 h-1 rounded-full bg-slate-200" />
                                  <div className="relative flex items-center gap-1 group/nicho-select">
-                                    <span className="bg-slate-50 text-slate-500 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border border-slate-100">
+                                    <span className="bg-slate-50 text-slate-500 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-slate-100">
                                       {group.nicho || 'Geral'}
                                     </span>
                                  </div>
@@ -1423,36 +1408,20 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-8 text-center">
+                      <td className="px-4 py-3 text-center">
                         {editingMembersId === group.id ? (
                           <div className="flex flex-col items-center">
-                            <div className="flex items-center gap-2">
-                              <input
-                                autoFocus
-                                type="text"
-                                value={membersInputValue}
-                                onChange={(e) => setMembersInputValue(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleUpdateMembers(group);
-                                  if (e.key === 'Escape') setEditingMembersId(null);
-                                }}
-                                className="w-24 px-2 py-1 bg-white border-2 border-primary rounded-lg text-center text-sm font-black text-slate-900 focus:outline-none shadow-lg shadow-green-100/50"
-                              />
-                            </div>
-                            <div className="flex gap-2 mt-2">
-                              <button 
-                                onClick={() => handleUpdateMembers(group)}
-                                className="px-3 py-1 bg-primary text-white rounded-md text-[8px] font-black uppercase tracking-widest hover:bg-primary active:scale-90 transition-all"
-                              >
-                                Salvar
-                              </button>
-                              <button 
-                                onClick={() => setEditingMembersId(null)}
-                                className="px-3 py-1 bg-slate-100 text-slate-400 rounded-md text-[8px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
-                              >
-                                Sair
-                              </button>
-                            </div>
+                            <input
+                              autoFocus
+                              type="text"
+                              value={membersInputValue}
+                              onChange={(e) => setMembersInputValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleUpdateMembers(group);
+                                if (e.key === 'Escape') setEditingMembersId(null);
+                              }}
+                              className="w-20 px-1.5 py-0.5 bg-white border border-primary rounded-lg text-center text-xs font-black text-slate-900 focus:outline-none"
+                            />
                           </div>
                         ) : (
                           <div 
@@ -1462,104 +1431,65 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                             }}
                             className="flex flex-col items-center cursor-pointer group/membros-edit"
                           >
-                            <div className="flex items-center gap-2">
-                              <span className="text-xl font-black text-slate-900 font-mono tracking-tighter group-hover/membros-edit:text-primary transition-colors">
-                                {formatNumber(group.quantidade_membros)}
-                              </span>
-                              {processingAction?.id === group.id && processingAction?.field === 'membros' && (
-                                <Loader2 className="w-3 h-3 text-primary animate-spin" />
-                              )}
-                            </div>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Membros</span>
+                            <span className="text-lg font-black text-slate-900 font-mono tracking-tighter group-hover/membros-edit:text-primary transition-colors">
+                              {formatNumber(group.quantidade_membros)}
+                            </span>
                           </div>
                         )}
                       </td>
-                      <td className="px-8 py-8 text-center">
-                        <div className="flex flex-col items-center gap-2">
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex flex-col items-center gap-1">
                           <span className={cn(
-                            "text-[9px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full border shadow-sm transition-all",
-                            group.priorityInfo.prioridade === 'Alta' ? "bg-rose-50 text-rose-600 border-rose-100 shadow-rose-50" :
-                            group.priorityInfo.prioridade === 'Média' ? "bg-amber-50 text-amber-600 border-amber-100 shadow-amber-50" :
-                            "bg-slate-50 text-slate-400 border-slate-100 shadow-slate-50"
+                            "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border shadow-sm transition-all",
+                            group.priorityInfo.prioridade === 'Alta' ? "bg-rose-50 text-rose-600 border-rose-100" :
+                            group.priorityInfo.prioridade === 'Média' ? "bg-amber-50 text-amber-600 border-amber-100" :
+                            "bg-slate-50 text-slate-400 border-slate-100"
                           )}>
                             {group.priorityInfo.prioridade}
                           </span>
-                          <span className={cn(
-                            "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border",
-                            group.quantidade_membros! >= 30000 && group.priorityInfo.score < 3 
-                              ? "bg-rose-100 text-rose-700 border-rose-200"
-                              : group.priorityInfo.score >= 8 
-                                ? "bg-green-100 text-accent border-green-200"
-                                : group.priorityInfo.score >= 4
-                                  ? "bg-blue-100 text-blue-700 border-blue-200"
-                                  : "bg-slate-100 text-slate-500 border-slate-200"
-                          )}>
-                            {group.quantidade_membros! >= 30000 && group.priorityInfo.score < 3 
-                              ? "Baixo Engajamento"
-                              : group.priorityInfo.score >= 8 
-                                ? "Alto Desempenho"
-                                : group.priorityInfo.score >= 4
-                                  ? "Médio Desempenho"
-                                  : "Baixo Desempenho"}
-                          </span>
-                          <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest font-mono">
+                          <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest font-mono">
                             {group.priorityInfo.score} pts
                           </span>
                         </div>
                       </td>
-                      <td className="px-8 py-8">
-                        <div className="flex flex-col gap-2 items-center justify-center min-w-[140px]">
-                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Perfil Ativo</span>
-                           <div className="flex flex-col gap-1.5 w-full">
-                             {/* Normal */}
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col gap-1 items-center justify-center min-w-[110px]">
+                           <div className="flex flex-col gap-1 w-full">
                              <button 
                               onClick={() => handleToggleField(group, 'perfil')}
                               disabled={!!processingAction}
-                              title="Perfil compartilhando publicações normais neste grupo"
                               className={cn(
-                                "flex items-center justify-between px-3 py-1.5 rounded-lg border transition-all active:scale-95 disabled:opacity-50",
+                                "flex items-center justify-between px-2 py-1 rounded-md border transition-all active:scale-95 disabled:opacity-50",
                                 group.perfil_compartilhando === 'Ativo' 
                                   ? "bg-emerald-50 border-emerald-100 text-emerald-700" 
                                   : "bg-slate-50 border-slate-100 text-slate-400"
                               )}
                              >
-                                <span className="text-[9px] font-bold uppercase tracking-wider">Normal</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[8px] font-black uppercase">{group.perfil_compartilhando === 'Ativo' ? 'Ativo' : 'Inativo'}</span>
-                                  <div className={cn("w-1.5 h-1.5 rounded-full", 
-                                    group.perfil_compartilhando === 'Ativo' 
-                                      ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" 
-                                      : "bg-rose-400"
-                                  )} />
-                                </div>
+                                <span className="text-[8px] font-black uppercase">Normal</span>
+                                <div className={cn("w-1.5 h-1.5 rounded-full", 
+                                  group.perfil_compartilhando === 'Ativo' ? "bg-emerald-500" : "bg-rose-400"
+                                )} />
                              </button>
 
-                             {/* Shopee */}
                              <button 
                               onClick={() => handleToggleField(group, 'shopee')}
                               disabled={!!processingAction}
-                              title="Perfil compartilhando links Shopee neste grupo"
                               className={cn(
-                                "flex items-center justify-between px-3 py-1.5 rounded-lg border transition-all active:scale-95 disabled:opacity-50",
+                                "flex items-center justify-between px-2 py-1 rounded-md border transition-all active:scale-95 disabled:opacity-50",
                                 group.uso_shopee === 'Ativo' 
                                   ? "bg-blue-50 border-blue-100 text-blue-700" 
                                   : "bg-slate-50 border-slate-100 text-slate-400"
                               )}
                              >
-                                <span className="text-[9px] font-bold uppercase tracking-wider">Shopee</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[8px] font-black uppercase">{group.uso_shopee === 'Ativo' ? 'Ativo' : 'Inativo'}</span>
-                                  <div className={cn("w-1.5 h-1.5 rounded-full", 
-                                    group.uso_shopee === 'Ativo' 
-                                      ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" 
-                                      : "bg-slate-300"
-                                  )} />
-                                </div>
+                                <span className="text-[8px] font-black uppercase">Shopee</span>
+                                <div className={cn("w-1.5 h-1.5 rounded-full", 
+                                  group.uso_shopee === 'Ativo' ? "bg-blue-500" : "bg-slate-300"
+                                )} />
                              </button>
                            </div>
                         </div>
                       </td>
-                      <td className="px-8 py-8 relative">
+                      <td className="px-4 py-3 relative">
                         <div className="flex flex-col items-center justify-center">
                           {(() => {
                             const mergedLocatarios = getMergedLocatarios(group);
@@ -1576,15 +1506,15 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                       setOpenRenterDropdownId(isDropdownOpen ? null : group.id);
                                     }}
                                     className={cn(
-                                      "flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border",
+                                      "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border",
                                       hasActive 
                                         ? "bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100" 
                                         : "bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100"
                                     )}
                                   >
-                                    <Users className="w-3.5 h-3.5" />
-                                    {hasActive ? `ALUGADO · ${activeLocatarios.length}` : `${mergedLocatarios.length} LOCATÁRIO${mergedLocatarios.length > 1 ? 'S' : ''}`}
-                                    <ChevronDown className={cn("w-3 h-3 transition-transform duration-300", isDropdownOpen && "rotate-180")} />
+                                    <Users className="w-3 h-3" />
+                                    {hasActive ? `ALUGADO` : `INATIVO`}
+                                    <ChevronDown className={cn("w-2.5 h-2.5 transition-transform duration-300", isDropdownOpen && "rotate-180")} />
                                   </button>
 
                                   <AnimatePresence>
@@ -1705,19 +1635,19 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                   setEditingLocatario(null);
                                   setIsLocatarioModalOpen(true);
                                 }}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black text-primary uppercase tracking-[0.2em] italic bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 transition-all shadow-sm active:scale-95"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black text-primary uppercase tracking-widest italic bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 transition-all shadow-sm active:scale-95"
                               >
-                                <UserPlus className="w-3.5 h-3.5" />
+                                <UserPlus className="w-3 h-3" />
                                 Disponível
                               </button>
                             );
                           })()}
                         </div>
                       </td>
-                      <td className="px-8 py-8 text-right">
+                      <td className="px-4 py-3 text-right">
                         <ExpiryBadge dareStr={group.data_vencimento} status={group.status} />
                       </td>
-                      <td className="px-8 py-8 text-right">
+                      <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
                            <MoreActionsDropdown 
                             group={group} 
@@ -1770,18 +1700,18 @@ Link: ${normalizeFacebookGroupLink(group)}`;
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {(groupedGroups[nicho] || []).map(group => (
                 <div key={group.id} className={cn(
-                  "bg-white p-5 rounded-[2.5rem] border transition-all relative overflow-hidden active:scale-[0.98] group",
-                  (group.perfil_compartilhando || 'Inativo') === 'Inativo' ? "border-rose-100 bg-rose-50/5" : "border-slate-100 shadow-xl shadow-slate-100/40"
+                  "bg-white p-3 rounded-[1.5rem] border transition-all relative overflow-hidden active:scale-[0.98] group shadow-sm",
+                  (group.perfil_compartilhando || 'Inativo') === 'Inativo' ? "border-rose-100 bg-rose-50/5" : "border-slate-100"
                 )}>
-                   <div className="flex flex-col gap-4">
-                     <div className="flex items-start gap-4">
+                   <div className="flex flex-col gap-3">
+                     <div className="flex items-start gap-3">
                         {/* Thumbnail Mobile */}
                         <GroupThumbnail group={group} size="mobile" />
 
                         <div className="flex-1 min-w-0">
-                           <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                           <div className="flex flex-wrap items-center gap-1.5 mb-1">
                              <span className={cn(
-                               "text-[7px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full",
+                               "text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full",
                                group.priorityInfo?.prioridade === 'Alta' ? "bg-rose-600 text-white" :
                                group.priorityInfo?.prioridade === 'Média' ? "bg-amber-500 text-white" :
                                "bg-slate-100 text-slate-400"
@@ -1821,16 +1751,16 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                               </div>
                            ) : (
                              <div className="flex items-center justify-between gap-2 mb-0.5">
-                               <h4 className="text-sm font-black text-slate-900 leading-tight truncate" title={group.nome_grupo || ''}>{group.nome_grupo || 'Sem Nome'}</h4>
+                               <h4 className="text-[13px] font-black text-slate-900 leading-tight truncate" title={group.nome_grupo || ''}>{group.nome_grupo || 'Sem Nome'}</h4>
                                <button
                                  onClick={(e) => {
                                    e.stopPropagation();
                                    setEditingGroupNameId(group.id);
                                    setTempGroupName(group.nome_grupo || '');
                                  }}
-                                 className="shrink-0 p-1.5 text-slate-300 active:text-blue-500 rounded-lg bg-slate-50 transition-colors"
+                                 className="shrink-0 p-1 text-slate-300 active:text-blue-500 rounded-lg bg-slate-50 transition-colors"
                                >
-                                 <Edit2 className="w-3 h-3" />
+                                 <Edit2 className="w-2.5 h-2.5" />
                                </button>
                              </div>
                            )}
@@ -1917,55 +1847,42 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                <X className="w-4 h-4" />
                              </button>
                            </div>
-                         </div>
-                       </div>
-                     )}
-
-                     <div className="pt-3 border-t border-slate-50">
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 block text-center">Perfil Ativo</span>
-                        <div className="grid grid-cols-2 gap-3">
+                          </div>
+                        </div>
+                      )}
+                      <div className="pt-2 border-t border-slate-50">
+                        <div className="grid grid-cols-2 gap-2">
                           <button 
                             onClick={() => handleToggleField(group, 'perfil')}
                             className={cn(
-                              "flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl border transition-all active:scale-95",
+                              "flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border transition-all active:scale-95",
                               group.perfil_compartilhando === 'Ativo' 
-                                ? "bg-emerald-50 border-emerald-100 text-emerald-700 font-bold" 
+                                ? "bg-emerald-50 border-emerald-100 text-emerald-700" 
                                 : "bg-slate-50 border-slate-100 text-slate-400"
                             )}
                           >
-                             <div className="flex items-center gap-2">
-                               <div className={cn("w-2 h-2 rounded-full",
-                                 group.perfil_compartilhando === 'Ativo' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-rose-400"
-                               )} />
-                               <span className="text-[9px] font-black uppercase tracking-widest">Normal</span>
-                             </div>
-                             <span className="text-[8px] font-black uppercase opacity-60">
-                               {group.perfil_compartilhando === 'Ativo' ? 'Ativo' : 'Inativo'}
-                             </span>
+                             <div className={cn("w-1.5 h-1.5 rounded-full",
+                               group.perfil_compartilhando === 'Ativo' ? "bg-emerald-500" : "bg-rose-400"
+                             )} />
+                             <span className="text-[9px] font-black uppercase">Normal</span>
                           </button>
                           <button 
                             onClick={() => handleToggleField(group, 'shopee')}
                             className={cn(
-                              "flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl border transition-all active:scale-95",
+                              "flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border transition-all active:scale-95",
                               group.uso_shopee === 'Ativo' 
-                                ? "bg-blue-50 border-blue-100 text-blue-700 font-bold" 
+                                ? "bg-blue-50 border-blue-100 text-blue-700" 
                                 : "bg-slate-50 border-slate-100 text-slate-400"
                             )}
                           >
-                             <div className="flex items-center gap-2">
-                               <div className={cn("w-2 h-2 rounded-full",
-                                 group.uso_shopee === 'Ativo' ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" : "bg-slate-300"
-                               )} />
-                               <span className="text-[9px] font-black uppercase tracking-widest">Shopee</span>
-                             </div>
-                             <span className="text-[8px] font-black uppercase opacity-60">
-                               {group.uso_shopee === 'Ativo' ? 'Ativo' : 'Inativo'}
-                             </span>
+                             <div className={cn("w-1.5 h-1.5 rounded-full",
+                               group.uso_shopee === 'Ativo' ? "bg-blue-500" : "bg-slate-300"
+                             )} />
+                             <span className="text-[9px] font-black uppercase">Shopee</span>
                           </button>
                         </div>
                       </div>
-
-                     <div className="border-t border-slate-50 pt-3 flex flex-col gap-3">
+                      <div className="border-t border-slate-50 pt-2 flex flex-col gap-2">
                         {(() => {
                            const mergedLocatarios = getMergedLocatarios(group);
                            const activeLocatarios = mergedLocatarios.filter(l => l.status === 'Ativo');
@@ -1981,15 +1898,15 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                      setOpenRenterDropdownId(isDropdownOpen ? null : group.id + '-mobile');
                                    }}
                                    className={cn(
-                                     "w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border",
+                                     "w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border",
                                      hasActive 
-                                       ? "bg-emerald-50 text-emerald-700 border-emerald-100 font-bold" 
+                                       ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
                                        : "bg-slate-50 text-slate-400 border-slate-100"
                                    )}
                                  >
-                                   <Users className="w-3.5 h-3.5" />
-                                   {hasActive ? `ALUGADO · ${activeLocatarios.length}` : `${mergedLocatarios.length} LOCATÁRIOS`}
-                                   <ChevronDown className={cn("w-3 h-3 transition-transform duration-300", isDropdownOpen && "rotate-180")} />
+                                   <Users className="w-3 h-3" />
+                                   {hasActive ? `ALUGADO` : `INATIVO`}
+                                   <ChevronDown className={cn("w-2.5 h-2.5 transition-transform duration-300", isDropdownOpen && "rotate-180")} />
                                  </button>
 
                                  <AnimatePresence>
@@ -2087,9 +2004,9 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                  setEditingLocatario(null);
                                  setIsLocatarioModalOpen(true);
                                }}
-                               className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-primary border border-emerald-100 shadow-sm transition-all"
+                               className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-primary border border-emerald-100 shadow-sm transition-all"
                              >
-                                <UserPlus className="w-3.5 h-3.5" />
+                                <UserPlus className="w-3 h-3" />
                                 Disponível
                              </button>
                            );
@@ -2101,9 +2018,9 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                           href={ensureAbsoluteUrl(group.link_grupo)} 
                           target="_blank" 
                           rel="noreferrer"
-                          className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl hover:bg-primary transition-all shadow-xl shadow-slate-100"
+                          className="w-full flex items-center justify-center gap-2 bg-slate-900 border border-slate-800 text-white font-black uppercase tracking-widest text-[9px] py-2.5 rounded-xl hover:bg-slate-800 transition-all shadow-sm"
                         >
-                          Acessar Grupo <ExternalLink className="w-3.5 h-3.5" />
+                          Acessar Grupo <ExternalLink className="w-3 h-3" />
                         </a>
                      )}
                    </div>

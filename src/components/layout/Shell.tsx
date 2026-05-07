@@ -69,13 +69,13 @@ export function Shell({
       {/* Sidebar - Desktop */}
       <motion.aside 
         initial={false}
-        animate={{ width: isCollapsed ? 80 : 288 }}
+        animate={{ width: isCollapsed ? 80 : 240 }}
         className="hidden md:flex flex-col bg-white border-r border-slate-200 sticky top-0 h-screen overflow-hidden group/sidebar"
       >
-        <div className={cn("p-6 md:p-8 border-b border-slate-50 relative", isCollapsed && "px-4")}>
-          <div className="flex items-center gap-3">
-            <div className="bg-primary p-2.5 rounded-xl shadow-lg shadow-green-100/50 shrink-0">
-              <Landmark className="w-6 h-6 text-white" />
+        <div className={cn("p-4 md:p-5 border-b border-slate-50 relative", isCollapsed && "px-4")}>
+          <div className="flex items-center gap-2">
+            <div className="bg-primary p-2 rounded-xl shadow-lg shadow-green-100/50 shrink-0">
+              <Landmark className="w-5 h-5 text-white" />
             </div>
             {!isCollapsed && (
               <motion.div 
@@ -83,8 +83,8 @@ export function Shell({
                 animate={{ opacity: 1, x: 0 }}
                 className="flex flex-col"
               >
-                <span className="font-extrabold text-xl tracking-tight leading-none text-slate-900">Grupos <span className="text-primary">FB</span></span>
-                <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mt-1.5 whitespace-nowrap">Gestão de Grupos</span>
+                <span className="font-extrabold text-lg tracking-tight leading-none text-slate-900">Grupos <span className="text-primary">FB</span></span>
+                <span className="text-[10px] uppercase tracking-[0.15em] font-bold text-slate-400 mt-1 whitespace-nowrap">Gestão de Grupos</span>
               </motion.div>
             )}
           </div>
@@ -97,7 +97,7 @@ export function Shell({
           </button>
         </div>
 
-        <nav className={cn("flex-1 p-6 space-y-1.5 pt-8", isCollapsed && "p-3")}>
+        <nav className={cn("flex-1 p-4 space-y-1 mt-4", isCollapsed && "p-3")}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -110,14 +110,14 @@ export function Shell({
                 }}
                 title={isCollapsed ? item.label : ""}
                 className={cn(
-                  "w-full flex items-center transition-all duration-200 font-semibold text-sm",
-                  isCollapsed ? "justify-center p-3.5 rounded-xl" : "gap-3.5 px-4 py-3.5 rounded-2xl",
+                  "w-full flex items-center transition-all duration-200 font-semibold text-[13px]",
+                  isCollapsed ? "justify-center p-3 rounded-xl" : "gap-3 px-3.5 py-2.5 rounded-xl",
                   isActive 
-                    ? "bg-slate-950 text-white shadow-md shadow-slate-200 scale-[1.02]" 
+                    ? "bg-slate-950 text-white shadow-md shadow-slate-200" 
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 )}
               >
-                <Icon className={cn("w-5 h-5 shrink-0", isActive ? "text-primary" : "text-slate-400")} />
+                <Icon className={cn("w-4.5 h-4.5 shrink-0", isActive ? "text-primary" : "text-slate-400")} />
                 {!isCollapsed && (
                   <motion.span
                     initial={{ opacity: 0, x: -5 }}
@@ -131,16 +131,16 @@ export function Shell({
           })}
         </nav>
 
-        <div className={cn("p-6 border-t border-slate-50 space-y-3", isCollapsed && "p-3")}>
+        <div className={cn("p-4 border-t border-slate-50 space-y-2", isCollapsed && "p-3")}>
           <button 
             onClick={onCleanupData}
             title={isCollapsed ? "Faxina de Dados" : ""}
             className={cn(
-              "w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:border-primary hover:text-accent font-bold rounded-2xl transition-all active:scale-95 text-xs shadow-sm shadow-slate-100",
-              isCollapsed ? "h-12 w-12 mx-auto rounded-xl" : "py-3"
+              "w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:border-primary hover:text-accent font-bold rounded-xl transition-all active:scale-95 text-[11px] shadow-sm shadow-slate-100",
+              isCollapsed ? "h-11 w-11 mx-auto rounded-xl" : "py-2.5"
             )}
           >
-            <Sparkles className={cn("text-primary shrink-0", isCollapsed ? "w-5 h-5" : "w-4 h-4")} />
+            <Sparkles className={cn("text-primary shrink-0", isCollapsed ? "w-4.5 h-4.5" : "w-3.5 h-3.5")} />
             {!isCollapsed && <span>Faxina de Dados</span>}
           </button>
           
@@ -148,22 +148,22 @@ export function Shell({
             onClick={onImportGroups}
             title={isCollapsed ? "Importar" : ""}
             className={cn(
-              "w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold rounded-2xl transition-all active:scale-95 text-sm shadow-sm shadow-slate-100",
-              isCollapsed ? "h-12 w-12 mx-auto rounded-xl" : "py-3"
+              "w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold rounded-xl transition-all active:scale-95 text-[12px] shadow-sm shadow-slate-100",
+              isCollapsed ? "h-11 w-11 mx-auto rounded-xl" : "py-2.5"
             )}
           >
-            <FileUp className={cn("text-slate-400 shrink-0", isCollapsed ? "w-6 h-6" : "w-5 h-5")} />
+            <FileUp className={cn("text-slate-400 shrink-0", isCollapsed ? "w-5 h-5" : "w-4 h-4")} />
             {!isCollapsed && <span>Importar</span>}
           </button>
           <button 
             onClick={onAddGroup}
             title={isCollapsed ? "Novo Grupo" : ""}
             className={cn(
-              "w-full flex items-center justify-center gap-2 bg-primary hover:bg-accent text-white font-bold rounded-[1.5rem] shadow-xl shadow-green-100/50/50 transition-all active:scale-95 text-sm",
-              isCollapsed ? "h-12 w-12 mx-auto rounded-xl" : "py-4 rounded-3xl"
+              "w-full flex items-center justify-center gap-2 bg-primary hover:bg-accent text-white font-bold rounded-xl shadow-lg shadow-green-100/50 transition-all active:scale-95 text-xs",
+              isCollapsed ? "h-11 w-11 mx-auto rounded-xl" : "py-3 rounded-2xl"
             )}
           >
-            <Plus className={cn("shrink-0", isCollapsed ? "w-6 h-6" : "w-5 h-5")} />
+            <Plus className={cn("shrink-0", isCollapsed ? "w-5 h-5" : "w-4.5 h-4.5")} />
             {!isCollapsed && <span>Novo Grupo</span>}
           </button>
         </div>
@@ -266,7 +266,7 @@ export function Shell({
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-x-hidden">
-        <div className="max-w-[1600px] mx-auto p-4 md:p-10 lg:p-12">
+        <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
