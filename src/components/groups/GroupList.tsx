@@ -1250,18 +1250,18 @@ Link: ${normalizeFacebookGroupLink(group)}`;
               <table className="w-full text-left border-collapse table-fixed">
             <thead className="sticky top-0 z-20 bg-slate-50 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
               <tr className="border-b border-slate-100">
-                <th className="w-[24%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
+                <th className="w-[25%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
                   <div className="flex items-center gap-2">Grupo <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
-                <th className="w-[10%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('quantidade_membros')}>
+                <th className="w-[9%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('quantidade_membros')}>
                   <div className="flex items-center gap-2 text-center justify-center w-full">Membros <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
-                <th className="w-[10%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('prioridade')}>
+                <th className="w-[9%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('prioridade')}>
                   <div className="flex items-center gap-2 text-center justify-center w-full">Prioridade <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
                 <th className="w-[15%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Perfil / Shopee</th>
                 <th className="w-[23%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Locatário / Info</th>
-                <th className="w-[11%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors text-right" onClick={() => toggleSort('data_vencimento')}>
+                <th className="w-[12%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors text-right" onClick={() => toggleSort('data_vencimento')}>
                   <div className="flex items-center gap-2 justify-end">Vencimento <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
                 <th className="w-[7%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
@@ -1398,7 +1398,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                               )}
                               <div className="flex items-center gap-1.5">
                                  <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                 <span className="text-slate-400 text-[8px] font-black uppercase tracking-widest truncate max-w-[70px]">
+                                 <span className="text-slate-400 text-[8px] font-black uppercase tracking-widest truncate max-w-[110px]" title={group.nicho || 'Geral'}>
                                     {group.nicho || 'Geral'}
                                  </span>
                               </div>
@@ -1610,7 +1610,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                         <ExpiryBadge dareStr={group.data_vencimento} status={group.status} />
                       </td>
                       <td className="px-3 py-2 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-1 group-hover:translate-x-0">
+                        <div className="flex items-center justify-end gap-2 opacity-40 group-hover:opacity-100 transition-all transform translate-x-1 group-hover:translate-x-0">
                            <MoreActionsDropdown 
                             group={group} 
                             onEdit={() => onEdit(group)} 
@@ -2179,9 +2179,9 @@ function MoreActionsDropdown({ group, onEdit, onDelete, onMarkForSale, onCopyRes
           e.stopPropagation();
           setIsOpen(!isOpen);
         }}
-        className="p-3 bg-white border border-slate-100 rounded-2xl hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all shadow-sm"
+        className="p-1.5 bg-white border border-slate-100 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all shadow-sm active:scale-95"
       >
-        <MoreVertical className="w-4 h-4" />
+        <MoreVertical className="w-3.5 h-3.5" />
       </button>
 
       <AnimatePresence>
