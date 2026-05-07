@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Group, QuickFilter } from '@/src/types';
 import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera, CheckCircle2, X, Users } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers } from '@/src/lib/utils';
@@ -1250,34 +1251,34 @@ Link: ${normalizeFacebookGroupLink(group)}`;
               <table className="w-full text-left border-collapse table-fixed">
             <thead className="sticky top-0 z-20 bg-slate-50 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
               <tr className="border-b border-slate-100">
-                <th className="w-[30%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
+                <th className="w-[30%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
                   <div className="flex items-center gap-2">Grupo <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
-                <th className="w-[8%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('quantidade_membros')}>
+                <th className="w-[8%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('quantidade_membros')}>
                   <div className="flex items-center gap-2 text-center justify-center w-full">Membros <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
-                <th className="w-[8%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('prioridade')}>
+                <th className="w-[8%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('prioridade')}>
                   <div className="flex items-center gap-2 text-center justify-center w-full">Prioridade <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
-                <th className="w-[14%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Perfil / Shopee</th>
-                <th className="w-[21%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Locatário / Info</th>
-                <th className="w-[12%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-slate-900 transition-colors text-right" onClick={() => toggleSort('data_vencimento')}>
+                <th className="w-[14%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide text-center">Perfil / Shopee</th>
+                <th className="w-[21%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide">Locatário / Info</th>
+                <th className="w-[12%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors text-right" onClick={() => toggleSort('data_vencimento')}>
                   <div className="flex items-center gap-2 justify-end">Vencimento <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
-                <th className="w-[7%] px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                <th className="w-[7%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 font-medium">
               {sortedNiches.map(nicho => (
                 <React.Fragment key={nicho}>
                   <tr className="bg-slate-50/50">
-                    <td colSpan={7} className="px-3 py-1.5">
+                    <td colSpan={7} className="px-3 py-1">
                       <div className="flex items-center gap-2">
                         <span className="w-1 h-1 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 capitalize">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600 capitalize">
                           Nicho: {nicho}
                         </span>
-                        <span className="text-[9px] font-bold text-slate-300 ml-auto uppercase tracking-widest">
+                        <span className="text-[9px] font-bold text-slate-400 ml-auto uppercase tracking-widest">
                           {groupedGroups[nicho].length} Grupos
                         </span>
                       </div>
@@ -1289,10 +1290,10 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                       key={group.id} 
                       className={cn(
                         "hover:bg-slate-50/50 transition-colors group relative",
-                        group.perfil_compartilhando === 'Inativo' && "bg-rose-50/10"
+                        group.perfil_compartilhando === 'Inativo' && "bg-rose-50/5"
                       )}
                     >
-                      <td className="px-3 py-3 relative">
+                      <td className="px-3 py-2 relative">
                         {group.perfil_compartilhando === 'Inativo' && (
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500" />
                         )}
@@ -1333,7 +1334,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                 </div>
                               ) : (
                                 <>
-                                  <span className="font-black text-slate-900 group-hover:text-primary transition-colors text-[12px] truncate" title={group.nome_grupo}>
+                                  <span className="font-bold text-slate-950 transition-colors text-[12px] truncate" title={group.nome_grupo}>
                                     {group.nome_grupo}
                                   </span>
                                   <button 
@@ -1376,7 +1377,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                       href={normalizeFacebookGroupLink(group)} 
                                       target="_blank" 
                                       rel="noreferrer"
-                                      className="text-[9px] text-blue-500 hover:text-blue-700 flex items-center gap-1 font-black uppercase tracking-widest transition-colors"
+                                      className="text-[9px] text-blue-500 hover:text-blue-700 flex items-center gap-1 font-bold uppercase tracking-widest transition-colors"
                                     >
                                       LINK <ExternalLink className="w-2.5 h-2.5" />
                                     </a>
@@ -1398,7 +1399,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                               )}
                               <div className="flex items-center gap-1.5">
                                  <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                 <span className="text-slate-400 text-[8px] font-black uppercase tracking-widest truncate max-w-[140px]" title={group.nicho || 'Geral'}>
+                                 <span className="text-slate-500 text-[8px] font-bold uppercase tracking-widest truncate max-w-[140px]" title={group.nicho || 'Geral'}>
                                     {group.nicho || 'Geral'}
                                  </span>
                               </div>
@@ -1406,7 +1407,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-center text-xs font-black text-slate-900 font-mono tracking-tighter">
+                      <td className="px-3 py-1.5 text-center text-xs font-bold text-slate-900 font-mono tracking-tighter">
                         <div 
                           onClick={() => {
                             setEditingMembersId(group.id);
@@ -1431,7 +1432,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                           )}
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-center">
+                      <td className="px-3 py-1.5 text-center">
                         <div className="flex flex-col items-center gap-0.5">
                           <span className={cn(
                             "text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full border shadow-sm",
@@ -1441,12 +1442,12 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                           )}>
                             {group.priorityInfo.prioridade}
                           </span>
-                          <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest font-mono">
+                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest font-mono">
                             {group.priorityInfo.score} pts
                           </span>
                         </div>
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-1.5">
                         <div className="flex flex-col gap-1 items-center justify-center">
                            <button 
                              onClick={() => handleToggleField(group, 'perfil')}
@@ -1481,7 +1482,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                            </button>
                         </div>
                       </td>
-                      <td className="px-3 py-2 relative">
+                      <td className="px-3 py-1.5 relative">
                         <div className="flex flex-col items-center justify-center">
                           {(() => {
                             const mergedLocatarios = getMergedLocatarios(group);
@@ -1606,10 +1607,10 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                           })()}
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-right">
+                      <td className="px-3 py-1.5 text-right">
                         <ExpiryBadge dareStr={group.data_vencimento} status={group.status} />
                       </td>
-                      <td className="px-3 py-2 text-right">
+                      <td className="px-3 py-1.5 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-all transform translate-x-1 group-hover:translate-x-0">
                            <MoreActionsDropdown 
                             group={group} 
@@ -1655,7 +1656,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
           <div className="min-w-[600px] space-y-6 grupos-table-content">
         {sortedNiches.map(nicho => (
           <div key={nicho} className="space-y-3">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 flex items-center gap-2 ml-4 mb-2">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500 flex items-center gap-2 ml-4 mb-2">
                <span className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
                Nicho: {nicho || 'Geral'}
             </h3>
@@ -1713,7 +1714,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                               </div>
                            ) : (
                              <div className="flex items-center justify-between gap-2 mb-0.5">
-                               <h4 className="text-[13px] font-black text-slate-900 leading-tight truncate" title={group.nome_grupo || ''}>{group.nome_grupo || 'Sem Nome'}</h4>
+                               <h4 className="text-[13px] font-bold text-slate-950 leading-tight truncate" title={group.nome_grupo || ''}>{group.nome_grupo || 'Sem Nome'}</h4>
                                <button
                                  onClick={(e) => {
                                    e.stopPropagation();
@@ -1727,9 +1728,9 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                              </div>
                            )}
                            <div className="flex items-center gap-2">
-                             <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest bg-slate-50 px-1.5 py-0.5 rounded border border-slate-50 uppercase">{group.nicho || 'Geral'}</span>
+                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-1.5 py-0.5 rounded border border-slate-50 uppercase">{group.nicho || 'Geral'}</span>
                              <div className="w-1 h-1 rounded-full bg-slate-200" />
-                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
                                {formatNumber(group.quantidade_membros || 0)} MEMBROS
                              </span>
                            </div>
@@ -1751,9 +1752,9 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                         </div>
                      </div>
 
-                     <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest px-1">
+                     <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-widest px-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-slate-300 italic">Vencimento:</span>
+                          <span className="text-slate-400 italic">Vencimento:</span>
                           <ExpiryBadge dareStr={group.data_vencimento} status={group.status} compact />
                         </div>
                         <div className="flex items-center gap-2">
@@ -1767,7 +1768,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                               LINK <ExternalLink className="w-2.5 h-2.5" />
                             </a>
                           ) : (
-                            <span className="text-slate-300 italic">Sem Link</span>
+                            <span className="text-slate-400 italic">Sem Link</span>
                           )}
                           <button
                             onClick={(e) => {
@@ -2002,18 +2003,24 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       )}
 
       {/* Delete Confirmation Modal */}
-      {confirmDeleteId && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl text-center">
-            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+      {confirmDeleteId && createPortal(
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[100000] flex items-center justify-center p-4 overflow-y-auto pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 pointer-events-auto" onClick={() => setConfirmDeleteId(null)} />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl text-center relative z-[100001] pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <Trash2 className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Excluir Grupo?</h3>
-            <p className="text-gray-500 text-sm mb-8">Esta ação não pode ser desfeita. Tem certeza que deseja remover este grupo?</p>
+            <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">Excluir Grupo?</h3>
+            <p className="text-slate-500 text-sm font-bold mb-8">Esta ação não pode ser desfeita. Tem certeza que deseja remover este grupo?</p>
             <div className="flex gap-3">
               <button 
                 onClick={() => setConfirmDeleteId(null)}
-                className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold rounded-xl transition-all"
+                className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-all active:scale-95 uppercase text-[10px] tracking-widest"
               >
                 Cancelar
               </button>
@@ -2021,14 +2028,16 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                 onClick={() => {
                   onDelete(confirmDeleteId);
                   setConfirmDeleteId(null);
+                  setToast({ message: "Grupo excluído com sucesso", type: 'success' });
                 }}
-                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-100"
+                className="flex-1 py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-black rounded-xl transition-all shadow-lg shadow-rose-100 active:scale-95 uppercase text-[10px] tracking-widest"
               >
                 Excluir
               </button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </div>,
+        document.body
       )}
 
       {onUpdate && (
@@ -2171,76 +2180,110 @@ Link: ${normalizeFacebookGroupLink(group)}`;
 
 function MoreActionsDropdown({ group, onEdit, onDelete, onMarkForSale, onCopyResume, onAddLocatario }: any) {
   const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+
+  const updateCoords = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + 8,
+        left: rect.right - 224 // Matches w-56 (56 * 4 = 224px)
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      const handleScrollResize = () => setIsOpen(false);
+      window.addEventListener('scroll', handleScrollResize, { passive: true });
+      window.addEventListener('resize', handleScrollResize, { passive: true });
+      return () => {
+        window.removeEventListener('scroll', handleScrollResize);
+        window.removeEventListener('resize', handleScrollResize);
+      };
+    }
+  }, [isOpen]);
 
   return (
     <div className="relative" onClick={(e) => e.stopPropagation()}>
       <button 
+        ref={buttonRef}
         onClick={(e) => {
           e.stopPropagation();
+          updateCoords();
           setIsOpen(!isOpen);
         }}
-        className="p-1.5 bg-white border border-slate-100 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all shadow-sm active:scale-95"
+        className="p-1 px-2 bg-white border border-slate-200/60 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all active:scale-95 hover:border-slate-300"
       >
-        <MoreVertical className="w-3.5 h-3.5" />
+        <MoreVertical className="w-3 h-3" />
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <div 
-              className="fixed inset-0 z-[9998]" 
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsOpen(false);
-              }} 
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              onClick={(e) => e.stopPropagation()}
-              className="absolute right-0 mt-2 w-56 bg-white rounded-2xl border border-slate-100 shadow-2xl z-[9999] overflow-hidden p-2 pointer-events-auto"
+      {isOpen && createPortal(
+        <>
+          <div 
+            className="fixed inset-0 z-[9998] cursor-default pointer-events-auto" 
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(false);
+            }} 
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              position: 'fixed',
+              top: coords.top,
+              left: coords.left,
+            }}
+            className="w-56 bg-white rounded-2xl border border-slate-100 shadow-2xl z-[99999] overflow-hidden p-2 pointer-events-auto"
+          >
+            <button 
+              onClick={(e) => { e.stopPropagation(); onEdit(); setIsOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-primary rounded-xl transition-all"
             >
-              <button 
-                onClick={(e) => { e.stopPropagation(); onEdit(); setIsOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-primary rounded-xl transition-all"
-              >
-                <Edit2 className="w-3.5 h-3.5" />
-                Editar Grupo
-              </button>
-              <button 
-                onClick={(e) => { e.stopPropagation(); onAddLocatario(); setIsOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-blue-500 rounded-xl transition-all"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                + Locatário
-              </button>
-              <button 
-                onClick={(e) => { e.stopPropagation(); onMarkForSale(); setIsOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-amber-600 rounded-xl transition-all"
-              >
-                <Tag className="w-3.5 h-3.5" />
-                Vender Grupo
-              </button>
-              <button 
-                onClick={(e) => { e.stopPropagation(); onCopyResume(); setIsOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-xl transition-all"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                Copiar Resumo
-              </button>
-              <div className="h-px bg-slate-50 my-1" />
-              <button 
-                onClick={(e) => { e.stopPropagation(); onDelete(); setIsOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Excluir Grupo
-              </button>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+              <Edit2 className="w-3.5 h-3.5" />
+              Editar Grupo
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onAddLocatario(); setIsOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-blue-500 rounded-xl transition-all"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              + Locatário
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onMarkForSale(); setIsOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-amber-600 rounded-xl transition-all"
+            >
+              <Tag className="w-3.5 h-3.5" />
+              Vender Grupo
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onCopyResume(); setIsOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-xl transition-all"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              Copiar Resumo
+            </button>
+            <div className="h-px bg-slate-50 my-1" />
+            <button 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                onDelete(); 
+                setIsOpen(false); 
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Excluir Grupo
+            </button>
+          </motion.div>
+        </>,
+        document.body
+      )}
     </div>
   );
 }
@@ -2292,7 +2335,7 @@ function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
 }
 
 function ExpiryBadge({ dareStr, status, compact = false }: { dareStr: string, status: string, compact?: boolean }) {
-  if (status !== 'Alugado' || !dareStr) return <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">-</span>;
+  if (status !== 'Alugado' || !dareStr) return <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">-</span>;
   
   const date = parseISO(dareStr);
   const isVenceHoje = isToday(date);
