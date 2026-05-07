@@ -48,6 +48,19 @@
   .grupos-table-wrapper::-webkit-scrollbar-thumb {
     @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
   }
+
+  /* Floating Scrollbar */
+  .grupos-floating-scroll::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .grupos-floating-scroll::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .grupos-floating-scroll::-webkit-scrollbar-thumb {
+    @apply bg-primary/40 rounded-full hover:bg-primary/60 transition-colors;
+  }
 }
 
 /* Chrome, Safari, Edge, Opera */

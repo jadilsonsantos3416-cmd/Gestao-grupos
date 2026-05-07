@@ -43,7 +43,9 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
 
   const handleSyncScroll = (sourceRef: React.RefObject<HTMLDivElement>, targetRef: React.RefObject<HTMLDivElement>) => {
     if (sourceRef.current && targetRef.current) {
-      targetRef.current.scrollLeft = sourceRef.current.scrollLeft;
+      if (targetRef.current.scrollLeft !== sourceRef.current.scrollLeft) {
+        targetRef.current.scrollLeft = sourceRef.current.scrollLeft;
+      }
     }
   };
 
@@ -1228,23 +1230,15 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       </div>
 
       {/* Desktop Table Content */}
-      <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden hidden lg:block">
-        {/* Fake Horizontal Scrollbar Top */}
-        <div 
-          className="w-full overflow-x-auto overflow-y-hidden h-3 bg-slate-50/50 border-b border-slate-100 grupos-scroll-top" 
-          ref={desktopFakeScrollRef}
-          onScroll={() => handleSyncScroll(desktopFakeScrollRef, desktopTableWrapperRef)}
-        >
-          <div className="w-[1500px] h-px"></div>
-        </div>
-        
-        <div 
-          className="w-full overflow-x-auto overflow-y-visible grupos-table-wrapper touch-pan-x"
-          ref={desktopTableWrapperRef}
-          onScroll={() => handleSyncScroll(desktopTableWrapperRef, desktopFakeScrollRef)}
-        >
-          <div className="min-w-[1500px] grupos-table-content">
-            <table className="w-full text-left border-collapse">
+      <div className="hidden lg:block relative">
+        <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden mb-4">
+          <div 
+            className="w-full overflow-x-auto overflow-y-visible grupos-table-wrapper touch-pan-x"
+            ref={desktopTableWrapperRef}
+            onScroll={() => handleSyncScroll(desktopTableWrapperRef, desktopFakeScrollRef)}
+          >
+            <div className="min-w-[1500px] grupos-table-content">
+              <table className="w-full text-left border-collapse">
             <thead className="sticky top-0 z-20 bg-slate-50 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
               <tr className="border-b border-slate-100">
                 <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
@@ -1740,19 +1734,22 @@ Link: ${normalizeFacebookGroupLink(group)}`;
         </div>
       </div>
 
-      {/* Mobile Card Layout */}
-      <div className="lg:hidden pb-20 p-1 md:p-0">
-        {/* Fake Horizontal Scrollbar Mobile */}
-        <div 
-          className="w-full overflow-x-auto overflow-y-hidden h-3 bg-white/50 mb-2 rounded-full overflow-hidden grupos-scroll-top" 
-          ref={mobileFakeScrollRef}
-          onScroll={() => handleSyncScroll(mobileFakeScrollRef, mobileTableWrapperRef)}
-        >
-          <div className="min-w-[600px] h-px"></div>
+        {/* Floating Horizontal Scrollbar Desktop */}
+        <div className="sticky bottom-6 z-40 w-full px-12 pointer-events-none -mt-10 mb-4">
+          <div 
+            className="w-full overflow-x-auto overflow-y-hidden h-2.5 bg-white/80 backdrop-blur-md rounded-full border border-slate-200 shadow-2xl pointer-events-auto grupos-floating-scroll" 
+            ref={desktopFakeScrollRef}
+            onScroll={() => handleSyncScroll(desktopFakeScrollRef, desktopTableWrapperRef)}
+          >
+            <div className="w-[1500px] h-px"></div>
+          </div>
         </div>
-        
+      </div>
+
+      {/* Mobile Card Layout */}
+      <div className="lg:hidden pb-20 p-1 md:p-0 relative">
         <div 
-          className="w-full overflow-x-auto overflow-y-visible touch-pan-x grupos-table-wrapper"
+          className="w-full overflow-x-auto overflow-y-visible touch-pan-x grupos-table-wrapper mb-4"
           ref={mobileTableWrapperRef}
           onScroll={() => handleSyncScroll(mobileTableWrapperRef, mobileFakeScrollRef)}
         >
@@ -2110,6 +2107,17 @@ Link: ${normalizeFacebookGroupLink(group)}`;
         ))}
         </div>
       </div>
+
+        {/* Floating Horizontal Scrollbar Mobile */}
+        <div className="sticky bottom-20 z-40 w-full px-4 pointer-events-none -mt-4 mb-8">
+          <div 
+            className="w-full overflow-x-auto overflow-y-hidden h-2 bg-white/90 backdrop-blur-md rounded-full border border-slate-200 shadow-lg pointer-events-auto grupos-floating-scroll" 
+            ref={mobileFakeScrollRef}
+            onScroll={() => handleSyncScroll(mobileFakeScrollRef, mobileTableWrapperRef)}
+          >
+            <div className="min-w-[600px] h-px"></div>
+          </div>
+        </div>
       </div>
 
       {filteredGroups.length === 0 && (
