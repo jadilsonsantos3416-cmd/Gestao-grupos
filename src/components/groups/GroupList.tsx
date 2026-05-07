@@ -978,7 +978,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* Toast Notification */}
       <AnimatePresence>
         {toast && (
@@ -1002,24 +1002,24 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       </AnimatePresence>
 
       {/* Controls */}
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col md:flex-row gap-3">
           <div className="flex-1 relative group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary w-4 h-4 md:w-5 md:h-5 transition-colors" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary w-3.5 h-3.5 md:w-4 md:h-4 transition-colors" />
             <input 
               type="text" 
               placeholder="Pesquisar por nome do grupo..."
-              className="w-full bg-white border border-slate-100 pl-12 md:pl-14 pr-6 py-3.5 md:py-5 rounded-2xl md:rounded-[2.5rem] shadow-sm focus:ring-4 focus:ring-green-50 focus:border-green-200 outline-none font-bold text-xs md:text-sm text-slate-600 placeholder:text-slate-300 transition-all"
+              className="w-full bg-white border border-slate-100 pl-10 md:pl-11 pr-4 py-2 md:py-2.5 rounded-xl md:rounded-2xl shadow-sm focus:ring-4 focus:ring-green-50 focus:border-green-200 outline-none font-bold text-[10px] md:text-xs text-slate-600 placeholder:text-slate-300 transition-all"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex-1 relative group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 w-4 h-4 md:w-5 md:h-5 transition-colors" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 w-3.5 h-3.5 md:w-4 md:h-4 transition-colors" />
             <input 
               type="text" 
               placeholder="Pesquisar por locatário..."
-              className="w-full bg-white border border-slate-100 pl-12 md:pl-14 pr-6 py-3.5 md:py-5 rounded-2xl md:rounded-[2.5rem] shadow-sm focus:ring-4 focus:ring-blue-50 focus:border-blue-200 outline-none font-bold text-xs md:text-sm text-slate-600 placeholder:text-slate-300 transition-all"
+              className="w-full bg-white border border-slate-100 pl-10 md:pl-11 pr-4 py-2 md:py-2.5 rounded-xl md:rounded-2xl shadow-sm focus:ring-4 focus:ring-blue-50 focus:border-blue-200 outline-none font-bold text-[10px] md:text-xs text-slate-600 placeholder:text-slate-300 transition-all"
               value={renterSearch}
               onChange={e => {
                 setRenterSearch(e.target.value);
@@ -1092,8 +1092,8 @@ Link: ${normalizeFacebookGroupLink(group)}`;
           </div>
         </div>
 
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 pb-4 md:pb-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:flex xl:flex-wrap gap-2 md:gap-3 w-full">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5 pb-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:flex xl:flex-wrap gap-2 w-full">
               <FilterBadge 
                 label="Nicho" 
                 value={nichoFilter} 
@@ -1135,25 +1135,25 @@ Link: ${normalizeFacebookGroupLink(group)}`;
             
             <button 
               onClick={() => setIsReviewModalOpen(true)}
-              className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-slate-50 text-slate-600 rounded-xl md:rounded-2xl border border-slate-100 hover:border-blue-200 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-white active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
+              className="h-9 md:h-10 flex items-center justify-center gap-2 px-4 bg-slate-50 text-slate-600 rounded-xl border border-slate-100 hover:border-blue-200 text-[9px] font-black uppercase tracking-widest hover:bg-white active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
             >
-              <ClipboardList className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform shrink-0" />
+              <ClipboardList className="w-3.5 h-3.5 text-blue-500 group-hover:scale-110 transition-transform shrink-0" />
               <span className="truncate">Revisar</span>
             </button>
 
             <button 
               onClick={() => setIsPostTodayModalOpen(true)}
-              className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-slate-900 text-white rounded-xl md:rounded-2xl shadow-lg shadow-slate-200 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-primary active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
+              className="h-9 md:h-10 flex items-center justify-center gap-2 px-4 bg-slate-900 text-white rounded-xl shadow-lg shadow-slate-200 text-[9px] font-black uppercase tracking-widest hover:bg-primary active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
             >
-              <Trophy className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
+              <Trophy className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
               <span className="truncate">Postar Hoje</span>
             </button>
 
             <button 
               onClick={() => setIsGenerateCopyModalOpen(true)}
-              className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-white border border-slate-100 rounded-xl md:rounded-2xl shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 hover:border-indigo-200 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
+              className="h-9 md:h-10 flex items-center justify-center gap-2 px-4 bg-white border border-slate-100 rounded-xl shadow-sm text-[9px] font-black uppercase tracking-widest text-slate-600 hover:border-indigo-200 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
             >
-              <Wand2 className="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform shrink-0" />
+              <Wand2 className="w-3.5 h-3.5 text-indigo-500 group-hover:scale-110 transition-transform shrink-0" />
               <span className="truncate">Copys</span>
             </button>
 
@@ -1161,15 +1161,15 @@ Link: ${normalizeFacebookGroupLink(group)}`;
               <button 
                 onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
                 disabled={isExporting}
-                className="h-11 md:h-14 flex items-center justify-center gap-2 px-6 bg-white border border-slate-100 rounded-xl md:rounded-2xl shadow-sm text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:border-green-200 active:scale-95 transition-all w-full md:w-auto xl:w-full group"
+                className="h-9 md:h-10 flex items-center justify-center gap-2 px-4 bg-white border border-slate-100 rounded-xl shadow-sm text-[9px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:border-green-200 active:scale-95 transition-all w-full md:w-auto xl:w-full group"
               >
                 {isExporting ? (
-                  <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />
+                  <Loader2 className="w-3.5 h-3.5 text-primary animate-spin shrink-0" />
                 ) : (
-                  <Download className="w-4 h-4 text-primary group-hover:scale-110 transition-transform shrink-0" />
+                  <Download className="w-3.5 h-3.5 text-primary group-hover:scale-110 transition-transform shrink-0" />
                 )}
                 <span className="truncate">{isExporting ? 'Exportando...' : 'Exportar'}</span>
-                <ChevronDown className={cn("w-3 h-3 transition-transform", isExportDropdownOpen && "rotate-180")} />
+                <ChevronDown className={cn("w-2.5 h-2.5 transition-transform", isExportDropdownOpen && "rotate-180")} />
               </button>
 
               <AnimatePresence>
@@ -2251,7 +2251,7 @@ function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
     <div 
       onClick={handleClick}
       className={cn(
-        "flex items-center gap-2 md:gap-3 bg-white px-4 md:px-5 h-12 lg:h-14 rounded-xl md:rounded-2xl border transition-all group w-full lg:w-auto xl:flex-1 min-w-[140px] cursor-pointer outline-none relative",
+        "flex items-center gap-2 md:gap-3 bg-white px-3 md:px-3.5 h-9 lg:h-10 rounded-xl border transition-all group w-full lg:w-auto xl:flex-1 min-w-[120px] cursor-pointer outline-none relative",
         value !== 'Todos' ? "border-green-200 bg-green-50/10 shadow-sm shadow-green-50" : "border-slate-100 shadow-sm hover:border-green-200"
       )}
     >
@@ -2260,7 +2260,7 @@ function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
         value !== 'Todos' ? "text-primary" : "text-slate-300 group-hover:text-primary"
       )} />
       <div className="flex items-center gap-1.5 md:gap-2 flex-1 min-w-0 pointer-events-none">
-        <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none shrink-0">{label}:</span>
+        <span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none shrink-0">{label}:</span>
         <select 
           ref={selectRef}
           value={value}
@@ -2270,7 +2270,7 @@ function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
           }}
           onClick={e => e.stopPropagation()}
           className={cn(
-            "bg-transparent border-0 focus:ring-0 p-0 text-[10px] font-black uppercase tracking-widest text-primary cursor-pointer w-full truncate pointer-events-auto pr-6",
+            "bg-transparent border-0 focus:ring-0 p-0 text-[9px] font-black uppercase tracking-widest text-primary cursor-pointer w-full truncate pointer-events-auto pr-6",
             isCapitalize && "capitalize"
           )}
         >
