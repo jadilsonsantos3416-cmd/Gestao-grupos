@@ -2173,7 +2173,7 @@ function MoreActionsDropdown({ group, onEdit, onDelete, onMarkForSale, onCopyRes
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="relative">
+    <div className="relative" onClick={(e) => e.stopPropagation()}>
       <button 
         onClick={(e) => {
           e.stopPropagation();
@@ -2187,36 +2187,43 @@ function MoreActionsDropdown({ group, onEdit, onDelete, onMarkForSale, onCopyRes
       <AnimatePresence>
         {isOpen && (
           <>
-            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+            <div 
+              className="fixed inset-0 z-[9998]" 
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen(false);
+              }} 
+            />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="absolute right-0 mt-2 w-56 bg-white rounded-2xl border border-slate-100 shadow-2xl z-50 overflow-hidden p-2"
+              onClick={(e) => e.stopPropagation()}
+              className="absolute right-0 mt-2 w-56 bg-white rounded-2xl border border-slate-100 shadow-2xl z-[9999] overflow-hidden p-2 pointer-events-auto"
             >
               <button 
-                onClick={() => { onEdit(); setIsOpen(false); }}
+                onClick={(e) => { e.stopPropagation(); onEdit(); setIsOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-primary rounded-xl transition-all"
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 Editar Grupo
               </button>
               <button 
-                onClick={() => { onAddLocatario(); setIsOpen(false); }}
+                onClick={(e) => { e.stopPropagation(); onAddLocatario(); setIsOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-blue-500 rounded-xl transition-all"
               >
                 <UserPlus className="w-3.5 h-3.5" />
                 + Locatário
               </button>
               <button 
-                onClick={() => { onMarkForSale(); setIsOpen(false); }}
+                onClick={(e) => { e.stopPropagation(); onMarkForSale(); setIsOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-amber-600 rounded-xl transition-all"
               >
                 <Tag className="w-3.5 h-3.5" />
                 Vender Grupo
               </button>
               <button 
-                onClick={() => { onCopyResume(); setIsOpen(false); }}
+                onClick={(e) => { e.stopPropagation(); onCopyResume(); setIsOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-xl transition-all"
               >
                 <Copy className="w-3.5 h-3.5" />
@@ -2224,7 +2231,7 @@ function MoreActionsDropdown({ group, onEdit, onDelete, onMarkForSale, onCopyRes
               </button>
               <div className="h-px bg-slate-50 my-1" />
               <button 
-                onClick={() => { onDelete(); setIsOpen(false); }}
+                onClick={(e) => { e.stopPropagation(); onDelete(); setIsOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
               >
                 <Trash2 className="w-3.5 h-3.5" />
