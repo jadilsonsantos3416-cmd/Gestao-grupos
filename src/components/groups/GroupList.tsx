@@ -1230,8 +1230,17 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       </div>
 
       {/* Desktop Table Content */}
-      <div className="hidden lg:block relative">
-        <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden mb-4">
+      <div className="hidden lg:block">
+        <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden p-6">
+          {/* Top Fake Scrollbar Desktop */}
+          <div 
+            className="w-full overflow-x-auto overflow-y-hidden h-2.5 bg-slate-50/50 border-b border-slate-100 rounded-t-2xl grupos-scroll-top mb-4" 
+            ref={desktopFakeScrollRef}
+            onScroll={() => handleSyncScroll(desktopFakeScrollRef, desktopTableWrapperRef)}
+          >
+            <div className="w-[1500px] h-px"></div>
+          </div>
+
           <div 
             className="w-full overflow-x-auto overflow-y-visible grupos-table-wrapper touch-pan-x"
             ref={desktopTableWrapperRef}
@@ -1733,23 +1742,21 @@ Link: ${normalizeFacebookGroupLink(group)}`;
           </div>
         </div>
       </div>
-
-        {/* Floating Horizontal Scrollbar Desktop */}
-        <div className="sticky bottom-6 z-40 w-full px-12 pointer-events-none -mt-10 mb-4">
-          <div 
-            className="w-full overflow-x-auto overflow-y-hidden h-2.5 bg-white/80 backdrop-blur-md rounded-full border border-slate-200 shadow-2xl pointer-events-auto grupos-floating-scroll" 
-            ref={desktopFakeScrollRef}
-            onScroll={() => handleSyncScroll(desktopFakeScrollRef, desktopTableWrapperRef)}
-          >
-            <div className="w-[1500px] h-px"></div>
-          </div>
-        </div>
-      </div>
+    </div>
 
       {/* Mobile Card Layout */}
       <div className="lg:hidden pb-20 p-1 md:p-0 relative">
+        {/* Top Fake Scrollbar Mobile */}
         <div 
-          className="w-full overflow-x-auto overflow-y-visible touch-pan-x grupos-table-wrapper mb-4"
+          className="w-full overflow-x-auto overflow-y-hidden h-2.5 bg-white/50 mb-3 rounded-full overflow-hidden grupos-scroll-top" 
+          ref={mobileFakeScrollRef}
+          onScroll={() => handleSyncScroll(mobileFakeScrollRef, mobileTableWrapperRef)}
+        >
+          <div className="min-w-[600px] h-px"></div>
+        </div>
+
+        <div 
+          className="w-full overflow-x-auto overflow-y-visible touch-pan-x grupos-table-wrapper"
           ref={mobileTableWrapperRef}
           onScroll={() => handleSyncScroll(mobileTableWrapperRef, mobileFakeScrollRef)}
         >
@@ -2107,18 +2114,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
         ))}
         </div>
       </div>
-
-        {/* Floating Horizontal Scrollbar Mobile */}
-        <div className="sticky bottom-20 z-40 w-full px-4 pointer-events-none -mt-4 mb-8">
-          <div 
-            className="w-full overflow-x-auto overflow-y-hidden h-2 bg-white/90 backdrop-blur-md rounded-full border border-slate-200 shadow-lg pointer-events-auto grupos-floating-scroll" 
-            ref={mobileFakeScrollRef}
-            onScroll={() => handleSyncScroll(mobileFakeScrollRef, mobileTableWrapperRef)}
-          >
-            <div className="min-w-[600px] h-px"></div>
-          </div>
-        </div>
-      </div>
+    </div>
 
       {filteredGroups.length === 0 && (
         <div className="bg-white p-12 rounded-[2rem] border border-dashed border-gray-200 text-center mx-4 my-8">
