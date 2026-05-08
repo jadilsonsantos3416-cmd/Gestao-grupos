@@ -47,6 +47,7 @@ export interface Group {
   // Sale fields
   para_venda?: boolean;
   valor_venda?: string;
+  valor_sugerido_venda?: number;
   status_venda?: SaleStatus;
   observacoes_venda?: string;
   atualizado_em?: string;

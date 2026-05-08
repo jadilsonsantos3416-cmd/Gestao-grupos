@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Tag, Edit2, XCircle, ExternalLink, MessageSquare, Plus, Search, CheckCircle2, AlertCircle, ChevronDown, Loader2 } from 'lucide-react';
+import { Download, Tag, Edit2, XCircle, ExternalLink, MessageSquare, Plus, Search, CheckCircle2, AlertCircle, ChevronDown, Loader2, Sparkles } from 'lucide-react';
 import { Group } from '@/src/types';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -135,12 +135,13 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
       (b.quantidade_membros || 0) - (a.quantidade_membros || 0)
     );
 
-    const headers = ['NOME', 'LINK', 'PUBLICO', 'VALOR'];
+    const headers = ['NOME', 'LINK', 'PUBLICO', 'VALOR ATUAL', 'VALOR SUGERIDO'];
     const rows = sortedGroups.map(group => [
       (group.nome_grupo || '').replace(/;/g, ' ').trim(),
       normalizeFacebookGroupLink(group),
       group.quantidade_membros || 0,
-      (group.valor_venda || '').replace(/;/g, ' ').trim()
+      (group.valor_venda || '').replace(/;/g, ' ').trim(),
+      group.valor_sugerido_venda ? `R$ ${group.valor_sugerido_venda.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''
     ]);
 
     const csvContent = [
@@ -186,11 +187,12 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
       group.nome_grupo || '',
       normalizeFacebookGroupLink(group),
       group.quantidade_membros?.toLocaleString('pt-BR') || '0',
-      group.valor_venda || ''
+      group.valor_venda || '',
+      group.valor_sugerido_venda ? `R$ ${group.valor_sugerido_venda.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''
     ]);
 
     autoTable(doc, {
-      head: [['NOME', 'LINK', 'PÚBLICO', 'VALOR']],
+      head: [['NOME', 'LINK', 'PÚBLICO', 'VALOR ATUAL', 'VALOR SUGERIDO']],
       body: data,
       startY: 35,
       theme: 'grid',
@@ -231,7 +233,8 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
       'NOME': group.nome_grupo || '',
       'LINK': normalizeFacebookGroupLink(group),
       'PUBLICO': group.quantidade_membros || 0,
-      'VALOR': group.valor_venda || ''
+      'VALOR ATUAL': group.valor_venda || '',
+      'VALOR SUGERIDO': group.valor_sugerido_venda ? `R$ ${group.valor_sugerido_venda.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''
     }));
 
     // Create worksheet
@@ -242,7 +245,8 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
       { wch: 40 }, // NOME
       { wch: 50 }, // LINK
       { wch: 15 }, // PUBLICO
-      { wch: 15 }, // VALOR
+      { wch: 20 }, // VALOR ATUAL
+      { wch: 20 }, // VALOR SUGERIDO
     ];
     worksheet['!cols'] = colWidths;
 
@@ -260,6 +264,93 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
         para_venda: false,
         atualizado_em: new Date().toISOString()
       });
+    }
+  };
+
+  const calculateSuggestedPrice = (group: Group) => {
+    const members = group.quantidade_membros || 0;
+    let price = members * 0.02;
+    const reasons: string[] = [`${members.toLocaleString('pt-BR')} membros`];
+
+    // Niche Multipliers
+    const niche = group.nicho || 'Geral';
+    let nicheMult = 1.0;
+    
+    if (niche.includes('Musa')) nicheMult = 1.3;
+    else if (niche.includes('Influencer')) nicheMult = 1.25;
+    else if (niche.includes('Evang') || niche.includes('Gospel')) nicheMult = 1.2;
+    else if (niche.includes('Receita') || niche.includes('Culin')) nicheMult = 1.1;
+    else if (niche.includes('Beleza') || niche.includes('Cabelo')) nicheMult = 1.15;
+    else if (niche.includes('Fã') || niche.includes('Musica')) nicheMult = 1.0;
+    else if (niche.includes('Humor')) nicheMult = 1.0;
+    else if (niche.includes('Agro') || niche.includes('Notic')) nicheMult = 0.9;
+    else nicheMult = 0.8;
+
+    if (nicheMult !== 1.0) {
+      price *= nicheMult;
+      reasons.push(`Nicho: x${nicheMult}`);
+    }
+
+    // Priority Multipliers
+    const priority = group.prioridade_postagem || 'Média';
+    const priorityMult = priority === 'Alta' ? 1.25 : priority === 'Baixa' ? 0.75 : 1.0;
+    if (priorityMult !== 1.0) {
+      price *= priorityMult;
+      reasons.push(`Prioridade: x${priorityMult}`);
+    }
+
+    // Score Multipliers
+    const score = group.score_postagem || 0;
+    let scoreMult = 1.0;
+    if (score >= 8) scoreMult = 1.4;
+    else if (score >= 5) scoreMult = 1.2;
+    else if (score >= 3) scoreMult = 1.0;
+    else scoreMult = 0.8;
+    
+    if (scoreMult !== 1.0) {
+      price *= scoreMult;
+      reasons.push(`Score: x${scoreMult}`);
+    }
+
+    // Active Profile/Shopee Multipliers
+    if (group.perfil_compartilhando === 'Ativo') {
+      price *= 1.1;
+      reasons.push(`Ativo: x1.1`);
+    }
+
+    if (group.uso_shopee === 'Ativo') {
+      price *= 1.1;
+      reasons.push(`Shopee: x1.1`);
+    }
+
+    // Rounding
+    if (price < 500) {
+      price = Math.round(price / 10) * 10;
+    } else {
+      price = Math.round(price / 50) * 50;
+    }
+
+    if (price < 100) price = 100;
+
+    return {
+      value: price,
+      justification: reasons.join(' • ')
+    };
+  };
+
+  const handleApplySuggestedPrice = async (group: Group, suggestedValue: number) => {
+    setIsProcessing(group.id);
+    try {
+      const formattedValue = `R$ ${suggestedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      await onUpdate(group.id, {
+        valor_venda: formattedValue,
+        valor_sugerido_venda: suggestedValue,
+        atualizado_em: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error applying suggested price:', error);
+    } finally {
+      setIsProcessing(null);
     }
   };
 
@@ -526,73 +617,107 @@ export function SalesPage({ groups, onEdit, onUpdate }: SalesPageProps) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20">
-            {salesGroups.map(group => (
-              <div key={group.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-100/40 flex flex-col h-full group">
-                <div className="flex justify-between items-start gap-4 mb-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className="text-[8px] font-black uppercase tracking-[0.25em] text-primary bg-green-50 px-3 py-1 rounded-full border border-green-100">
-                        {group.nicho || 'Geral'}
-                      </span>
-                      <span className={cn(
-                        "text-[8px] font-black uppercase tracking-[0.25em] px-3 py-1 rounded-full border",
-                        group.status_venda === 'Vendido' ? "bg-rose-50 text-rose-600 border-rose-100" :
-                        group.status_venda === 'Reservado' ? "bg-amber-50 text-amber-600 border-amber-100" :
-                        "bg-blue-50 text-blue-600 border-blue-100"
-                      )}>
-                        {group.status_venda || 'Disponível'}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-black text-slate-900 leading-tight truncate">{group.nome_grupo}</h3>
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
-                      {formatNumber(group.quantidade_membros)} MEMBROS
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <button 
-                      onClick={() => onEdit(group)}
-                      className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-100 hover:text-primary transition-all border border-slate-100"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleRemoveFromSale(group)}
-                      className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-100 hover:text-rose-600 transition-all border border-slate-100"
-                    >
-                      <XCircle className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mt-auto space-y-4">
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor de Venda</span>
-                      <span className="text-sm font-black text-primary font-mono">{group.valor_venda || 'Não def.'}</span>
-                    </div>
-                    {group.observacoes_venda && (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Observações</span>
-                        <p className="text-[11px] text-slate-600 leading-relaxed max-h-12 overflow-y-auto pr-2 custom-scrollbar">
-                          {group.observacoes_venda}
-                        </p>
+            {salesGroups.map(group => {
+              const suggested = calculateSuggestedPrice(group);
+              return (
+                <div key={group.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-100/40 flex flex-col h-full group">
+                  <div className="flex justify-between items-start gap-4 mb-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className="text-[8px] font-black uppercase tracking-[0.25em] text-primary bg-green-50 px-3 py-1 rounded-full border border-green-100">
+                          {group.nicho || 'Geral'}
+                        </span>
+                        <span className={cn(
+                          "text-[8px] font-black uppercase tracking-[0.25em] px-3 py-1 rounded-full border",
+                          group.status_venda === 'Vendido' ? "bg-rose-50 text-rose-600 border-rose-100" :
+                          group.status_venda === 'Reservado' ? "bg-amber-50 text-amber-600 border-amber-100" :
+                          "bg-blue-50 text-blue-600 border-blue-100"
+                        )}>
+                          {group.status_venda || 'Disponível'}
+                        </span>
                       </div>
-                    )}
+                      <h3 className="text-lg font-black text-slate-900 leading-tight truncate">{group.nome_grupo}</h3>
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
+                        {formatNumber(group.quantidade_membros)} MEMBROS
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <button 
+                        onClick={() => onEdit(group)}
+                        className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-100 hover:text-primary transition-all border border-slate-100"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleRemoveFromSale(group)}
+                        className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-slate-100 hover:text-rose-600 transition-all border border-slate-100"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="flex gap-2">
-                    <a 
-                      href={normalizeFacebookGroupLink(group)} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 bg-slate-950 text-white font-black uppercase tracking-[0.2em] text-[8px] py-3.5 rounded-xl hover:bg-primary transition-all shadow-lg shadow-slate-100"
-                    >
-                      ACESSAR <ExternalLink className="w-3 h-3" />
-                    </a>
+                  <div className="mt-auto space-y-4">
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 relative group/suggested">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor de Venda</span>
+                        <span className="text-sm font-black text-primary font-mono">{group.valor_venda || 'Não def.'}</span>
+                      </div>
+                      
+                      {/* suggested value block */}
+                      <div className="pt-3 mt-3 border-t border-slate-200/60">
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <Sparkles className="w-3 h-3 text-amber-500" />
+                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Valor Sugerido</span>
+                          </div>
+                          <span className="text-xs font-black text-slate-900 font-mono">
+                            R$ {suggested.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                        <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed mb-3">
+                          {suggested.justification}
+                        </p>
+                        <button
+                          onClick={() => handleApplySuggestedPrice(group, suggested.value)}
+                          disabled={isProcessing === group.id}
+                          className="w-full py-2 bg-white border border-amber-200 text-amber-600 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-sm"
+                        >
+                          {isProcessing === group.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <>
+                              <CheckCircle2 className="w-3 h-3" />
+                              Usar Valor Sugerido
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {group.observacoes_venda && (
+                        <div className="flex flex-col gap-1 mt-4">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Observações</span>
+                          <p className="text-[11px] text-slate-600 leading-relaxed max-h-12 overflow-y-auto pr-2 custom-scrollbar">
+                            {group.observacoes_venda}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <a 
+                        href={normalizeFacebookGroupLink(group)} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="flex-1 flex items-center justify-center gap-2 bg-slate-950 text-white font-black uppercase tracking-[0.2em] text-[8px] py-3.5 rounded-xl hover:bg-primary transition-all shadow-lg shadow-slate-100"
+                      >
+                        ACESSAR <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
