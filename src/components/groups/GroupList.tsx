@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Group, QuickFilter } from '@/src/types';
-import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera, CheckCircle2, X, Users } from 'lucide-react';
+import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera, CheckCircle2, X, Users, Plus, XCircle } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -17,7 +17,7 @@ import { PostTodayModal } from './PostTodayModal';
 import { GenerateCopyModal } from './GenerateCopyModal';
 import { NichoModal } from './NichoModal';
 import { LocatarioModal } from './LocatarioModal';
-import { listarNichos } from '@/src/lib/nichosService';
+import { listarNichos, adicionarNicho } from '@/src/lib/nichosService';
 import { Nicho, Locatario } from '@/src/types';
 import { CLOUDINARY_BASE_URL } from '@/src/constants';
 
@@ -87,6 +87,12 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [tempGroupLink, setTempGroupLink] = useState('');
   const [isSavingName, setIsSavingName] = useState(false);
   const [isSavingLink, setIsSavingLink] = useState(false);
+  const [editingGroupNicheId, setEditingGroupNicheId] = useState<string | null>(null);
+  const [editingSaleStatusId, setEditingSaleStatusId] = useState<string | null>(null);
+  const [newNicheInputValue, setNewNicheInputValue] = useState('');
+  const [isCreatingNewNiche, setIsCreatingNewNiche] = useState(false);
+  const [nicheEditCoords, setNicheEditCoords] = useState({ top: 0, left: 0 });
+  const [saleEditCoords, setSaleEditCoords] = useState({ top: 0, left: 0 });
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const getMergedLocatarios = (group: Group): Locatario[] => {
@@ -587,25 +593,39 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const handleMarkForSale = async (group: Group) => {
     if (!onUpdate) return;
     
-    // Check if already for sale
-    if (group.para_venda) {
-      setToast({ message: "Este grupo já está na lista de venda", type: 'success' });
-      return;
-    }
-
-    setProcessingAction({ id: group.id, field: 'perfil' }); // Generic field for loading
+    setProcessingAction({ id: group.id, field: 'perfil' });
 
     try {
       await onUpdate(group.id, {
         para_venda: true,
         status_venda: 'Disponível',
-        valor_venda: String(group.valor || ''),
+        valor_venda: group.valor_venda || '',
+        observacoes_venda: group.observacoes_venda || '',
         atualizado_em: new Date().toISOString()
       });
       setToast({ message: "Grupo marcado para venda!", type: 'success' });
     } catch (error) {
       console.error("Erro ao marcar para venda:", error);
       setToast({ message: "Erro ao marcar para venda", type: 'error' });
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const handleRemoveFromSale = async (group: Group) => {
+    if (!onUpdate) return;
+    
+    setProcessingAction({ id: group.id, field: 'perfil' });
+
+    try {
+      await onUpdate(group.id, {
+        para_venda: false,
+        atualizado_em: new Date().toISOString()
+      });
+      setToast({ message: "Grupo removido da venda", type: 'success' });
+    } catch (error) {
+      console.error("Erro ao remover da venda:", error);
+      setToast({ message: "Erro ao remover da venda", type: 'error' });
     } finally {
       setProcessingAction(null);
     }
@@ -1342,8 +1362,28 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                   </button>
                                 </>
                               )}
-                              {group.para_venda && (
-                                <span className="bg-amber-50 text-amber-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-100 shrink-0">À Venda</span>
+                              {group.para_venda ? (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    setSaleEditCoords({ top: rect.bottom + 5, left: rect.left });
+                                    setEditingSaleStatusId(group.id);
+                                  }}
+                                  className="bg-amber-50 text-amber-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-100 shrink-0 hover:bg-amber-100 transition-colors"
+                                >
+                                  À Venda
+                                </button>
+                              ) : (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMarkForSale(group);
+                                  }}
+                                  className="text-slate-300 hover:text-amber-500 hover:border-amber-200 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-slate-100 shrink-0 transition-all opacity-0 group-hover:opacity-100"
+                                >
+                                  + Venda
+                                </button>
                               )}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
@@ -1391,9 +1431,20 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                               )}
                               <div className="flex items-center gap-1.5">
                                  <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                 <span className="text-slate-500 text-[8px] font-bold uppercase tracking-widest truncate max-w-[140px]" title={group.nicho || 'Geral'}>
+                                 <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    setNicheEditCoords({ top: rect.bottom + 5, left: rect.left });
+                                    setEditingGroupNicheId(group.id);
+                                    setIsCreatingNewNiche(false);
+                                  }}
+                                  className="text-slate-500 text-[8px] font-bold uppercase tracking-widest truncate max-w-[140px] hover:text-primary transition-colors flex items-center gap-1 group/niche" 
+                                  title={group.nicho || 'Geral'}
+                                 >
                                     {group.nicho || 'Geral'}
-                                 </span>
+                                    <Edit2 className="w-2 h-2 opacity-0 group-hover/niche:opacity-100 transition-opacity" />
+                                 </button>
                               </div>
                             </div>
                           </div>
@@ -1673,8 +1724,28 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                              )}>
                                {group.priorityInfo?.prioridade || 'Baixa'}
                              </span>
-                             {group.para_venda && (
-                               <span className="bg-amber-50 text-amber-600 text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-100">À VENDA</span>
+                             {group.para_venda ? (
+                               <button 
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   const rect = e.currentTarget.getBoundingClientRect();
+                                   setSaleEditCoords({ top: rect.bottom + 5, left: Math.min(rect.left, window.innerWidth - 180) });
+                                   setEditingSaleStatusId(group.id);
+                                 }}
+                                 className="bg-amber-50 text-amber-600 text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-100 active:bg-amber-100 transition-colors"
+                               >
+                                 À VENDA
+                               </button>
+                             ) : (
+                               <button 
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   handleMarkForSale(group);
+                                 }}
+                                 className="bg-slate-50 text-slate-400 text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-slate-100 active:bg-slate-100 transition-colors"
+                               >
+                                 Colocar à venda
+                               </button>
                              )}
                            </div>
                            {editingGroupNameId === group.id ? (
@@ -1714,13 +1785,26 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                    setTempGroupName(group.nome_grupo || '');
                                  }}
                                  className="shrink-0 p-1 text-slate-300 active:text-blue-500 rounded-lg bg-slate-50 transition-colors"
-                               >
+                                >
                                  <Edit2 className="w-2.5 h-2.5" />
                                </button>
                              </div>
                            )}
                            <div className="flex items-center gap-2">
-                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-1.5 py-0.5 rounded border border-slate-50 uppercase">{group.nicho || 'Geral'}</span>
+                             <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setNicheEditCoords({ top: rect.bottom + 5, left: Math.min(rect.left, window.innerWidth - 220) });
+                                setEditingGroupNicheId(group.id);
+                                setIsCreatingNewNiche(false);
+                              }}
+                              className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 active:bg-slate-100 transition-colors flex items-center gap-1"
+                             >
+                              {group.nicho || 'Geral'}
+                              <Edit2 className="w-2 h-2 opacity-50" />
+                             </button>
+
                              <div className="w-1 h-1 rounded-full bg-slate-200" />
                              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
                                {formatNumber(group.quantidade_membros || 0)} MEMBROS
@@ -2029,6 +2113,153 @@ Link: ${normalizeFacebookGroupLink(group)}`;
             </div>
           </motion.div>
         </div>,
+        document.body
+      )}
+
+      {/* Quick Niche Edit Dropdown */}
+      {editingGroupNicheId && createPortal(
+        <>
+          <div className="fixed inset-0 z-[100002]" onClick={() => setEditingGroupNicheId(null)} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            style={{ 
+              position: 'fixed', 
+              top: nicheEditCoords.top, 
+              left: nicheEditCoords.left,
+              zIndex: 100003
+            }}
+            className="w-56 bg-white rounded-2xl border border-slate-100 shadow-2xl overflow-hidden p-2"
+          >
+            {!isCreatingNewNiche ? (
+              <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                <div className="p-2 text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-50 mb-1">
+                  NICHOS EXISTENTES
+                </div>
+                {allAvailableNiches.map(niche => (
+                  <button
+                    key={niche}
+                    onClick={() => {
+                      const group = groups.find(g => g.id === editingGroupNicheId);
+                      if (group) handleUpdateNiche(group, niche);
+                      setEditingGroupNicheId(null);
+                      setToast({ message: "Nicho atualizado!", type: 'success' });
+                    }}
+                    className="w-full text-left px-3 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 rounded-xl transition-all"
+                  >
+                    {niche}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setIsCreatingNewNiche(true)}
+                  className="w-full text-left px-3 py-2.5 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 bg-blue-50/20 rounded-xl transition-all mt-1 flex items-center gap-2"
+                >
+                  <Plus className="w-3 h-3" />
+                  Criar Novo Nicho
+                </button>
+              </div>
+            ) : (
+              <div className="p-2 space-y-3">
+                <div className="text-[8px] font-black uppercase tracking-[0.2em] text-blue-600">
+                  NOVO NICHO
+                </div>
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Digite o nicho..."
+                  value={newNicheInputValue}
+                  onChange={(e) => setNewNicheInputValue(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-300"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setIsCreatingNewNiche(false);
+                      setNewNicheInputValue('');
+                    }}
+                    className="flex-1 py-2 text-[8px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 rounded-lg hover:bg-slate-100"
+                  >
+                    Voltar
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const cleanNiche = newNicheInputValue.trim();
+                      if (!cleanNiche) return;
+                      
+                      try {
+                        // Check if it's already in the available list (case insensitive)
+                        if (!allAvailableNiches.some(n => n.toLowerCase() === cleanNiche.toLowerCase())) {
+                          await adicionarNicho(cleanNiche);
+                          await loadNichos(); // Reload to update dropdowns
+                        }
+                        
+                        const group = groups.find(g => g.id === editingGroupNicheId);
+                        if (group) {
+                           await handleUpdateNiche(group, cleanNiche);
+                           setToast({ message: "Novo nicho criado e aplicado!", type: 'success' });
+                        }
+                      } catch (error: any) {
+                        console.error("Erro ao criar nicho:", error);
+                        setToast({ message: error.message || "Erro ao criar nicho", type: 'error' });
+                      } finally {
+                        setEditingGroupNicheId(null);
+                        setNewNicheInputValue('');
+                        setIsCreatingNewNiche(false);
+                      }
+                    }}
+                    className="flex-1 py-2 text-[8px] font-black uppercase tracking-widest text-white bg-blue-500 rounded-lg shadow-sm"
+                  >
+                    Salvar
+                  </button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </>,
+        document.body
+      )}
+
+      {/* Quick Sale Status Dropdown */}
+      {editingSaleStatusId && createPortal(
+        <>
+          <div className="fixed inset-0 z-[100002]" onClick={() => setEditingSaleStatusId(null)} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            style={{ 
+              position: 'fixed', 
+              top: saleEditCoords.top, 
+              left: saleEditCoords.left,
+              zIndex: 100003
+            }}
+            className="w-56 bg-white rounded-2xl border border-slate-100 shadow-2xl overflow-hidden p-2"
+          >
+            <div className="p-2 text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-50 mb-1">
+              OPÇÕES DE VENDA
+            </div>
+            <button
+              onClick={() => {
+                setEditingSaleStatusId(null);
+                setToast({ message: "Consulte a aba de Vendas para detalhes", type: 'success' });
+              }}
+              className="w-full text-left px-3 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-primary rounded-xl transition-all flex items-center gap-2"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Ver na lista de venda
+            </button>
+            <button
+              onClick={() => {
+                const group = groups.find(g => g.id === editingSaleStatusId);
+                if (group) handleRemoveFromSale(group);
+                setEditingSaleStatusId(null);
+              }}
+              className="w-full text-left px-3 py-2.5 text-[10px] font-black uppercase tracking-widest text-rose-600 hover:bg-rose-50 rounded-xl transition-all mt-1 flex items-center gap-2"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              Remover da venda
+            </button>
+          </motion.div>
+        </>,
         document.body
       )}
 
