@@ -2173,14 +2173,19 @@ Link: ${normalizeFacebookGroupLink(group)}`;
 function MoreActionsDropdown({ group, onEdit, onDelete, onMarkForSale, onCopyResume, onAddLocatario }: any) {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const [coords, setCoords] = useState({ top: 0, left: 0, direction: 'down' as 'up' | 'down' });
 
   const updateCoords = () => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
+      const menuHeight = 280; // Estimated height for w-56 with all options
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const shouldOpenUp = spaceBelow < menuHeight && rect.top > menuHeight;
+
       setCoords({
-        top: rect.bottom + 8,
-        left: rect.right - 224 // Matches w-56 (56 * 4 = 224px)
+        top: shouldOpenUp ? rect.top - menuHeight - 8 : rect.bottom + 8,
+        left: rect.right - 224, // Matches w-56 (56 * 4 = 224px)
+        direction: shouldOpenUp ? 'up' : 'down'
       });
     }
   };
@@ -2221,9 +2226,9 @@ function MoreActionsDropdown({ group, onEdit, onDelete, onMarkForSale, onCopyRes
             }} 
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            initial={{ opacity: 0, scale: 0.95, y: coords.direction === 'down' ? -10 : 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            exit={{ opacity: 0, scale: 0.95, y: coords.direction === 'down' ? -10 : 10 }}
             onClick={(e) => e.stopPropagation()}
             style={{ 
               position: 'fixed',
