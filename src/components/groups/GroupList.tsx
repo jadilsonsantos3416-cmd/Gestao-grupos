@@ -304,82 +304,74 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
 
     setIsExporting(true);
     try {
+      const formatMembersWord = (count: number) => {
+        if (count >= 1000) {
+          const mil = count / 1000;
+          const formatted = mil.toLocaleString('pt-BR', { 
+            minimumFractionDigits: 0, 
+            maximumFractionDigits: 1 
+          });
+          return `${formatted} mil Membros`;
+        }
+        return `${count} Membros`;
+      };
+
+      const docChildren: any[] = [
+        new Paragraph({
+          text: "Lista de Grupos FB",
+          heading: HeadingLevel.HEADING_1,
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 120 },
+        }),
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `Exportado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`,
+              color: "64748b",
+              size: 20,
+            }),
+          ],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 400 },
+        }),
+      ];
+
+      dataToExport.forEach((group, index) => {
+        const item = group as any;
+        const groupName = (item.nome_grupo || item.nome || "").replace(/\n/g, ' ').trim();
+        const groupLink = normalizeFacebookGroupLink(group);
+        const membersCount = item.quantidade_membros || item.membros || 0;
+        const formattedMembers = formatMembersWord(membersCount);
+
+        docChildren.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: `${index + 1}. `, bold: true, size: 24 }),
+              new TextRun({ text: groupName, bold: true, size: 24 }),
+              new TextRun({ text: `  ${formattedMembers}`, bold: false, size: 24 }),
+            ],
+            spacing: { before: 240 }
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: groupLink, color: "0563C1", underline: { type: "single" }, size: 22 }),
+            ],
+          })
+        );
+      });
+
       const doc = new Document({
         sections: [
           {
             properties: {},
-            children: [
-              new Paragraph({
-                text: "Lista de Grupos FB",
-                heading: HeadingLevel.HEADING_1,
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 200 },
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `Exportado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`,
-                    color: "64748b", // slate-400
-                    size: 20, // 10pt
-                  }),
-                ],
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 400 },
-              }),
-              new Table({
-                width: {
-                  size: 100,
-                  type: WidthType.PERCENTAGE,
-                },
-                rows: [
-                  new TableRow({
-                    children: [
-                      new TableCell({
-                        children: [new Paragraph({ children: [new TextRun({ text: "NOME", bold: true, color: "ffffff" })], alignment: AlignmentType.CENTER })],
-                        shading: { fill: "16a34a" }, // primary green
-                        verticalAlign: VerticalAlign.CENTER,
-                      }),
-                      new TableCell({
-                        children: [new Paragraph({ children: [new TextRun({ text: "LINK", bold: true, color: "ffffff" })], alignment: AlignmentType.CENTER })],
-                        shading: { fill: "16a34a" },
-                        verticalAlign: VerticalAlign.CENTER,
-                      }),
-                      new TableCell({
-                        children: [new Paragraph({ children: [new TextRun({ text: "MEMBROS", bold: true, color: "ffffff" })], alignment: AlignmentType.CENTER })],
-                        shading: { fill: "16a34a" },
-                        verticalAlign: VerticalAlign.CENTER,
-                      }),
-                    ],
-                  }),
-                  ...dataToExport.map(g => {
-                    const item = g as any;
-                    return new TableRow({
-                      children: [
-                        new TableCell({
-                          children: [new Paragraph({ text: (item.nome_grupo || item.nome || "").replace(/\n/g, ' ').trim() })],
-                          verticalAlign: VerticalAlign.CENTER,
-                        }),
-                        new TableCell({
-                          children: [new Paragraph({ text: normalizeFacebookGroupLink(g) })],
-                          verticalAlign: VerticalAlign.CENTER,
-                        }),
-                        new TableCell({
-                          children: [new Paragraph({ text: (item.quantidade_membros || item.membros || 0).toLocaleString('pt-BR'), alignment: AlignmentType.RIGHT })],
-                          verticalAlign: VerticalAlign.CENTER,
-                        }),
-                      ],
-                    });
-                  }),
-                ],
-              }),
-            ],
+            children: docChildren,
           },
         ],
       });
 
       const blob = await Packer.toBlob(doc);
       const dateSuffix = new Date().toISOString().split('T')[0];
-      saveAs(blob, `grupos_fb_${dateSuffix}.docx`);
+      saveAs(blob, `grupos_fb_word_${dateSuffix}.docx`);
 
       setIsExportDropdownOpen(false);
       setToast({ message: "Word exportado com sucesso", type: 'success' });
