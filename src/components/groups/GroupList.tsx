@@ -91,9 +91,27 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [editingSaleStatusId, setEditingSaleStatusId] = useState<string | null>(null);
   const [newNicheInputValue, setNewNicheInputValue] = useState('');
   const [isCreatingNewNiche, setIsCreatingNewNiche] = useState(false);
-  const [nicheEditCoords, setNicheEditCoords] = useState({ top: 0, left: 0 });
-  const [saleEditCoords, setSaleEditCoords] = useState({ top: 0, left: 0 });
+  const [nicheEditCoords, setNicheEditCoords] = useState({ top: 0, left: 0, openUp: false });
+  const [saleEditCoords, setSaleEditCoords] = useState({ top: 0, left: 0, openUp: false });
+  const [renterEditCoords, setRenterEditCoords] = useState({ top: 0, left: 0, openUp: false });
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const calculateDropdownPos = (
+    rect: DOMRect, 
+    menuHeight: number, 
+    menuWidth: number,
+    offset: number = 8
+  ) => {
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const shouldOpenUp = spaceBelow < menuHeight && spaceAbove > menuHeight;
+    
+    return {
+      top: shouldOpenUp ? rect.top - menuHeight - offset : rect.bottom + offset,
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8)),
+      openUp: shouldOpenUp
+    };
+  };
 
   const getMergedLocatarios = (group: Group): Locatario[] => {
     const list: Locatario[] = [...(group.locatarios || [])];
@@ -1366,8 +1384,8 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                 <button 
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    setSaleEditCoords({ top: rect.bottom + 5, left: rect.left });
+                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                    setSaleEditCoords(calculateDropdownPos(rect, 120, 224));
                                     setEditingSaleStatusId(group.id);
                                   }}
                                   className="bg-amber-50 text-amber-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-100 shrink-0 hover:bg-amber-100 transition-colors"
@@ -1434,8 +1452,8 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                  <button 
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    setNicheEditCoords({ top: rect.bottom + 5, left: rect.left });
+                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                    setNicheEditCoords(calculateDropdownPos(rect, 320, 224));
                                     setEditingGroupNicheId(group.id);
                                     setIsCreatingNewNiche(false);
                                   }}
@@ -1539,7 +1557,13 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setOpenRenterDropdownId(isDropdownOpen ? null : group.id);
+                                      if (isDropdownOpen) {
+                                        setOpenRenterDropdownId(null);
+                                      } else {
+                                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                        setRenterEditCoords(calculateDropdownPos(rect, 300, 260));
+                                        setOpenRenterDropdownId(group.id);
+                                      }
                                     }}
                                     className={cn(
                                       "flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border",
@@ -1554,81 +1578,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                   </button>
 
                                   <AnimatePresence>
-                                    {isDropdownOpen && (
-                                      <>
-                                        <div 
-                                          className="fixed inset-0 z-40" 
-                                          onClick={() => setOpenRenterDropdownId(null)}
-                                        />
-                                        <motion.div
-                                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                          className="absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[260px] bg-white rounded-3xl border border-slate-100 shadow-2xl z-50 overflow-hidden"
-                                        >
-                                          <div className="p-2 max-h-[300px] overflow-y-auto">
-                                            {mergedLocatarios.map((l, idx) => (
-                                              <div 
-                                                key={l.id || idx} 
-                                                className="group/item flex flex-col p-3 hover:bg-slate-50 rounded-2xl transition-all border border-transparent hover:border-slate-100 mt-1"
-                                              >
-                                                <div className="flex items-start justify-between gap-2">
-                                                  <div className="min-w-0">
-                                                    <span className={cn(
-                                                      "text-xs font-black uppercase tracking-tight block truncate",
-                                                      l.status === 'Ativo' ? "text-slate-900" : "text-slate-400 font-bold"
-                                                    )}>
-                                                      {l.nome}
-                                                    </span>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                      <span className="text-[9px] text-slate-400 font-bold font-mono">{l.whatsapp}</span>
-                                                    </div>
-                                                  </div>
-                                                  <div className="flex gap-1">
-                                                    <button 
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setLocatarioGroup(group);
-                                                        setEditingLocatario(l);
-                                                        setIsLocatarioModalOpen(true);
-                                                        setOpenRenterDropdownId(null);
-                                                      }}
-                                                      className="p-1 text-slate-400 hover:text-amber-500 rounded-md hover:bg-white transition-all shadow-sm"
-                                                    >
-                                                      <Edit2 className="w-3 h-3" />
-                                                    </button>
-                                                  </div>
-                                                </div>
-                                                <div className="mt-1 flex items-center justify-between">
-                                                  <span className="text-[8px] font-bold text-slate-300">
-                                                    {l.data_vencimento ? format(parseISO(l.data_vencimento), 'dd/MM') : 'N/D'}
-                                                  </span>
-                                                  <span className={cn(
-                                                    "text-[7px] font-black uppercase px-1.5 py-0.5 rounded-full border",
-                                                    l.status === 'Ativo' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"
-                                                  )}>
-                                                    {l.status}
-                                                  </span>
-                                                </div>
-                                              </div>
-                                            ))}
-                                            <button 
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                setLocatarioGroup(group);
-                                                setEditingLocatario(null);
-                                                setIsLocatarioModalOpen(true);
-                                                setOpenRenterDropdownId(null);
-                                              }}
-                                              className="w-full flex items-center justify-center gap-1 py-3 mt-1 text-[8px] font-black text-blue-500 uppercase tracking-widest hover:bg-blue-50/50 rounded-xl transition-all border border-dashed border-blue-100 hover:border-solid"
-                                            >
-                                              <UserPlus className="w-3.5 h-3.5" />
-                                              Novo Locatário
-                                            </button>
-                                          </div>
-                                        </motion.div>
-                                      </>
-                                    )}
+                                    {/* Portal rendering handled globally at the bottom */}
                                   </AnimatePresence>
                                 </div>
                               );
@@ -1728,8 +1678,8 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                <button 
                                  onClick={(e) => {
                                    e.stopPropagation();
-                                   const rect = e.currentTarget.getBoundingClientRect();
-                                   setSaleEditCoords({ top: rect.bottom + 5, left: Math.min(rect.left, window.innerWidth - 180) });
+                                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                   setSaleEditCoords(calculateDropdownPos(rect, 120, 224));
                                    setEditingSaleStatusId(group.id);
                                  }}
                                  className="bg-amber-50 text-amber-600 text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-100 active:bg-amber-100 transition-colors"
@@ -1794,8 +1744,8 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                              <button 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                setNicheEditCoords({ top: rect.bottom + 5, left: Math.min(rect.left, window.innerWidth - 220) });
+                                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                setNicheEditCoords(calculateDropdownPos(rect, 320, 224));
                                 setEditingGroupNicheId(group.id);
                                 setIsCreatingNewNiche(false);
                               }}
@@ -1934,7 +1884,13 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                  <button
                                    onClick={(e) => {
                                      e.stopPropagation();
-                                     setOpenRenterDropdownId(isDropdownOpen ? null : group.id + '-mobile');
+                                     if (isDropdownOpen) {
+                                       setOpenRenterDropdownId(null);
+                                     } else {
+                                       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                       setRenterEditCoords(calculateDropdownPos(rect, 300, 260));
+                                       setOpenRenterDropdownId(group.id + '-mobile');
+                                     }
                                    }}
                                    className={cn(
                                      "w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border",
@@ -1949,87 +1905,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                  </button>
 
                                  <AnimatePresence>
-                                   {isDropdownOpen && (
-                                     <>
-                                       <div 
-                                         className="fixed inset-0 z-[60]" 
-                                         onClick={() => setOpenRenterDropdownId(null)}
-                                       />
-                                       <motion.div
-                                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                          className="absolute left-0 right-0 bottom-full mb-3 bg-white rounded-3xl border border-slate-100 shadow-2xl z-[70] overflow-hidden"
-                                       >
-                                         <div className="p-2 max-h-[300px] overflow-y-auto">
-                                           {mergedLocatarios.map((l, idx) => (
-                                             <div 
-                                               key={l.id || idx} 
-                                               className="flex flex-col p-4 bg-slate-50/50 rounded-2xl mb-1 border border-slate-100"
-                                             >
-                                               <div className="flex items-start justify-between">
-                                                 <div>
-                                                   <span className="text-xs font-black uppercase tracking-tight text-slate-900">{l.nome}</span>
-                                                   <div className="flex items-center gap-2 mt-1">
-                                                      <span className="text-[10px] text-slate-400 font-bold font-mono">{l.whatsapp}</span>
-                                                      <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                                      <span className="text-[10px] font-black text-emerald-600 font-mono">{formatCurrency(Number(l.valor))}</span>
-                                                   </div>
-                                                 </div>
-                                                 <div className="flex gap-1">
-                                                   <button 
-                                                     onClick={(e) => {
-                                                       e.stopPropagation();
-                                                       setLocatarioGroup(group);
-                                                       setEditingLocatario(l);
-                                                       setIsLocatarioModalOpen(true);
-                                                       setOpenRenterDropdownId(null);
-                                                     }}
-                                                     className="p-1.5 text-slate-400 hover:text-amber-500 rounded-lg bg-white shadow-sm"
-                                                   >
-                                                     <Edit2 className="w-3.5 h-3.5" />
-                                                   </button>
-                                                   <button 
-                                                     onClick={(e) => {
-                                                       e.stopPropagation();
-                                                       handleDeleteLocatario(group, l.id);
-                                                     }}
-                                                     className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg bg-white shadow-sm"
-                                                   >
-                                                     <Trash2 className="w-3.5 h-3.5" />
-                                                   </button>
-                                                 </div>
-                                               </div>
-                                               <div className="mt-2 flex items-center justify-between">
-                                                 <span className="text-[8px] font-bold text-slate-300">
-                                                   Vence {l.data_vencimento ? format(parseISO(l.data_vencimento), 'dd/MM') : 'N/D'}
-                                                 </span>
-                                                 <span className={cn(
-                                                   "text-[8px] font-black uppercase px-2 py-0.5 rounded-full border",
-                                                   l.status === 'Ativo' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"
-                                                 )}>
-                                                   {l.status}
-                                                  </span>
-                                               </div>
-                                             </div>
-                                           ))}
-                                           <button 
-                                             onClick={(e) => {
-                                               e.stopPropagation();
-                                               setLocatarioGroup(group);
-                                               setEditingLocatario(null);
-                                               setIsLocatarioModalOpen(true);
-                                               setOpenRenterDropdownId(null);
-                                             }}
-                                             className="w-full flex items-center justify-center gap-2 py-3 mt-1 text-[9px] font-black text-blue-500 uppercase tracking-widest bg-blue-50/30 rounded-2xl border border-dashed border-blue-100"
-                                           >
-                                             <UserPlus className="w-3.5 h-3.5" />
-                                             Adicionar Locatário
-                                           </button>
-                                         </div>
-                                       </motion.div>
-                                     </>
-                                   )}
+                                   {/* Portal rendering handled globally at the bottom */}
                                  </AnimatePresence>
                                </div>
                              );
@@ -2121,7 +1997,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
         <>
           <div className="fixed inset-0 z-[100002]" onClick={() => setEditingGroupNicheId(null)} />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            initial={{ opacity: 0, scale: 0.95, y: nicheEditCoords.openUp ? 10 : -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             style={{ 
               position: 'fixed', 
@@ -2224,7 +2100,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
         <>
           <div className="fixed inset-0 z-[100002]" onClick={() => setEditingSaleStatusId(null)} />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            initial={{ opacity: 0, scale: 0.95, y: saleEditCoords.openUp ? 10 : -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             style={{ 
               position: 'fixed', 
@@ -2258,6 +2134,122 @@ Link: ${normalizeFacebookGroupLink(group)}`;
               <XCircle className="w-3.5 h-3.5" />
               Remover da venda
             </button>
+          </motion.div>
+        </>,
+        document.body
+      )}
+
+      {openRenterDropdownId && createPortal(
+        <>
+          <div className="fixed inset-0 z-[100002]" onClick={() => setOpenRenterDropdownId(null)} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: renterEditCoords.openUp ? 20 : -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            style={{ 
+              position: 'fixed', 
+              top: renterEditCoords.top, 
+              left: renterEditCoords.left,
+              zIndex: 100003
+            }}
+            className="w-64 bg-white rounded-3xl border border-slate-100 shadow-2xl overflow-hidden"
+          >
+            {(() => {
+              const baseId = openRenterDropdownId.replace('-mobile', '');
+              const group = groups.find(g => g.id === baseId);
+              if (!group) return null;
+              
+              const mergedLocatarios = getMergedLocatarios(group);
+              const isMobile = openRenterDropdownId.endsWith('-mobile');
+
+              return (
+                <div className="p-2 max-h-[300px] overflow-y-auto">
+                  {mergedLocatarios.map((l, idx) => (
+                    <div 
+                      key={l.id || idx} 
+                      className={cn(
+                        "group/item flex flex-col p-3 hover:bg-slate-50 rounded-2xl transition-all border border-transparent hover:border-slate-100 mt-1",
+                        isMobile && "bg-slate-50/50 mb-1 border-slate-100 hover:bg-white"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <span className={cn(
+                            "text-xs font-black uppercase tracking-tight block truncate",
+                            l.status === 'Ativo' ? "text-slate-900" : "text-slate-400 font-bold"
+                          )}>
+                            {l.nome}
+                          </span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[9px] text-slate-400 font-bold font-mono">{l.whatsapp}</span>
+                            {isMobile && l.valor && (
+                              <>
+                                <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                <span className="text-[10px] font-black text-emerald-600 font-mono">{formatCurrency(Number(l.valor))}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocatarioGroup(group);
+                              setEditingLocatario(l);
+                              setIsLocatarioModalOpen(true);
+                              setOpenRenterDropdownId(null);
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-amber-500 rounded-lg hover:bg-white transition-all shadow-sm bg-white md:bg-transparent"
+                          >
+                            <Edit2 className="w-3.5 h-3.5 md:w-3 md:h-3" />
+                          </button>
+                          {isMobile && (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteLocatario(group, l.id);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg bg-white shadow-sm"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className={cn(
+                        "mt-1 flex items-center justify-between",
+                        isMobile && "mt-2"
+                      )}>
+                        <span className="text-[8px] font-bold text-slate-300">
+                          {isMobile ? 'Vence ' : ''}{l.data_vencimento ? format(parseISO(l.data_vencimento), 'dd/MM') : 'N/D'}
+                        </span>
+                        <span className={cn(
+                          "text-[7px] font-black uppercase px-2 py-0.5 rounded-full border",
+                          l.status === 'Ativo' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                        )}>
+                          {l.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLocatarioGroup(group);
+                      setEditingLocatario(null);
+                      setIsLocatarioModalOpen(true);
+                      setOpenRenterDropdownId(null);
+                    }}
+                    className={cn(
+                      "w-full flex items-center justify-center gap-2 py-3 mt-1 text-[9px] font-black text-blue-500 uppercase tracking-widest transition-all rounded-2xl border border-dashed",
+                      isMobile ? "bg-blue-50/30 border-blue-100" : "hover:bg-blue-50/50 border-blue-100 hover:border-solid"
+                    )}
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    {isMobile ? 'Adicionar' : 'Novo'} Locatário
+                  </button>
+                </div>
+              );
+            })()}
           </motion.div>
         </>,
         document.body
@@ -2409,13 +2401,15 @@ function MoreActionsDropdown({ group, onEdit, onDelete, onMarkForSale, onCopyRes
   const updateCoords = () => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      const menuHeight = 280; // Estimated height for w-56 with all options
+      const menuHeight = 280;
+      const menuWidth = 224; // w-56
       const spaceBelow = window.innerHeight - rect.bottom;
-      const shouldOpenUp = spaceBelow < menuHeight && rect.top > menuHeight;
+      const spaceAbove = rect.top;
+      const shouldOpenUp = spaceBelow < menuHeight && spaceAbove > menuHeight;
 
       setCoords({
         top: shouldOpenUp ? rect.top - menuHeight - 8 : rect.bottom + 8,
-        left: rect.right - 224, // Matches w-56 (56 * 4 = 224px)
+        left: Math.max(8, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8)),
         direction: shouldOpenUp ? 'up' : 'down'
       });
     }
