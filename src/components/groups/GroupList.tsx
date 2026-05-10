@@ -58,8 +58,8 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [shopeeFilter, setShopeeFilter] = useState('Todos');
   const [priorityFilter, setPriorityFilter] = useState('Todos');
   const [onlyReadyForShopee, setOnlyReadyForShopee] = useState(false);
-  const [sortField, setSortField] = useState<SortField>('data_vencimento');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortField, setSortField] = useState<SortField>('quantidade_membros');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isPostTodayModalOpen, setIsPostTodayModalOpen] = useState(false);
@@ -95,6 +95,13 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [saleEditCoords, setSaleEditCoords] = useState({ top: 0, left: 0, openUp: false });
   const [renterEditCoords, setRenterEditCoords] = useState({ top: 0, left: 0, openUp: false });
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const getMembersCount = (g: any): number => {
+    if (typeof g.quantidade_membros === 'number') return g.quantidade_membros;
+    if (typeof g.membros === 'number') return g.membros;
+    const val = g.quantidade_membros || g.membros || '0';
+    return parseMembers(String(val));
+  };
 
   const calculateDropdownPos = (
     rect: DOMRect, 
@@ -261,9 +268,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
 
     // Sorting: Strictly by member count descending (maior para o menor)
     return [...filteredGroups].sort((a, b) => {
-      const mA = a.quantidade_membros || (a as any).membros || 0;
-      const mB = b.quantidade_membros || (b as any).membros || 0;
-      return mB - mA;
+      return getMembersCount(b) - getMembersCount(a);
     });
   };
 
@@ -831,8 +836,8 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       }
       
       if (sortField === 'quantidade_membros') {
-        const valA = a.quantidade_membros || 0;
-        const valB = b.quantidade_membros || 0;
+        const valA = getMembersCount(a);
+        const valB = getMembersCount(b);
         return sortOrder === 'asc' ? valA - valB : valB - valA;
       }
       
@@ -854,15 +859,18 @@ Link: ${normalizeFacebookGroupLink(group)}`;
         return sortOrder === 'asc' ? valB - valA : valA - valB;
       }
 
-      // Default grouping sort: Nicho
-      const nichoA = (a.nicho || 'Geral').toLowerCase();
-      const nichoB = (b.nicho || 'Geral').toLowerCase();
-      if (nichoA < nichoB) return -1;
-      if (nichoA > nichoB) return 1;
+      // Default grouping sort logic
+      // If we are in "Todos" nicho, we don't sort by nicho name first
+      if (nichoFilter !== 'Todos') {
+        const nichoA = (a.nicho || 'Geral').toLowerCase();
+        const nichoB = (b.nicho || 'Geral').toLowerCase();
+        if (nichoA < nichoB) return -1;
+        if (nichoA > nichoB) return 1;
+      }
 
-      // Secondary sort: Members Descending (maior para o menor)
-      const memA = a.quantidade_membros || 0;
-      const memB = b.quantidade_membros || 0;
+      // Fallback sort: Members Descending (maior para o menor)
+      const memA = getMembersCount(a);
+      const memB = getMembersCount(b);
       if (memB !== memA) return memB - memA;
 
       // Tertiary sort: Nome do Grupo
@@ -873,9 +881,10 @@ Link: ${normalizeFacebookGroupLink(group)}`;
 
   // Grouping for visual separation
   const groupedGroups: { [nicho: string]: GroupWithPriority[] } = filteredGroups.reduce((acc, group) => {
-    const nicho = group.nicho || 'Sem Nicho';
-    if (!acc[nicho]) acc[nicho] = [];
-    acc[nicho].push(group);
+    // When "Todos" filter is used, we show one single global group
+    const nichoKey = nichoFilter === 'Todos' ? 'Todos os Grupos' : (group.nicho || 'Sem Nicho');
+    if (!acc[nichoKey]) acc[nichoKey] = [];
+    acc[nichoKey].push(group);
     return acc;
   }, {} as { [nicho: string]: GroupWithPriority[] });
 
