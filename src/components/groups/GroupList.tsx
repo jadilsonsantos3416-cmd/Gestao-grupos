@@ -1336,7 +1336,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                 </th>
                 <th className="w-[12%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide text-center">Perfil / Shopee</th>
                 <th className="w-[15%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide text-center cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('aluguel_sugerido')}>
-                  <div className="flex items-center gap-2 justify-center">Sugerido <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
+                  <div className="flex items-center gap-2 justify-center leading-tight">Aluguel<br/>Sugerido <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
                 <th className="w-[18%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide">Locatário / Info</th>
                 <th className="w-[9%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors text-right" onClick={() => toggleSort('data_vencimento')}>
@@ -2584,9 +2584,12 @@ function SuggestedRentDisplay({ group, onApply, compact = false }: { group: Grou
             setShowTooltip(!showTooltip);
           }}
         >
-          <div className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1 shadow-sm active:bg-emerald-100 transition-all">
-            <Sparkles className="w-2 h-2 text-emerald-400" />
-            <span className="text-[9px] font-black font-mono">{formatCurrency(suggestion.valorSugeridoAluguel)}/mês</span>
+          <div className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1.5 shadow-sm active:bg-emerald-100 transition-all">
+            <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
+            <div className="flex flex-col -space-y-0.5 leading-none">
+              <span className="text-[6px] font-black uppercase tracking-tight text-emerald-400">Aluguel Sugerido</span>
+              <span className="text-[9px] font-black font-mono">{formatCurrency(suggestion.valorSugeridoAluguel)}/mês</span>
+            </div>
           </div>
           
           <AnimatePresence>
@@ -2600,8 +2603,8 @@ function SuggestedRentDisplay({ group, onApply, compact = false }: { group: Grou
                   className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 text-white p-3 rounded-2xl text-[10px] shadow-2xl z-[101]"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <p className="font-black mb-1 text-emerald-400 uppercase tracking-widest text-[8px]">Justificativa:</p>
-                  <p className="font-bold text-slate-200 leading-tight">{suggestion.justificativa}</p>
+                  <p className="font-black mb-1 text-emerald-400 uppercase tracking-widest text-[8px]">Justificativa de Aluguel:</p>
+                  <p className="font-bold text-slate-200 leading-tight">Valor sugerido para aluguel mensal deste grupo. {suggestion.justificativa}</p>
                   <div className="mt-2 pt-2 border-t border-slate-800 text-slate-400 font-bold italic text-[8px]">
                     {suggestion.faixa}
                   </div>
@@ -2619,7 +2622,7 @@ function SuggestedRentDisplay({ group, onApply, compact = false }: { group: Grou
           }}
           className="text-[8px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-1 rounded-full border border-blue-100 active:scale-95 transition-all"
         >
-          Usar
+          Usar Aluguel
         </button>
       </div>
     );
@@ -2637,8 +2640,8 @@ function SuggestedRentDisplay({ group, onApply, compact = false }: { group: Grou
         }}
       >
         <div className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-xl border border-emerald-100 flex flex-col items-center shadow-sm hover:bg-emerald-100 transition-all min-w-[80px]">
-          <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Sugerido</span>
-          <span className="text-[11px] font-black font-mono">{formatCurrency(suggestion.valorSugeridoAluguel)}</span>
+          <span className="text-[7px] font-black uppercase tracking-tight text-emerald-400 leading-none mb-0.5">Aluguel Sugerido</span>
+          <span className="text-[11px] font-black font-mono">{formatCurrency(suggestion.valorSugeridoAluguel)}/mês</span>
         </div>
         
         <AnimatePresence>
@@ -2653,9 +2656,9 @@ function SuggestedRentDisplay({ group, onApply, compact = false }: { group: Grou
                 <div className="w-6 h-6 bg-emerald-500/20 rounded-lg flex items-center justify-center">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                 </div>
-                <p className="font-black text-emerald-400 uppercase tracking-widest text-[9px]">Análise de Rentabilidade</p>
+                <p className="font-black text-emerald-400 uppercase tracking-widest text-[9px]">Análise de Aluguel Mensal</p>
               </div>
-              <p className="font-bold text-slate-200 leading-relaxed mb-3">{suggestion.justificativa}</p>
+              <p className="font-bold text-slate-200 leading-relaxed mb-3">Valor sugerido para aluguel mensal deste grupo. {suggestion.justificativa}</p>
               <div className="bg-slate-800/50 p-2 rounded-xl text-slate-400 font-bold italic text-[8px] border border-slate-800">
                 {suggestion.faixa}
               </div>
@@ -2673,7 +2676,7 @@ function SuggestedRentDisplay({ group, onApply, compact = false }: { group: Grou
         className="text-[9px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-700 active:scale-95 transition-all flex items-center gap-1.5 bg-blue-50/50 px-3 py-1 rounded-full border border-blue-100"
       >
         <CheckCircle2 className="w-3 h-3" />
-        Usar valor
+        Usar valor de Aluguel
       </button>
     </div>
   );
