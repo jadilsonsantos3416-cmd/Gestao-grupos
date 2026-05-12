@@ -93,3 +93,97 @@ export function parseMembers(val: string): number {
   
   return Math.floor(num);
 }
+
+export function calcularValorSugeridoAluguel(grupo: any): {
+  valorSugeridoAluguel: number;
+  faixa: string;
+  justificativa: string;
+} {
+  const membrosCount = typeof grupo.quantidade_membros === 'number' 
+    ? grupo.quantidade_membros 
+    : (typeof grupo.membros === 'number' ? grupo.membros : parseMembers(String(grupo.quantidade_membros || grupo.membros || '0')));
+
+  // Base calculation
+  let valorBase = membrosCount * 0.004;
+
+  // Niche Multipliers
+  const nichoMultipliers: Record<string, number> = {
+    'Musa': 1.25,
+    'Influencer': 1.20,
+    'Evangélico': 1.15,
+    'Receitas / Culinária': 1.15,
+    'Beleza / Cabelo': 1.10,
+    'Fã / Música': 1.00,
+    'Humor': 1.00,
+    'Agro / Notícias': 0.95,
+    'Motivacional': 1.10,
+    'Sem Nicho': 0.80,
+  };
+
+  const nicho = grupo.nicho || 'Sem Nicho';
+  let nichoMult = nichoMultipliers[nicho] || 1.00;
+  
+  if (!nichoMultipliers[nicho]) {
+    const nichoLower = nicho.toLowerCase();
+    if (nichoLower.includes('musa')) nichoMult = 1.25;
+    else if (nichoLower.includes('influencer')) nichoMult = 1.20;
+    else if (nichoLower.includes('evangélico') || nichoLower.includes('gospel')) nichoMult = 1.15;
+    else if (nichoLower.includes('receita') || nichoLower.includes('culinária')) nichoMult = 1.15;
+    else if (nichoLower.includes('beleza') || nichoLower.includes('cabelo')) nichoMult = 1.10;
+    else if (nichoLower.includes('agro') || nichoLower.includes('notícia')) nichoMult = 0.95;
+    else if (nichoLower.includes('motivacional')) nichoMult = 1.10;
+    else if (nichoLower === 'geral' || nichoLower === '') nichoMult = 1.00;
+  }
+
+  // Priority Multipliers
+  let priorityMult = 1.00;
+  const priority = grupo.prioridade_postagem || grupo.priorityInfo?.prioridade;
+  if (priority === 'Alta') priorityMult = 1.25;
+  else if (priority === 'Média') priorityMult = 1.00;
+  else if (priority === 'Baixa') priorityMult = 0.75;
+
+  // Score Multipliers
+  let scoreMult = 1.00;
+  const score = grupo.score_postagem;
+  if (score !== undefined && score !== null) {
+     if (score >= 8) scoreMult = 1.35;
+     else if (score >= 5) scoreMult = 1.20;
+     else if (score >= 3) scoreMult = 1.00;
+     else scoreMult = 0.80;
+  }
+
+  // Activity Multipliers
+  let activityMult = 1.00;
+  if (grupo.perfil_compartilhando === 'Ativo') activityMult *= 1.10;
+  if (grupo.uso_shopee === 'Ativo') activityMult *= 1.10;
+
+  let valorFinal = valorBase * nichoMult * priorityMult * scoreMult * activityMult;
+
+  // Rounding rules
+  if (valorFinal <= 100) {
+    valorFinal = Math.round(valorFinal / 10) * 10;
+  } else {
+    valorFinal = Math.round(valorFinal / 50) * 50;
+  }
+
+  // Min value
+  valorFinal = Math.max(30, valorFinal);
+
+  // Faixas (just for labels or info)
+  let faixa = "";
+  if (membrosCount <= 5000) faixa = "Até 5.000 membros (R$ 30 a R$ 50)";
+  else if (membrosCount <= 10000) faixa = "5.001 até 10.000 membros (R$ 50 a R$ 80)";
+  else if (membrosCount <= 30000) faixa = "10.001 até 30.000 membros (R$ 80 a R$ 150)";
+  else if (membrosCount <= 70000) faixa = "30.001 até 70.000 membros (R$ 150 a R$ 300)";
+  else if (membrosCount <= 150000) faixa = "70.001 até 150.000 membros (R$ 300 a R$ 600)";
+  else if (membrosCount <= 300000) faixa = "150.001 até 300.000 membros (R$ 600 a R$ 1.000)";
+  else faixa = "Acima de 300.000 membros (R$ 1.000+)";
+
+  const justificativa = `Baseado em ${formatNumber(membrosCount)} membros, nicho ${nicho}, prioridade ${priority || 'N/D'} e score ${score || 'N/D'}.`;
+
+  return {
+    valorSugeridoAluguel: valorFinal,
+    faixa,
+    justificativa
+  };
+}

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Group, QuickFilter } from '@/src/types';
 import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera, CheckCircle2, X, Users, Plus, XCircle } from 'lucide-react';
-import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers } from '@/src/lib/utils';
+import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers, calcularValorSugeridoAluguel } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
@@ -30,7 +30,7 @@ interface GroupListProps {
   onQuickFilterChange?: (filter: QuickFilter) => void;
 }
 
-type SortField = 'data_vencimento' | 'quantidade_membros' | 'nome_grupo' | 'prioridade' | 'score';
+type SortField = 'data_vencimento' | 'quantidade_membros' | 'nome_grupo' | 'prioridade' | 'score' | 'aluguel_sugerido';
 
 interface GroupWithPriority extends Group {
   priorityInfo: PriorityInfo;
@@ -284,10 +284,13 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
       // Prepare data specifically for Excel
       const data = dataToExport.map(g => {
         const item = g as any;
+        const suggestion = calcularValorSugeridoAluguel(g);
         return {
           'NOME': (item.nome_grupo || item.nome || "").replace(/\n/g, ' ').trim(),
           'LINK': normalizeFacebookGroupLink(g),
-          'MEMBROS': item.quantidade_membros || item.membros || 0
+          'MEMBROS': item.quantidade_membros || item.membros || 0,
+          'VALOR SUGERIDO': suggestion.valorSugeridoAluguel,
+          'VALOR ATUAL': item.valor || 0
         };
       });
 
@@ -296,11 +299,13 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Grupos FB");
 
-      // Set column widths as requested
+      // Set column widths
       worksheet['!cols'] = [
         { wch: 38 }, // NOME
         { wch: 60 }, // LINK
         { wch: 15 }, // MEMBROS
+        { wch: 18 }, // VALOR SUGERIDO
+        { wch: 15 }, // VALOR ATUAL
       ];
 
       // Freeze first row
@@ -371,6 +376,8 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
         const groupLink = normalizeFacebookGroupLink(group);
         const membersCount = item.quantidade_membros || item.membros || 0;
         const formattedMembers = formatMembersWord(membersCount);
+        const suggestion = calcularValorSugeridoAluguel(group);
+        const valorDisplay = item.valor || suggestion.valorSugeridoAluguel;
 
         docChildren.push(
           new Paragraph({
@@ -378,6 +385,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
               new TextRun({ text: `${index + 1}. `, bold: true, size: 24 }),
               new TextRun({ text: groupName, bold: true, size: 24 }),
               new TextRun({ text: `  ${formattedMembers}`, bold: false, size: 24 }),
+              new TextRun({ text: ` - ${formatCurrency(valorDisplay)}`, bold: true, color: "16a34a", size: 24 }),
             ],
             spacing: { before: 240 }
           }),
@@ -421,14 +429,17 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
     setIsExporting(true);
     try {
       const BOM = "\uFEFF";
-      const headers = ['NOME', 'LINK', 'MEMBROS'];
+      const headers = ['NOME', 'LINK', 'MEMBROS', 'VALOR_SUGERIDO', 'VALOR_ATUAL'];
 
       const rows = dataToExport.map(g => {
         const item = g as any;
+        const suggestion = calcularValorSugeridoAluguel(g);
         return [
           (item.nome_grupo || item.nome || "").replace(/;/g, ' ').replace(/\n/g, ' ').trim(),
           normalizeFacebookGroupLink(g),
-          item.quantidade_membros || item.membros || 0
+          item.quantidade_membros || item.membros || 0,
+          suggestion.valorSugeridoAluguel,
+          item.valor || 0
         ];
       });
 
@@ -483,15 +494,17 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
 
       const tableData = dataToExport.map(g => {
         const item = g as any;
+        const suggestion = calcularValorSugeridoAluguel(g);
         return [
           (item.nome_grupo || item.nome || "").substring(0, 100),
           normalizeFacebookGroupLink(g),
-          (item.quantidade_membros || item.membros || 0).toLocaleString('pt-BR')
+          (item.quantidade_membros || item.membros || 0).toLocaleString('pt-BR'),
+          formatCurrency(suggestion.valorSugeridoAluguel)
         ];
       });
 
       autoTable(doc, {
-        head: [['NOME', 'LINK', 'MEMBROS']],
+        head: [['NOME', 'LINK', 'MEMBROS', 'SUGERIDO']],
         body: tableData,
         startY: 35,
         theme: 'grid',
@@ -507,9 +520,10 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
           overflow: 'linebreak'
         },
         columnStyles: {
-          0: { cellWidth: 60 },
-          1: { cellWidth: 100 },
-          2: { cellWidth: 30, halign: 'right' }
+          0: { cellWidth: 50 },
+          1: { cellWidth: 80 },
+          2: { cellWidth: 30, halign: 'right' },
+          3: { cellWidth: 30, halign: 'right' }
         }
       });
 
@@ -662,6 +676,21 @@ Link: ${normalizeFacebookGroupLink(group)}`;
 
     navigator.clipboard.writeText(text);
     setToast({ message: "Resumo copiado com sucesso!", type: 'success' });
+  };
+
+  const handleApplySuggestedRent = async (group: Group, valor: number) => {
+    if (!onUpdate) return;
+    try {
+      await onUpdate(group.id, {
+        valor: valor,
+        valor_sugerido_aluguel: valor,
+        atualizado_em: new Date().toISOString()
+      });
+      setToast({ message: "Valor de aluguel aplicado", type: 'success' });
+    } catch (error) {
+      console.error("Erro ao aplicar valor sugerido:", error);
+      setToast({ message: "Erro ao aplicar valor", type: 'error' });
+    }
   };
 
   const handleSaveLocatario = async (locatario: Locatario) => {
@@ -857,6 +886,12 @@ Link: ${normalizeFacebookGroupLink(group)}`;
         const valA = a.priorityInfo?.score || 0;
         const valB = b.priorityInfo?.score || 0;
         return sortOrder === 'asc' ? valB - valA : valA - valB;
+      }
+
+      if (sortField === 'aluguel_sugerido') {
+        const valA = calcularValorSugeridoAluguel(a).valorSugeridoAluguel;
+        const valB = calcularValorSugeridoAluguel(b).valorSugeridoAluguel;
+        return sortOrder === 'asc' ? valA - valB : valB - valA;
       }
 
       // Default grouping sort logic
@@ -1290,7 +1325,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
               <table className="w-full text-left border-collapse table-fixed">
             <thead className="sticky top-0 z-20 bg-slate-50 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
               <tr className="border-b border-slate-100">
-                <th className="w-[30%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
+                <th className="w-[25%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
                   <div className="flex items-center gap-2">Grupo <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
                 <th className="w-[8%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('quantidade_membros')}>
@@ -1299,12 +1334,15 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                 <th className="w-[8%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('prioridade')}>
                   <div className="flex items-center gap-2 text-center justify-center w-full">Prioridade <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
-                <th className="w-[14%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide text-center">Perfil / Shopee</th>
-                <th className="w-[21%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide">Locatário / Info</th>
-                <th className="w-[12%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors text-right" onClick={() => toggleSort('data_vencimento')}>
+                <th className="w-[12%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide text-center">Perfil / Shopee</th>
+                <th className="w-[15%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide text-center cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('aluguel_sugerido')}>
+                  <div className="flex items-center gap-2 justify-center">Sugerido <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
+                </th>
+                <th className="w-[18%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide">Locatário / Info</th>
+                <th className="w-[9%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors text-right" onClick={() => toggleSort('data_vencimento')}>
                   <div className="flex items-center gap-2 justify-end">Vencimento <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
-                <th className="w-[7%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide text-right">Ações</th>
+                <th className="w-[5%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 font-medium">
@@ -1551,6 +1589,12 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                               )} />
                            </button>
                         </div>
+                      </td>
+                      <td className="px-3 py-1.5 text-center">
+                        <SuggestedRentDisplay 
+                          group={group} 
+                          onApply={(val) => handleApplySuggestedRent(group, val)} 
+                        />
                       </td>
                       <td className="px-3 py-1.5 relative">
                         <div className="flex flex-col items-center justify-center">
@@ -1881,6 +1925,13 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                         </div>
                       </div>
                       <div className="border-t border-slate-50 pt-2 flex flex-col gap-2">
+                        <div className="flex justify-center mb-1">
+                          <SuggestedRentDisplay 
+                            group={group} 
+                            onApply={(val) => handleApplySuggestedRent(group, val)} 
+                            compact
+                          />
+                        </div>
                         {(() => {
                            const mergedLocatarios = getMergedLocatarios(group);
                            const activeLocatarios = mergedLocatarios.filter(l => l.status === 'Ativo');
@@ -2515,6 +2566,115 @@ function MoreActionsDropdown({ group, onEdit, onDelete, onMarkForSale, onCopyRes
         </>,
         document.body
       )}
+    </div>
+  );
+}
+
+function SuggestedRentDisplay({ group, onApply, compact = false }: { group: Group, onApply: (val: number) => void, compact?: boolean }) {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const suggestion = calcularValorSugeridoAluguel(group);
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <div 
+          className="relative cursor-help"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowTooltip(!showTooltip);
+          }}
+        >
+          <div className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1 shadow-sm active:bg-emerald-100 transition-all">
+            <Sparkles className="w-2 h-2 text-emerald-400" />
+            <span className="text-[9px] font-black font-mono">{formatCurrency(suggestion.valorSugeridoAluguel)}/mês</span>
+          </div>
+          
+          <AnimatePresence>
+            {showTooltip && (
+              <>
+                <div className="fixed inset-0 z-[100]" onClick={(e) => { e.stopPropagation(); setShowTooltip(false); }} />
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 text-white p-3 rounded-2xl text-[10px] shadow-2xl z-[101]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <p className="font-black mb-1 text-emerald-400 uppercase tracking-widest text-[8px]">Justificativa:</p>
+                  <p className="font-bold text-slate-200 leading-tight">{suggestion.justificativa}</p>
+                  <div className="mt-2 pt-2 border-t border-slate-800 text-slate-400 font-bold italic text-[8px]">
+                    {suggestion.faixa}
+                  </div>
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900" />
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
+        
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onApply(suggestion.valorSugeridoAluguel);
+          }}
+          className="text-[8px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-1 rounded-full border border-blue-100 active:scale-95 transition-all"
+        >
+          Usar
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div 
+        className="relative cursor-help"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowTooltip(!showTooltip);
+        }}
+      >
+        <div className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-xl border border-emerald-100 flex flex-col items-center shadow-sm hover:bg-emerald-100 transition-all min-w-[80px]">
+          <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Sugerido</span>
+          <span className="text-[11px] font-black font-mono">{formatCurrency(suggestion.valorSugeridoAluguel)}</span>
+        </div>
+        
+        <AnimatePresence>
+          {showTooltip && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-slate-900 text-white p-4 rounded-[1.5rem] text-[10px] shadow-2xl z-50 pointer-events-none"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                </div>
+                <p className="font-black text-emerald-400 uppercase tracking-widest text-[9px]">Análise de Rentabilidade</p>
+              </div>
+              <p className="font-bold text-slate-200 leading-relaxed mb-3">{suggestion.justificativa}</p>
+              <div className="bg-slate-800/50 p-2 rounded-xl text-slate-400 font-bold italic text-[8px] border border-slate-800">
+                {suggestion.faixa}
+              </div>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      
+      <button 
+        onClick={(e) => {
+          e.stopPropagation();
+          onApply(suggestion.valorSugeridoAluguel);
+        }}
+        className="text-[9px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-700 active:scale-95 transition-all flex items-center gap-1.5 bg-blue-50/50 px-3 py-1 rounded-full border border-blue-100"
+      >
+        <CheckCircle2 className="w-3 h-3" />
+        Usar valor
+      </button>
     </div>
   );
 }

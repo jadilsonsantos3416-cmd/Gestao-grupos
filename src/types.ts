@@ -48,6 +48,7 @@ export interface Group {
   para_venda?: boolean;
   valor_venda?: string;
   valor_sugerido_venda?: number;
+  valor_sugerido_aluguel?: number;
   status_venda?: SaleStatus;
   observacoes_venda?: string;
   atualizado_em?: string;
