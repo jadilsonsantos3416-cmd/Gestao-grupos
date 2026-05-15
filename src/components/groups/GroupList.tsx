@@ -3106,7 +3106,7 @@ function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
           }}
           onClick={e => e.stopPropagation()}
           className={cn(
-            "bg-transparent border-0 focus:ring-0 p-0 text-[9px] font-black uppercase tracking-widest text-primary cursor-pointer w-full truncate pointer-events-auto pr-6",
+            "appearance-none bg-transparent border-0 focus:ring-0 p-0 text-[9px] font-black uppercase tracking-widest text-primary cursor-pointer w-full truncate pointer-events-auto pr-6",
             isCapitalize && "capitalize"
           )}
         >
@@ -3115,7 +3115,10 @@ function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
           ))}
         </select>
       </div>
-      <ChevronDown className="w-3 h-3 text-slate-300 absolute right-4 pointer-events-none group-hover:text-emerald-400 transition-colors" />
+      <ChevronDown className={cn(
+        "w-3 h-3 absolute right-4 pointer-events-none transition-colors",
+        value !== 'Todos' ? "text-emerald-500" : "text-slate-300 group-hover:text-emerald-400"
+      )} />
     </div>
   );
 }
