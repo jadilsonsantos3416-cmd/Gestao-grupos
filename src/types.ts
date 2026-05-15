@@ -19,6 +19,16 @@ export interface Locatario {
   data_inicio: string;
   data_vencimento: string;
   status: 'Ativo' | 'Inativo';
+  ultima_renovacao?: string;
+  historico_renovacoes?: RenewalHistoryEntry[];
+}
+
+export interface RenewalHistoryEntry {
+  data: string;
+  vencimento_anterior: string;
+  novo_vencimento: string;
+  valor: number | string;
+  locatario: string;
 }
 
 export interface Group {
@@ -54,6 +64,8 @@ export interface Group {
   atualizado_em?: string;
   locatarios?: Locatario[];
   thumbnail_grupo?: string;
+  ultima_renovacao?: string;
+  historico_renovacoes?: RenewalHistoryEntry[];
 }
 
 export interface Renter {

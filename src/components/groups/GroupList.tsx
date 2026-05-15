@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Group, QuickFilter } from '@/src/types';
-import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera, CheckCircle2, X, Users, Plus, XCircle } from 'lucide-react';
+import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera, CheckCircle2, X, Users, Plus, XCircle, RotateCcw, CalendarClock } from 'lucide-react';
 import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers, calcularValorSugeridoAluguel } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
-import { parseISO, format, isToday, isTomorrow, isPast } from 'date-fns';
+import { parseISO, format, isToday, isTomorrow, isPast, addDays, isBefore, isAfter, startOfDay } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
@@ -740,6 +740,98 @@ Link: ${normalizeFacebookGroupLink(group)}`;
     }
   };
 
+  const handleRenew = async (group: Group, locatarioId?: string, days: number = 30) => {
+    if (!onUpdate) return;
+
+    const today = startOfDay(new Date());
+    let updates: Partial<Group> = {};
+    const timestamp = new Date().toISOString();
+
+    if (locatarioId && group.locatarios) {
+      // Renew specific locatário in array
+      const currentLocatarios = [...group.locatarios];
+      const index = currentLocatarios.findIndex(l => l.id === locatarioId);
+      if (index >= 0) {
+        const loc = currentLocatarios[index];
+        const currentExp = loc.data_vencimento ? parseISO(loc.data_vencimento) : today;
+        const baseDate = isBefore(currentExp, today) ? today : currentExp;
+        const newExp = addDays(baseDate, days);
+        
+        const historyEntry = {
+          data: timestamp,
+          vencimento_anterior: loc.data_vencimento || '',
+          novo_vencimento: format(newExp, 'yyyy-MM-dd'),
+          valor: loc.valor || group.valor || 0,
+          locatario: loc.nome
+        };
+
+        currentLocatarios[index] = {
+          ...loc,
+          data_vencimento: format(newExp, 'yyyy-MM-dd'),
+          status: 'Ativo',
+          ultima_renovacao: timestamp,
+          historico_renovacoes: [historyEntry, ...(loc.historico_renovacoes || [])].slice(0, 50)
+        } as Locatario;
+        updates.locatarios = currentLocatarios;
+      }
+    } else {
+      // Renew legacy (single) or primary
+      const currentExpStr = group.data_vencimento;
+      const currentExp = currentExpStr ? parseISO(currentExpStr) : today;
+      const baseDate = isBefore(currentExp, today) ? today : currentExp;
+      const newExp = addDays(baseDate, days);
+      const newExpStr = format(newExp, 'yyyy-MM-dd');
+
+      const historyEntry = {
+        data: timestamp,
+        vencimento_anterior: currentExpStr || '',
+        novo_vencimento: newExpStr,
+        valor: group.valor || 0,
+        locatario: group.locatario || 'Locatário'
+      };
+
+      updates = {
+        data_vencimento: newExpStr,
+        status: 'Alugado',
+        ultima_renovacao: timestamp,
+        historico_renovacoes: [historyEntry, ...(group.historico_renovacoes || [])].slice(0, 50)
+      };
+    }
+
+    updates.atualizado_em = timestamp;
+
+    try {
+      await onUpdate(group.id, updates);
+    } catch (error) {
+      console.error("Erro ao renovar aluguel:", error);
+      throw error;
+    }
+  };
+
+  const handleRenewBatch = async (days: number = 30) => {
+    if (!onUpdate || selectedGroupIds.size === 0) return;
+
+    const count = selectedGroupIds.size;
+    setProcessingAction({ id: 'batch', field: 'locatario' });
+    
+    try {
+      const promises = Array.from(selectedGroupIds).map(id => {
+        const group = groups.find(g => g.id === id);
+        if (group) return handleRenew(group, undefined, days);
+        return Promise.resolve();
+      });
+      await Promise.all(promises);
+      setSelectedGroupIds(new Set());
+      setToast({ message: `${count} aluguéis renovados!`, type: 'success' });
+    } catch (error) {
+      console.error("Erro na renovação em lote:", error);
+      setToast({ message: "Erro em algumas renovações", type: 'error' });
+    } finally {
+      setProcessingAction(null);
+      setIsRenewBatchModalOpen(false);
+    }
+  };
+
   const getEffectiveStatus = (group: Group): string => {
     const mergedLocatarios = getMergedLocatarios(group);
     if (mergedLocatarios.length > 0) {
@@ -776,6 +868,10 @@ Link: ${normalizeFacebookGroupLink(group)}`;
   const priorities = ['Todos', 'Alta', 'Média', 'Baixa'];
 
   const [renterFilter, setRenterFilter] = useState('Todos');
+  const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
+  const [renewModalGroup, setRenewModalGroup] = useState<Group | null>(null);
+  const [isRenewBatchModalOpen, setIsRenewBatchModalOpen] = useState(false);
+  const [expirationFilter, setExpirationFilter] = useState<'Todos' | 'Vencidos' | 'Vence Hoje' | 'Próximos 3 dias'>('Todos');
 
   // Add priority info to groups for sorting and filtering
   const groupsWithPriority = useMemo(() => {
@@ -856,7 +952,18 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       (shopeeFilter === 'Todos' || (g.uso_shopee || 'Inativo') === shopeeFilter) &&
       (priorityFilter === 'Todos' || g.priorityInfo.prioridade === priorityFilter) &&
       (renterFilter === 'Todos' || (g.locatario || '') === renterFilter || (g.locatarios || []).some(l => l.nome === renterFilter)) &&
-      (!onlyReadyForShopee || ((g.perfil_compartilhando || 'Inativo') === 'Ativo' && (g.uso_shopee || 'Inativo') === 'Ativo'))
+      (!onlyReadyForShopee || ((g.perfil_compartilhando || 'Inativo') === 'Ativo' && (g.uso_shopee || 'Inativo') === 'Ativo')) &&
+      (expirationFilter === 'Todos' || (() => {
+        if (!g.data_vencimento || getEffectiveStatus(g) !== 'Alugado') return false;
+        const date = parseISO(g.data_vencimento);
+        if (expirationFilter === 'Vencidos') return isPast(date) && !isToday(date);
+        if (expirationFilter === 'Vence Hoje') return isToday(date);
+        if (expirationFilter === 'Próximos 3 dias') {
+          const threeDaysFromNow = addDays(startOfDay(new Date()), 3);
+          return (isToday(date) || isAfter(date, startOfDay(new Date()))) && (isBefore(date, threeDaysFromNow) || format(date, 'yyyy-MM-dd') === format(threeDaysFromNow, 'yyyy-MM-dd'));
+        }
+        return true;
+      })())
     )
     .sort((a, b) => {
       // Handle Sorting
@@ -1236,7 +1343,24 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                 options={priorities} 
                 onChange={v => handleFilterChange(setPriorityFilter, v)} 
               />
+              <FilterBadge 
+                label="Vencimento" 
+                value={expirationFilter} 
+                options={['Todos', 'Vencidos', 'Vence Hoje', 'Próximos 3 dias']} 
+                onChange={v => setExpirationFilter(v)} 
+                isCapitalize
+              />
             
+            {selectedGroupIds.size > 0 && (
+              <button 
+                onClick={() => setIsRenewBatchModalOpen(true)}
+                className="h-9 md:h-10 flex items-center justify-center gap-2 px-4 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-100 text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span className="truncate">Renovar Selecionados ({selectedGroupIds.size})</span>
+              </button>
+            )}
+
             <button 
               onClick={() => setIsReviewModalOpen(true)}
               className="h-9 md:h-10 flex items-center justify-center gap-2 px-4 bg-slate-50 text-slate-600 rounded-xl border border-slate-100 hover:border-blue-200 text-[9px] font-black uppercase tracking-widest hover:bg-white active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
@@ -1354,7 +1478,21 @@ Link: ${normalizeFacebookGroupLink(group)}`;
               <table className="w-full text-left border-collapse table-fixed">
             <thead className="sticky top-0 z-20 bg-slate-50 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
               <tr className="border-b border-slate-100">
-                <th className="w-[25%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
+                <th className="w-[3%] px-3 py-2 text-center">
+                  <input 
+                    type="checkbox"
+                    className="w-3.5 h-3.5 rounded border-slate-200 text-primary focus:ring-primary/20 cursor-pointer"
+                    checked={filteredGroups.length > 0 && selectedGroupIds.size === filteredGroups.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedGroupIds(new Set(filteredGroups.map(g => g.id)));
+                      } else {
+                        setSelectedGroupIds(new Set());
+                      }
+                    }}
+                  />
+                </th>
+                <th className="w-[22%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('nome_grupo')}>
                   <div className="flex items-center gap-2">Grupo <ArrowUpDown className="w-3 h-3 opacity-30" /></div>
                 </th>
                 <th className="w-[8%] px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wide cursor-pointer hover:text-slate-900 transition-colors" onClick={() => toggleSort('quantidade_membros')}>
@@ -1399,6 +1537,19 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                         group.perfil_compartilhando === 'Inativo' && "bg-rose-50/5"
                       )}
                     >
+                      <td className="px-3 py-2 text-center">
+                        <input 
+                          type="checkbox"
+                          className="w-3.5 h-3.5 rounded border-slate-200 text-primary focus:ring-primary/20 cursor-pointer"
+                          checked={selectedGroupIds.has(group.id)}
+                          onChange={() => {
+                            const next = new Set(selectedGroupIds);
+                            if (next.has(group.id)) next.delete(group.id);
+                            else next.add(group.id);
+                            setSelectedGroupIds(next);
+                          }}
+                        />
+                      </td>
                       <td className="px-3 py-2 relative">
                         {group.perfil_compartilhando === 'Inativo' && (
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500" />
@@ -1683,7 +1834,12 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                         </div>
                       </td>
                       <td className="px-3 py-1.5 text-right">
-                        <ExpiryBadge dareStr={group.data_vencimento} status={group.status} />
+                        <ExpiryBadge 
+                          dareStr={group.data_vencimento || ''} 
+                          status={getEffectiveStatus(group)} 
+                          group={group}
+                          onRenew={(g) => setRenewModalGroup(g)}
+                        />
                       </td>
                       <td className="px-3 py-1.5 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-all transform translate-x-1 group-hover:translate-x-0">
@@ -1698,6 +1854,8 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                               setEditingLocatario(null);
                               setIsLocatarioModalOpen(true);
                             }}
+                            onRenew={() => setRenewModalGroup(group)}
+                            onQuickRenew={() => handleRenew(group)}
                           />
                         </div>
                       </td>
@@ -1737,10 +1895,27 @@ Link: ${normalizeFacebookGroupLink(group)}`;
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {(groupedGroups[nicho] || []).map(group => (
-                <div key={group.id} className={cn(
-                  "bg-white p-3 rounded-[1.5rem] border transition-all relative overflow-hidden active:scale-[0.98] group shadow-sm",
-                  (group.perfil_compartilhando || 'Inativo') === 'Inativo' ? "border-rose-100 bg-rose-50/5" : "border-slate-100"
-                )}>
+                <div 
+                  key={group.id} 
+                  onClick={() => {
+                    const next = new Set(selectedGroupIds);
+                    if (next.has(group.id)) next.delete(group.id);
+                    else next.add(group.id);
+                    setSelectedGroupIds(next);
+                  }}
+                  className={cn(
+                    "bg-white p-3 rounded-[1.5rem] border transition-all relative overflow-hidden active:scale-[0.98] group shadow-sm",
+                    selectedGroupIds.has(group.id) ? "border-primary/50 bg-primary/5" : 
+                    (group.perfil_compartilhando || 'Inativo') === 'Inativo' ? "border-rose-100 bg-rose-50/5" : "border-slate-100"
+                  )}
+                >
+                   {/* Selection Badge for Mobile */}
+                   <div className={cn(
+                     "absolute top-3 right-11 w-5 h-5 rounded-full flex items-center justify-center shadow-sm border transition-all z-10",
+                     selectedGroupIds.has(group.id) ? "bg-primary text-white scale-110 border-primary" : "bg-white text-slate-200 border-slate-50 scale-90"
+                   )}>
+                     {selectedGroupIds.has(group.id) ? <CheckCircle2 className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                   </div>
                    <div className="flex flex-col gap-3">
                      <div className="flex items-start gap-3">
                         {/* Thumbnail Mobile */}
@@ -1856,6 +2031,8 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                               setEditingLocatario(null);
                               setIsLocatarioModalOpen(true);
                             }}
+                            onRenew={() => setRenewModalGroup(group)}
+                            onQuickRenew={() => handleRenew(group)}
                           />
                         </div>
                      </div>
@@ -1863,7 +2040,13 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                      <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-widest px-1">
                         <div className="flex items-center gap-2">
                           <span className="text-slate-400 italic">Vencimento:</span>
-                          <ExpiryBadge dareStr={group.data_vencimento} status={group.status} compact />
+                          <ExpiryBadge 
+                            dareStr={group.data_vencimento || ''} 
+                            status={getEffectiveStatus(group)} 
+                            group={group}
+                            onRenew={(g) => setRenewModalGroup(g)}
+                            compact 
+                          />
                         </div>
                         <div className="flex items-center gap-2">
                           {group.link_grupo ? (
@@ -2282,6 +2465,17 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
+                              handleRenew(group, l.id);
+                              setOpenRenterDropdownId(null);
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-emerald-500 rounded-lg hover:bg-white transition-all shadow-sm bg-white md:bg-transparent"
+                            title="Renovar Aluguel"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5 md:w-3 md:h-3" />
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setLocatarioGroup(group);
                               setEditingLocatario(l);
                               setIsLocatarioModalOpen(true);
@@ -2385,6 +2579,161 @@ Link: ${normalizeFacebookGroupLink(group)}`;
             editingLocatario={editingLocatario}
           />
 
+          {/* Renovação Modal - Confirmação Simples */}
+          <AnimatePresence>
+            {renewModalGroup && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setRenewModalGroup(null)}
+                  className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 z-[101]"
+                >
+                  <div className="p-8">
+                    <div className="flex items-center gap-5 mb-8">
+                      <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center border border-emerald-100 shrink-0">
+                        <RotateCcw className="w-8 h-8 text-emerald-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Renovar Aluguel</h3>
+                        <p className="text-slate-500 font-bold text-sm tracking-tight">{renewModalGroup.nome_grupo}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100 mb-8">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Locatário</span>
+                        <span className="text-slate-900 font-black tracking-tight">{renewModalGroup.locatario || (renewModalGroup.locatarios?.[0]?.nome) || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Vencimento Atual</span>
+                        <span className="text-slate-500 font-bold font-mono">
+                          {renewModalGroup.data_vencimento ? format(parseISO(renewModalGroup.data_vencimento), 'dd/MM/yyyy') : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="pt-4 border-t border-slate-200 mt-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-emerald-600 font-black uppercase tracking-widest text-[10px]">Novo Vencimento (+30 d)</span>
+                          <span className="text-emerald-700 font-black font-mono text-xl">
+                            {(() => {
+                              const today = startOfDay(new Date());
+                              const current = renewModalGroup.data_vencimento ? parseISO(renewModalGroup.data_vencimento) : today;
+                              const base = isBefore(current, today) ? today : current;
+                              return format(addDays(base, 30), 'dd/MM/yyyy');
+                            })()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        onClick={() => setRenewModalGroup(null)}
+                        className="py-4 bg-slate-100 text-slate-500 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const group = renewModalGroup;
+                          setRenewModalGroup(null);
+                          try {
+                            await handleRenew(group);
+                            setToast({ message: "Aluguel renovado com sucesso!", type: 'success' });
+                          } catch (e) {
+                            setToast({ message: "Erro ao renovar", type: 'error' });
+                          }
+                        }}
+                        className="py-4 bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        Confirmar
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+
+          {/* Renovação em Lote Modal */}
+          <AnimatePresence>
+            {isRenewBatchModalOpen && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsRenewBatchModalOpen(false)}
+                  className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 z-[101]"
+                >
+                  <div className="p-8 text-center">
+                    <div className="w-20 h-20 bg-emerald-600 rounded-3xl flex items-center justify-center border border-emerald-700 shrink-0 shadow-lg shadow-emerald-100 mx-auto mb-6">
+                      <RotateCcw className="w-10 h-10 text-white" />
+                    </div>
+                    
+                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Renovação em Lote</h3>
+                    <p className="text-slate-500 font-bold text-sm tracking-tight mb-8">
+                      Deseja renovar o aluguel de <span className="text-emerald-600 font-black">{selectedGroupIds.size} grupos</span> selecionados?
+                    </p>
+
+                    <div className="p-6 rounded-2xl border-2 border-emerald-50 bg-emerald-50/30 mb-8 text-left">
+                      <p className="text-xs font-bold text-slate-600 leading-relaxed uppercase tracking-widest text-center opacity-40 mb-3">Impacto da Renovação:</p>
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckCircle2 className="w-3 h-3" />
+                          </div>
+                          <p className="text-[11px] font-bold text-slate-600">+30 dias adicionados ao vencimento.</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckCircle2 className="w-3 h-3" />
+                          </div>
+                          <p className="text-[11px] font-bold text-slate-600">Status atualizado para 'Alugado'.</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckCircle2 className="w-3 h-3" />
+                          </div>
+                          <p className="text-[11px] font-bold text-slate-600">Histórico registrado em cada grupo.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        onClick={() => setIsRenewBatchModalOpen(false)}
+                        className="py-4 bg-slate-100 text-slate-500 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={() => handleRenewBatch(30)}
+                        className="py-4 bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        {processingAction ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <RotateCcw className="w-4 h-4" />}
+                        Confirmar Todos
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+
           {/* Modal Alterar Miniatura */}
           <AnimatePresence>
             {thumbnailModalGroup && (
@@ -2482,7 +2831,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
   );
 }
 
-function MoreActionsDropdown({ group, onEdit, onDelete, onMarkForSale, onCopyResume, onAddLocatario }: any) {
+function MoreActionsDropdown({ group, onEdit, onDelete, onMarkForSale, onCopyResume, onAddLocatario, onRenew, onQuickRenew }: any) {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [coords, setCoords] = useState({ top: 0, left: 0, direction: 'down' as 'up' | 'down' });
@@ -2557,6 +2906,20 @@ function MoreActionsDropdown({ group, onEdit, onDelete, onMarkForSale, onCopyRes
             >
               <Edit2 className="w-3.5 h-3.5" />
               Editar Grupo
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onRenew(); setIsOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-emerald-500 rounded-xl transition-all"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Renovar Aluguel
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onQuickRenew(); setIsOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-emerald-600 rounded-xl transition-all"
+            >
+              <CalendarClock className="w-3.5 h-3.5" />
+              Renovar +30 dias
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); onAddLocatario(); setIsOpen(false); }}
@@ -2757,7 +3120,7 @@ function FilterBadge({ label, value, options, onChange, isCapitalize }: any) {
   );
 }
 
-function ExpiryBadge({ dareStr, status, compact = false }: { dareStr: string, status: string, compact?: boolean }) {
+function ExpiryBadge({ dareStr, status, group, onRenew, compact = false }: { dareStr: string, status: string, group?: Group, onRenew?: (g: Group) => void, compact?: boolean }) {
   if (status !== 'Alugado' || !dareStr) return <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">-</span>;
   
   const date = parseISO(dareStr);
@@ -2770,15 +3133,29 @@ function ExpiryBadge({ dareStr, status, compact = false }: { dareStr: string, st
 
   return (
     <div className={cn(
-      "flex flex-col",
+      "flex flex-col group/expiry",
       compact ? "items-end" : "items-end"
     )}>
-      <span className={cn(
-        "text-[10px] font-black font-mono tracking-tighter",
-        colorClass
-      )}>
-        {format(date, 'dd/MM/yyyy')}
-      </span>
+      <div className="flex items-center gap-1.5">
+        {group && onRenew && (isVenceHoje || isVenceAmanha || isVencido) && (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onRenew(group);
+            }}
+            className="w-5 h-5 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all opacity-0 group-hover/expiry:opacity-100 active:scale-95"
+            title="Renovar Aluguel"
+          >
+            <RotateCcw className="w-3 h-3" />
+          </button>
+        )}
+        <span className={cn(
+          "text-[10px] font-black font-mono tracking-tighter",
+          colorClass
+        )}>
+          {format(date, 'dd/MM/yyyy')}
+        </span>
+      </div>
       {(isVenceHoje || isVenceAmanha || isVencido) && (
         <span className={cn(
           "text-[8px] font-black uppercase px-2 py-0.5 rounded-md mt-1 shadow-sm border",
