@@ -41,6 +41,8 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const desktopTableWrapperRef = useRef<HTMLDivElement>(null);
   const mobileFakeScrollRef = useRef<HTMLDivElement>(null);
   const mobileTableWrapperRef = useRef<HTMLDivElement>(null);
+  const searchTermInputRef = useRef<HTMLInputElement>(null);
+  const renterSearchInputRef = useRef<HTMLInputElement>(null);
 
   const handleSyncScroll = (sourceRef: React.RefObject<HTMLDivElement>, targetRef: React.RefObject<HTMLDivElement>) => {
     if (sourceRef.current && targetRef.current) {
@@ -1082,19 +1084,33 @@ Link: ${normalizeFacebookGroupLink(group)}`;
           <div className="flex-1 relative group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary w-3.5 h-3.5 md:w-4 md:h-4 transition-colors" />
             <input 
+              ref={searchTermInputRef}
               type="text" 
               placeholder="Pesquisar por nome do grupo..."
-              className="w-full bg-white border border-slate-100 pl-10 md:pl-11 pr-4 py-2 md:py-2.5 rounded-xl md:rounded-2xl shadow-sm focus:ring-4 focus:ring-green-50 focus:border-green-200 outline-none font-bold text-[10px] md:text-xs text-slate-600 placeholder:text-slate-300 transition-all"
+              className="w-full bg-white border border-slate-100 pl-10 md:pl-11 pr-10 py-2 md:py-2.5 rounded-xl md:rounded-2xl shadow-sm focus:ring-4 focus:ring-green-50 focus:border-green-200 outline-none font-bold text-[10px] md:text-xs text-slate-600 placeholder:text-slate-300 transition-all"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button 
+                onClick={() => {
+                  setSearchTerm("");
+                  searchTermInputRef.current?.focus();
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors p-1 rounded-full hover:bg-slate-50 active:scale-95"
+                title="Limpar busca"
+              >
+                <X className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              </button>
+            )}
           </div>
           <div className="flex-1 relative group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 w-3.5 h-3.5 md:w-4 md:h-4 transition-colors" />
             <input 
+              ref={renterSearchInputRef}
               type="text" 
               placeholder="Pesquisar por locatário..."
-              className="w-full bg-white border border-slate-100 pl-10 md:pl-11 pr-4 py-2 md:py-2.5 rounded-xl md:rounded-2xl shadow-sm focus:ring-4 focus:ring-blue-50 focus:border-blue-200 outline-none font-bold text-[10px] md:text-xs text-slate-600 placeholder:text-slate-300 transition-all"
+              className="w-full bg-white border border-slate-100 pl-10 md:pl-11 pr-10 py-2 md:py-2.5 rounded-xl md:rounded-2xl shadow-sm focus:ring-4 focus:ring-blue-50 focus:border-blue-200 outline-none font-bold text-[10px] md:text-xs text-slate-600 placeholder:text-slate-300 transition-all"
               value={renterSearch}
               onChange={e => {
                 setRenterSearch(e.target.value);
@@ -1102,6 +1118,19 @@ Link: ${normalizeFacebookGroupLink(group)}`;
               }}
               onFocus={() => setIsRenterDropdownOpen(true)}
             />
+            {renterSearch && (
+              <button 
+                onClick={() => {
+                  setRenterSearch("");
+                  setIsRenterDropdownOpen(false);
+                  renterSearchInputRef.current?.focus();
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors p-1 rounded-full hover:bg-slate-50 active:scale-95"
+                title="Limpar busca"
+              >
+                <X className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              </button>
+            )}
             
             <AnimatePresence>
               {isRenterDropdownOpen && (
