@@ -176,7 +176,7 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
     if (selectedGroupKeys.size === renterGroups.length) {
       setSelectedGroupKeys(new Set());
     } else {
-      setSelectedGroupKeys(new Set(renterGroups.map(lg => `${lg.group.id}-${lg.locatarioIndex}`)));
+      setSelectedGroupKeys(new Set(renterGroups.map(lg => `${lg.group.id}:${lg.locatarioIndex}`)));
     }
   };
 
@@ -188,7 +188,7 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
   };
 
   const handleRenew = () => {
-    if (selectedGroupKeys.size === 0 || !newExpirationDate) return;
+    if (selectedGroupKeys.size === 0 || !newExpirationDate || !parsedTotalValue) return;
     setShowConfirmModal(true);
   };
 
@@ -207,7 +207,7 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
       const updatesByGroup = new Map<string, Partial<Group>>();
 
       for (const key of selectedGroupKeys) {
-        const [groupId, locIndexStr] = key.split('-');
+        const [groupId, locIndexStr] = key.split(':');
         const locIndex = parseInt(locIndexStr);
         const lg = renterGroups.find(item => item.group.id === groupId && item.locatarioIndex === locIndex);
         
@@ -361,7 +361,24 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
                   key={r.nome}
                   onClick={() => {
                     setSelectedRenter(r.nome);
-                    setSelectedGroupKeys(new Set());
+                    // Find all groups for this renter and select them automatically
+                    const renterKey = r.nome.toLowerCase().trim();
+                    const initialKeys = new Set<string>();
+                    
+                    groups.forEach(group => {
+                      if (group.locatario && group.status === 'Alugado' && group.locatario.toLowerCase().trim() === renterKey) {
+                        initialKeys.add(`${group.id}:-1`);
+                      }
+                      if (group.locatarios) {
+                        group.locatarios.forEach((l, idx) => {
+                          if (l.status === 'Ativo' && l.nome.toLowerCase().trim() === renterKey) {
+                            initialKeys.add(`${group.id}:${idx}`);
+                          }
+                        });
+                      }
+                    });
+                    setSelectedGroupKeys(initialKeys);
+                    setTotalPaidValue(''); // Reset value to force user to enter
                   }}
                   className={cn(
                     "flex items-center justify-between p-4 rounded-2xl border transition-all text-left group",
@@ -485,6 +502,27 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
                 {isRenewing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <RotateCcw className="w-5 h-5" />}
                 {isRenewing ? 'Salvando...' : 'Salvar e Renovar'}
               </button>
+
+              {/* Status Advisory */}
+              {selectedRenter && (
+                <div className="px-2 space-y-1">
+                  {selectedGroupKeys.size === 0 && (
+                    <p className="text-[9px] text-rose-400 font-bold uppercase tracking-widest text-center animate-pulse">
+                      Selecione pelo menos um grupo
+                    </p>
+                  )}
+                  {!parsedTotalValue && selectedGroupKeys.size > 0 && (
+                    <p className="text-[9px] text-orange-400 font-bold uppercase tracking-widest text-center">
+                      Informe o valor total pago
+                    </p>
+                  )}
+                  {!newExpirationDate && selectedGroupKeys.size > 0 && (
+                    <p className="text-[9px] text-orange-400 font-bold uppercase tracking-widest text-center">
+                      Informe a data de vencimento
+                    </p>
+                  )}
+                </div>
+              )}
               
               <button
                 disabled={!selectedRenterStats}
@@ -517,12 +555,20 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <button 
-                onClick={handleSelectAll}
-                className="px-4 py-2 bg-white text-slate-600 rounded-xl border border-slate-200 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95"
-              >
-                {selectedGroupKeys.size === renterGroups.length ? 'Desmarcar Todos' : 'Selecionar Todos'}
-              </button>
+              <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-100">
+                <button 
+                  onClick={() => setSelectedGroupKeys(new Set(renterGroups.map(lg => `${lg.group.id}:${lg.locatarioIndex}`)))}
+                  className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all active:scale-95 border border-emerald-100"
+                >
+                  Selecionar Todos
+                </button>
+                <button 
+                  onClick={() => setSelectedGroupKeys(new Set())}
+                  className="px-3 py-1.5 bg-slate-50 text-slate-400 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-95 border border-slate-100"
+                >
+                  Desmarcar Todos
+                </button>
+              </div>
 
               <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-100">
                 {(['Todos', 'Vencidos', 'Vence Hoje', 'Ativos'] as const).map(f => (
@@ -565,7 +611,7 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
                   </tr>
                 ) : (
                   renterGroups.map(lg => {
-                    const key = `${lg.group.id}-${lg.locatarioIndex}`;
+                    const key = `${lg.group.id}:${lg.locatarioIndex}`;
                     const isSelected = selectedGroupKeys.has(key);
                     const dateStr = lg.locatarioData.data_vencimento;
                     const date = dateStr ? parseISO(dateStr) : null;
