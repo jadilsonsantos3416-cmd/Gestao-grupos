@@ -30,6 +30,9 @@ export interface RenewalHistoryEntry {
   valor: number | string;
   locatario: string;
   tipo?: string;
+  valor_total_pago?: number;
+  valor_por_grupo?: number;
+  quantidade_grupos?: number;
 }
 
 export interface Group {

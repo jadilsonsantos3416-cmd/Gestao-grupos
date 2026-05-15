@@ -20,6 +20,7 @@ interface LocatarioGroup {
 export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
   const [selectedRenter, setSelectedRenter] = useState<string | null>(null);
   const [newExpirationDate, setNewExpirationDate] = useState<string>(format(addDays(new Date(), 30), 'yyyy-MM-dd'));
+  const [totalPaidValue, setTotalPaidValue] = useState<string>('');
   const [selectedGroupKeys, setSelectedGroupKeys] = useState<Set<string>>(new Set());
   const [isRenewing, setIsRenewing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -156,6 +157,17 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
     return rentersData.find(r => r.nome.toLowerCase().trim() === selectedRenter.toLowerCase().trim());
   }, [rentersData, selectedRenter]);
 
+  const parsedTotalValue = useMemo(() => {
+    if (!totalPaidValue) return 0;
+    const clean = totalPaidValue.replace(/[^\d.,]/g, '').replace(',', '.');
+    return parseFloat(clean) || 0;
+  }, [totalPaidValue]);
+
+  const valuePerGroup = useMemo(() => {
+    if (selectedGroupKeys.size === 0 || parsedTotalValue === 0) return 0;
+    return parsedTotalValue / selectedGroupKeys.size;
+  }, [selectedGroupKeys.size, parsedTotalValue]);
+
   const handleApplyPlus30 = () => {
     setNewExpirationDate(format(addDays(new Date(), 30), 'yyyy-MM-dd'));
   };
@@ -185,6 +197,9 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
     setShowConfirmModal(false);
     const timestamp = new Date().toISOString();
     const targetDateFormatted = formatDateBR(newExpirationDate);
+    const vpg = valuePerGroup;
+    const totalPaid = parsedTotalValue;
+    const qty = selectedGroupKeys.size;
     let successCount = 0;
 
     try {
@@ -206,14 +221,18 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
             data_renovacao: timestamp,
             vencimento_anterior: lg.group.data_vencimento || '',
             novo_vencimento: newExpirationDate,
-            valor: lg.group.valor || 0,
+            valor: vpg > 0 ? vpg : (lg.group.valor || 0),
             locatario: lg.group.locatario,
-            tipo: "renovacao_por_locatario"
+            tipo: "renovacao_por_locatario",
+            valor_total_pago: totalPaid > 0 ? totalPaid : undefined,
+            valor_por_grupo: vpg > 0 ? vpg : undefined,
+            quantidade_grupos: qty > 0 ? qty : undefined
           };
 
           updatesByGroup.set(groupId, {
             ...currentUpdates,
             data_vencimento: newExpirationDate,
+            valor: vpg > 0 ? vpg : lg.group.valor,
             status: 'Alugado',
             ultima_renovacao: timestamp,
             atualizado_em: timestamp,
@@ -229,15 +248,19 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
             data_renovacao: timestamp,
             vencimento_anterior: loc.data_vencimento || '',
             novo_vencimento: newExpirationDate,
-            valor: loc.valor || lg.group.valor || 0,
+            valor: vpg > 0 ? vpg : (loc.valor || lg.group.valor || 0),
             locatario: loc.nome,
-            tipo: "renovacao_por_locatario"
+            tipo: "renovacao_por_locatario",
+            valor_total_pago: totalPaid > 0 ? totalPaid : undefined,
+            valor_por_grupo: vpg > 0 ? vpg : undefined,
+            quantidade_grupos: qty > 0 ? qty : undefined
           };
 
           currentLocatarios[locIndex] = {
             ...loc,
             data_vencimento: newExpirationDate,
             status: 'Ativo',
+            valor: vpg > 0 ? vpg : loc.valor,
             ultima_renovacao: timestamp,
             historico_renovacoes: [historyEntry, ...(loc.historico_renovacoes || [])].slice(0, 50)
           } as Locatario;
@@ -273,7 +296,13 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
     const greeting = hour >= 18 || hour < 5 ? "Boa noite" : "Bom dia";
     const dateFormatted = formatDateBR(newExpirationDate);
     
-    const message = `${greeting}, ${selectedRenterStats.nome}! Tudo bem? 😊\n\nSeus grupos foram renovados com sucesso.\nPróximo vencimento: *${dateFormatted}*\n\nQualquer coisa, me chama por aqui 👍`;
+    let message = `${greeting}, ${selectedRenterStats.nome}! Tudo bem? 😊\n\nRecebi a renovação dos seus grupos.\nPróximo vencimento: *${dateFormatted}*`;
+    
+    if (parsedTotalValue > 0) {
+      message += `\nTotal renovado: *${formatCurrency(parsedTotalValue)}*`;
+    }
+
+    message += `\n\nTudo certo por aqui 👍`;
     
     navigator.clipboard.writeText(message);
     setToast({ message: "Mensagem copiada!", type: 'success' });
@@ -403,31 +432,58 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
             </div>
 
             {selectedRenterStats && (
-              <div className="bg-slate-800/50 rounded-3xl p-6 border border-white/5 space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Valor Mensal Estimado</span>
-                  <span className="text-xl font-black text-white font-mono">{formatCurrency(selectedRenterStats.totalValue)}</span>
+              <div className="bg-slate-800/50 rounded-3xl p-6 border border-white/5 space-y-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Valor Total Pago (R$)</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
+                    <input 
+                      type="text"
+                      placeholder="0,00"
+                      value={totalPaidValue}
+                      onChange={(e) => setTotalPaidValue(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 text-white pl-12 pr-4 py-3 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all font-mono font-bold"
+                    />
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Grupos Selecionados</span>
-                  <span className="text-emerald-400 font-black font-mono">{selectedGroupKeys.size}</span>
+
+                <div className="space-y-4 pt-4 border-t border-white/5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Valor por Grupo</span>
+                    <span className={cn(
+                      "text-lg font-black font-mono",
+                      valuePerGroup > 0 ? "text-white" : "text-slate-600"
+                    )}>
+                      {formatCurrency(valuePerGroup)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Grupos Selecionados</span>
+                    <span className="text-emerald-400 font-black font-mono">{selectedGroupKeys.size}</span>
+                  </div>
+                  {newExpirationDate && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Novo Vencimento</span>
+                      <span className="text-white font-black font-mono">{formatDateBR(newExpirationDate)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             <div className="flex flex-col gap-3">
               <button
-                disabled={selectedGroupKeys.size === 0 || isRenewing}
+                disabled={selectedGroupKeys.size === 0 || isRenewing || !newExpirationDate || !parsedTotalValue}
                 onClick={handleRenew}
                 className={cn(
                   "w-full py-5 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs transition-all flex items-center justify-center gap-3",
-                  selectedGroupKeys.size > 0 && !isRenewing
+                  selectedGroupKeys.size > 0 && !isRenewing && newExpirationDate && parsedTotalValue
                     ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-xl shadow-emerald-500/20 active:scale-95"
                     : "bg-slate-800 text-slate-600 cursor-not-allowed"
                 )}
               >
                 {isRenewing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <RotateCcw className="w-5 h-5" />}
-                {isRenewing ? 'Renovando...' : 'Renovar Selecionados'}
+                {isRenewing ? 'Salvando...' : 'Salvar e Renovar'}
               </button>
               
               <button
@@ -548,7 +604,12 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className="font-black font-mono text-slate-700">{formatCurrency(Number(lg.locatarioData.valor))}</span>
+                          <span className={cn(
+                            "font-black font-mono transition-colors",
+                            isSelected && valuePerGroup > 0 ? "text-emerald-600 scale-110" : "text-slate-700"
+                          )}>
+                            {formatCurrency(isSelected && valuePerGroup > 0 ? valuePerGroup : Number(lg.locatarioData.valor))}
+                          </span>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <span className={cn(
@@ -600,9 +661,23 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
 
                 <div className="text-center space-y-3 mb-8">
                   <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Renovar aluguel do locatário?</h3>
-                  <p className="text-slate-500 font-bold leading-relaxed px-4">
-                    Você está renovando <span className="text-emerald-600 font-black">{selectedGroupKeys.size} grupos</span> do locatário <span className="text-slate-900 font-black">{selectedRenterStats.nome}</span> para o vencimento <span className="text-slate-900 font-black">{formatDateBR(newExpirationDate)}</span>.
-                  </p>
+                  <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col gap-3">
+                    <p className="text-slate-500 font-bold leading-relaxed">
+                      Você está renovando <span className="text-emerald-600 font-black">{selectedGroupKeys.size} grupos</span> do locatário <span className="text-slate-900 font-black">{selectedRenterStats.nome}</span>.
+                    </p>
+                    <div className="flex flex-col gap-1 items-center justify-center pt-2 border-t border-slate-200/50">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Novo Vencimento</span>
+                      <span className="text-xl font-black text-slate-900">{formatDateBR(newExpirationDate)}</span>
+                      {parsedTotalValue > 0 && (
+                        <>
+                          <div className="h-4" />
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor Total Pago</span>
+                          <span className="text-xl font-black text-emerald-600">{formatCurrency(parsedTotalValue)}</span>
+                          <span className="text-[10px] font-bold text-slate-400">({formatCurrency(valuePerGroup)} p/ grupo)</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
