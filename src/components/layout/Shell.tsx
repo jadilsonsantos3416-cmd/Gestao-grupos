@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, MessageSquare, Plus, Menu, X, Landmark, FileUp, Sparkles, Trophy, Brain, Megaphone, ChevronLeft, ChevronRight, Tag, Image as ImageIcon } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquare, Plus, Menu, X, Landmark, FileUp, Sparkles, Trophy, Brain, Megaphone, ChevronLeft, ChevronRight, Tag, Image as ImageIcon, Calendar } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { QuickFilter } from '@/src/types';
@@ -40,6 +40,7 @@ export function Shell({
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'groups', label: 'Grupos', icon: Users },
+    { id: 'renewals', label: 'Renovações', icon: Calendar },
     { id: 'campaigns', label: 'Campanhas', icon: Megaphone },
     { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare },
     { id: 'thumbnails', label: 'Miniaturas', icon: ImageIcon },

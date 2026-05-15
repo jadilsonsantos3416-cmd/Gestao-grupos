@@ -11,6 +11,7 @@ import { RankingPage } from '@/src/components/ranking/RankingPage';
 import { GrowthAnalysis } from '@/src/components/growth/GrowthAnalysis';
 import { CampaignsPage } from '@/src/components/campaigns/CampaignsPage';
 import { SalesPage } from '@/src/components/sales/SalesPage';
+import { RenewalsTab } from '@/src/components/renewals/RenewalsTab';
 import { RedirectPage } from '@/src/components/campaigns/RedirectPage';
 import { ErrorBoundary } from '@/src/components/common/ErrorBoundary';
 import { SplashScreen } from '@/src/components/common/SplashScreen';
@@ -149,6 +150,11 @@ export default function App() {
                     activeQuickFilter={activeFilter}
                     onQuickFilterChange={setActiveFilter}
                   />
+                </ErrorBoundary>
+              )}
+              {activeTab === 'renewals' && (
+                <ErrorBoundary>
+                  <RenewalsTab groups={groups} onUpdate={updateGroup} />
                 </ErrorBoundary>
               )}
               {activeTab === 'whatsapp' && (

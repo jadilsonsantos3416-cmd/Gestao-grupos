@@ -758,7 +758,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
         const newExp = addDays(baseDate, days);
         
         const historyEntry = {
-          data: timestamp,
+          data_renovacao: timestamp,
           vencimento_anterior: loc.data_vencimento || '',
           novo_vencimento: format(newExp, 'yyyy-MM-dd'),
           valor: loc.valor || group.valor || 0,
@@ -783,7 +783,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       const newExpStr = format(newExp, 'yyyy-MM-dd');
 
       const historyEntry = {
-        data: timestamp,
+        data_renovacao: timestamp,
         vencimento_anterior: currentExpStr || '',
         novo_vencimento: newExpStr,
         valor: group.valor || 0,

@@ -24,11 +24,12 @@ export interface Locatario {
 }
 
 export interface RenewalHistoryEntry {
-  data: string;
+  data_renovacao: string;
   vencimento_anterior: string;
   novo_vencimento: string;
   valor: number | string;
   locatario: string;
+  tipo?: string;
 }
 
 export interface Group {
