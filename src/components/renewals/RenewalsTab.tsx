@@ -27,6 +27,16 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
   const [groupFilter, setGroupFilter] = useState<'Todos' | 'Vencidos' | 'Vence Hoje' | 'Ativos'>('Todos');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  // Helper to format date for display DD/MM/YYYY
+  const formatDateBR = (dateStr: string | undefined | null) => {
+    if (!dateStr) return '-';
+    // If it's a full ISO string, take only the date part
+    const justDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+    const parts = justDate.split('-');
+    if (parts.length !== 3) return dateStr;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  };
+
   // Aggregate unique renters and their stats
   const rentersData = useMemo(() => {
     const renterMap = new Map<string, {
@@ -50,8 +60,13 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
         };
         
         existing.groupCount++;
-        if (group.data_vencimento && isPast(parseISO(group.data_vencimento)) && !isToday(parseISO(group.data_vencimento))) {
-          existing.expiredCount++;
+        // Use a more robust check for expiration that avoids timezone shifts
+        if (group.data_vencimento) {
+          const expiration = parseISO(group.data_vencimento);
+          // Compare using startOfDay to avoid time issues
+          if (isPast(expiration) && !isToday(expiration)) {
+            existing.expiredCount++;
+          }
         }
         existing.totalValue += Number(group.valor) || 0;
         renterMap.set(key, existing);
@@ -71,8 +86,11 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
             };
             
             existing.groupCount++;
-            if (l.data_vencimento && isPast(parseISO(l.data_vencimento)) && !isToday(parseISO(l.data_vencimento))) {
-              existing.expiredCount++;
+            if (l.data_vencimento) {
+              const expiration = parseISO(l.data_vencimento);
+              if (isPast(expiration) && !isToday(expiration)) {
+                existing.expiredCount++;
+              }
             }
             existing.totalValue += Number(l.valor) || 0;
             renterMap.set(key, existing);
@@ -123,6 +141,8 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
 
     return list.filter(item => {
       if (groupFilter === 'Todos') return true;
+      if (!item.locatarioData.data_vencimento) return false;
+      
       const date = parseISO(item.locatarioData.data_vencimento);
       if (groupFilter === 'Vencidos') return isPast(date) && !isToday(date);
       if (groupFilter === 'Vence Hoje') return isToday(date);
@@ -164,6 +184,7 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
     setIsRenewing(true);
     setShowConfirmModal(false);
     const timestamp = new Date().toISOString();
+    const targetDateFormatted = formatDateBR(newExpirationDate);
     let successCount = 0;
 
     try {
@@ -234,14 +255,14 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
       const promises = Array.from(updatesByGroup.entries()).map(([id, updates]) => onUpdate(id, updates));
       await Promise.all(promises);
 
-      setToast({ message: `Renovação concluída: ${successCount} grupos renovados!`, type: 'success' });
+      setToast({ message: `${successCount} grupos renovados para ${targetDateFormatted}`, type: 'success' });
       setSelectedGroupKeys(new Set());
     } catch (error) {
       console.error("Erro ao renovar por locatário:", error);
-      setToast({ message: "Erro em algumas renovações. Verifique o console.", type: 'error' });
+      setToast({ message: "Alguns grupos não foram renovados", type: 'error' });
     } finally {
       setIsRenewing(false);
-      setTimeout(() => setToast(null), 3000);
+      setTimeout(() => setToast(null), 5000);
     }
   };
 
@@ -250,7 +271,7 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
 
     const hour = new Date().getHours();
     const greeting = hour >= 18 || hour < 5 ? "Boa noite" : "Bom dia";
-    const dateFormatted = format(parseISO(newExpirationDate), 'dd/MM/yyyy');
+    const dateFormatted = formatDateBR(newExpirationDate);
     
     const message = `${greeting}, ${selectedRenterStats.nome}! Tudo bem? 😊\n\nSeus grupos foram renovados com sucesso.\nPróximo vencimento: *${dateFormatted}*\n\nQualquer coisa, me chama por aqui 👍`;
     
@@ -534,7 +555,7 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
                             "font-black font-mono",
                             isVencido ? "text-rose-500" : isVenceHoje ? "text-orange-500" : "text-slate-500"
                           )}>
-                            {date ? format(date, 'dd/MM/yyyy') : '-'}
+                            {formatDateBR(dateStr)}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -580,7 +601,7 @@ export function RenewalsTab({ groups, onUpdate }: RenewalsTabProps) {
                 <div className="text-center space-y-3 mb-8">
                   <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Renovar aluguel do locatário?</h3>
                   <p className="text-slate-500 font-bold leading-relaxed px-4">
-                    Você está renovando <span className="text-emerald-600 font-black">{selectedGroupKeys.size} grupos</span> do locatário <span className="text-slate-900 font-black">{selectedRenterStats.nome}</span> para o vencimento <span className="text-slate-900 font-black">{format(parseISO(newExpirationDate), 'dd/MM/yyyy')}</span>.
+                    Você está renovando <span className="text-emerald-600 font-black">{selectedGroupKeys.size} grupos</span> do locatário <span className="text-slate-900 font-black">{selectedRenterStats.nome}</span> para o vencimento <span className="text-slate-900 font-black">{formatDateBR(newExpirationDate)}</span>.
                   </p>
                 </div>
 
