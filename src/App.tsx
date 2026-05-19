@@ -51,14 +51,12 @@ export default function App() {
     }
   };
 
-  const handleMassUpdate = async (updates: { id: string, nome_grupo: string, quantidade_membros: number }[]) => {
+  const handleMassUpdate = async (updates: any[]) => {
     try {
-      const promises = updates.map(update => 
-        updateGroup(update.id, { 
-          nome_grupo: update.nome_grupo, 
-          quantidade_membros: update.quantidade_membros 
-        })
-      );
+      const promises = updates.map(update => {
+        const { id, ...data } = update;
+        return updateGroup(id, data);
+      });
       await Promise.all(promises);
       alert(`${updates.length} registros atualizados com sucesso!`);
     } catch (error) {

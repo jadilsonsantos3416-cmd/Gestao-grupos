@@ -18,6 +18,17 @@ export function normalizeSearchText(text: string): string {
     .trim();
 }
 
+export function normalizeNicho(value: string | undefined | null): string {
+  if (!value) return '';
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+    .replace(/\//g, ' / ') // Padronizar barras com espaço
+    .replace(/\s+/g, ' ') // Remove espaços duplicados
+    .trim();
+}
+
 export function extractFacebookGroupId(text: string): string {
   if (!text) return '';
   const trimmed = text.trim();

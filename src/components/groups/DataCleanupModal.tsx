@@ -3,14 +3,16 @@ import { X, Sparkles, CheckCircle, AlertCircle, Info, RefreshCw, Trash2, ShieldC
 import { motion, AnimatePresence } from 'motion/react';
 import { Group } from '@/src/types';
 import { cleanGroupName, parseMembers } from '@/src/lib/groupParser';
-import { cn } from '@/src/lib/utils';
+import { cn, normalizeNicho } from '@/src/lib/utils';
 
 interface CleanupItem {
   id: string;
   originalName: string;
   originalMembers: number;
+  originalNicho: string;
   proposedName: string;
   proposedMembers: number;
+  proposedNicho: string;
   status: 'correct' | 'needs_fix' | 'manual';
   isSelected: boolean;
 }
@@ -34,6 +36,7 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
       
       const groupName = g.nome_grupo || '';
       const groupMembros = Number(g.quantidade_membros) || 0;
+      const groupNicho = g.nicho || 'Geral';
 
       // 1. Check for member patterns in the name
       // Match numbers like 50.000, 50k, 50 mil, etc.
@@ -67,13 +70,35 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
         status = 'needs_fix';
       }
 
+      // 3. Niche Normalization
+      const normNicho = normalizeNicho(groupNicho);
+      let proposedNicho = groupNicho.trim();
+      
+      if (normNicho) {
+        // Apply better formatting: capitalize words
+        proposedNicho = normNicho.split(' ')
+          .map(w => w.length > 1 ? w.charAt(0).toUpperCase() + w.slice(1) : w)
+          .join(' ');
+        
+        // Special case for our standardized separators
+        if (proposedNicho.includes(' / ')) {
+          proposedNicho = proposedNicho.split(' / ')
+            .map(s => s.trim().charAt(0).toUpperCase() + s.trim().slice(1))
+            .join(' / ');
+        }
+      }
+
+      if (proposedNicho !== groupNicho) {
+        status = 'needs_fix';
+      }
+
       // If name became too short or empty, might need manual review
       if (!proposedName || proposedName.length < 3) {
         status = 'manual';
       }
 
       // If it looks identical to original, it's correct
-      if (proposedName === groupName && Object.is(proposedMembers, groupMembros)) {
+      if (proposedName === groupName && Object.is(proposedMembers, groupMembros) && proposedNicho === groupNicho) {
         status = 'correct';
       }
 
@@ -81,8 +106,10 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
         id: g.id,
         originalName: groupName,
         originalMembers: groupMembros,
+        originalNicho: groupNicho,
         proposedName,
         proposedMembers,
+        proposedNicho,
         status
       };
     }).filter(item => item !== null) as CleanupItem[];
@@ -125,7 +152,8 @@ export function DataCleanupModal({ onClose, groups, onApply }: DataCleanupModalP
       .map(d => ({
         id: d.id,
         nome_grupo: d.proposedName,
-        quantidade_membros: d.proposedMembers
+        quantidade_membros: d.proposedMembers,
+        nicho: d.proposedNicho
       }));
 
     if (approvedUpdates.length === 0 && selectedIds.size > 0) {

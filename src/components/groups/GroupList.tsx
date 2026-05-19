@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Group, QuickFilter } from '@/src/types';
 import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera, CheckCircle2, X, Users, Plus, XCircle, RotateCcw, CalendarClock } from 'lucide-react';
-import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers, calcularValorSugeridoAluguel, normalizeSearchText, extractFacebookGroupId } from '@/src/lib/utils';
+import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers, calcularValorSugeridoAluguel, normalizeSearchText, extractFacebookGroupId, normalizeNicho } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast, addDays, isBefore, isAfter, startOfDay } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
@@ -603,9 +603,24 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   ], []);
 
   const allAvailableNiches = useMemo(() => {
-    const existingNichesFromGroups = Array.from(new Set(groups.map(g => g.nicho))).filter(Boolean);
-    const existingNichesFromDB = nichos.map(n => n.nome);
-    return Array.from(new Set([...existingNichesFromGroups, ...existingNichesFromDB])).sort();
+    const rawNiches = Array.from(new Set(groups.map(g => g.nicho || 'Geral')));
+    const dbNiches = nichos.map(n => n.nome);
+    
+    const combined = Array.from(new Set([...rawNiches, ...dbNiches]));
+    const normalizedMap = new Map<string, string>(); // normalized -> display
+
+    combined.forEach(n => {
+      const norm = normalizeNicho(n);
+      if (!norm) return;
+      
+      // Prefer capitalization for the display name if multiple versions exist
+      const existing = normalizedMap.get(norm);
+      if (!existing || (n.trim().length > 0 && n === n.charAt(0).toUpperCase() + n.slice(1))) {
+        normalizedMap.set(norm, n.trim());
+      }
+    });
+
+    return Array.from(normalizedMap.values()).sort();
   }, [groups, nichos]);
 
   const handleUpdateNiche = async (group: Group, newNicho: string) => {
@@ -977,9 +992,12 @@ Link: ${normalizeFacebookGroupLink(group)}`;
         (g.locatarios || []).some(l => l.nome.toLowerCase().includes(renterSearch.toLowerCase()))
       );
 
+      const normNichoFilter = normalizeNicho(nichoFilter);
+      const isNichoMatch = nichoFilter === 'Todos' || normalizeNicho(g.nicho || 'Geral') === normNichoFilter;
+
       return mainSearchMatch && 
       renterMatch && 
-      (nichoFilter === 'Todos' || (g.nicho || 'Geral') === nichoFilter) &&
+      isNichoMatch && 
       (statusFilter === 'Todos' || getEffectiveStatus(g) === statusFilter) &&
       (perfilFilter === 'Todos' || (g.perfil_compartilhando || 'Inativo') === perfilFilter) &&
       (shopeeFilter === 'Todos' || (g.uso_shopee || 'Inativo') === shopeeFilter) &&
@@ -1060,8 +1078,20 @@ Link: ${normalizeFacebookGroupLink(group)}`;
   const groupedGroups: { [nicho: string]: GroupWithPriority[] } = filteredGroups.reduce((acc, group) => {
     // When "Todos" filter is used, we show one single global group
     const nichoKey = nichoFilter === 'Todos' ? 'Todos os Grupos' : (group.nicho || 'Sem Nicho');
-    if (!acc[nichoKey]) acc[nichoKey] = [];
-    acc[nichoKey].push(group);
+    
+    // We normalize the key for grouping to ensure "Musa" and " musa" end up in the same visual bucket
+    // But we keep a representative "nichoFilter" label if it's selected
+    const groupNichoNorm = normalizeNicho(group.nicho || 'Geral');
+    let bucketName = group.nicho || 'Sem Nicho';
+    
+    if (nichoFilter !== 'Todos') {
+      bucketName = nichoFilter;
+    }
+    
+    const finalKey = nichoFilter === 'Todos' ? 'Todos os Grupos' : bucketName;
+
+    if (!acc[finalKey]) acc[finalKey] = [];
+    acc[finalKey].push(group);
     return acc;
   }, {} as { [nicho: string]: GroupWithPriority[] });
 
@@ -1489,6 +1519,68 @@ Link: ${normalizeFacebookGroupLink(group)}`;
           </div>
         </div>
       </div>
+
+      {/* Active Filters Summary */}
+      {(nichoFilter !== 'Todos' || statusFilter !== 'Todos' || perfilFilter !== 'Todos' || shopeeFilter !== 'Todos' || priorityFilter !== 'Todos' || expirationFilter !== 'Todos' || renterFilter !== 'Todos' || searchTerm) && (
+        <div className="mx-4 mb-4 p-3 bg-white border border-slate-100 rounded-2xl flex flex-wrap items-center gap-2 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-2 pr-2 border-r border-slate-100 mr-2">
+            <Filter className="w-3.5 h-3.5 text-blue-500" />
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Filtros Ativos:</span>
+          </div>
+          
+          {nichoFilter !== 'Todos' && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg border border-amber-100 text-[9px] font-bold">
+              <span>Nicho: {nichoFilter}</span>
+              <button onClick={() => setNichoFilter('Todos')} className="hover:text-amber-900 transition-colors"><X className="w-3 h-3" /></button>
+            </div>
+          )}
+
+          {searchTerm && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 text-[9px] font-bold">
+              <Search className="w-3 h-3" />
+              <span className="max-w-[150px] truncate">Busca: {searchTerm}</span>
+              <button onClick={() => setSearchTerm('')} className="hover:text-blue-900 transition-colors"><X className="w-3 h-3" /></button>
+            </div>
+          )}
+
+          {(statusFilter !== 'Todos' || perfilFilter !== 'Todos' || shopeeFilter !== 'Todos' || priorityFilter !== 'Todos' || expirationFilter !== 'Todos' || renterFilter !== 'Todos') && (
+             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 text-slate-600 rounded-lg border border-slate-100 text-[9px] font-bold">
+               <span>Outros Filtros</span>
+               <button 
+                 onClick={() => {
+                   setStatusFilter('Todos');
+                   setPerfilFilter('Todos');
+                   setShopeeFilter('Todos');
+                   setPriorityFilter('Todos');
+                   setExpirationFilter('Todos');
+                   setRenterFilter('Todos');
+                 }} 
+                 className="flex items-center gap-1 hover:text-rose-600 transition-colors ml-1 border-l border-slate-200 pl-1.5"
+               >
+                 <span className="text-[8px] uppercase">Limpar</span>
+                 <X className="w-3 h-3" />
+               </button>
+             </div>
+          )}
+
+          <button 
+            onClick={() => {
+              setNichoFilter('Todos');
+              setStatusFilter('Todos');
+              setPerfilFilter('Todos');
+              setShopeeFilter('Todos');
+              setPriorityFilter('Todos');
+              setExpirationFilter('Todos');
+              setRenterFilter('Todos');
+              setSearchTerm('');
+            }}
+            className="ml-auto text-[9px] font-black uppercase text-rose-500 hover:text-rose-600 transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-xl hover:bg-rose-50"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Limpar Tudo
+          </button>
+        </div>
+      )}
 
       {/* Desktop Table Content */}
       <div className="hidden lg:block">
@@ -2061,6 +2153,72 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                {formatNumber(group.quantidade_membros || 0)} MEMBROS
                              </span>
                            </div>
+
+                           {/* Mobile Search Diagnostic */}
+                           {searchTerm && (normalizeSearchText(group.link_grupo || '').includes(normalizeSearchText(searchTerm)) || String(group.group_id).includes(extractFacebookGroupId(searchTerm))) && (
+                             <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                               <div className="flex items-center gap-2 mb-1">
+                                 <AlertCircle className="w-3 h-3 text-blue-500" />
+                                 <span className="text-[8px] font-black uppercase text-blue-600 tracking-[0.1em]">Diagnóstico de Filtros</span>
+                               </div>
+                               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[8px] font-bold text-slate-500">
+                                 <div className="flex justify-between items-center gap-1">
+                                   <span className="shrink-0">Nicho Salvo:</span>
+                                   <span className={cn("text-slate-900 font-extrabold truncate", normalizeNicho(group.nicho) !== normalizeNicho(nichoFilter) && nichoFilter !== 'Todos' && "text-rose-500 underline decoration-rose-300 underline-offset-2")}>
+                                     {group.nicho || 'Geral'}
+                                   </span>
+                                 </div>
+                                 <div className="flex justify-between items-center gap-1">
+                                   <span className="shrink-0">Status:</span>
+                                   <span className={cn("text-slate-900 font-extrabold", statusFilter !== 'Todos' && getEffectiveStatus(group) !== statusFilter && "text-rose-500 underline decoration-rose-300 underline-offset-2")}>
+                                     {getEffectiveStatus(group)}
+                                   </span>
+                                 </div>
+                                 <div className="flex justify-between items-center gap-1">
+                                   <span className="shrink-0">Perfil:</span>
+                                   <span className={cn("text-slate-900 font-extrabold", perfilFilter !== 'Todos' && (group.perfil_compartilhando || 'Inativo') !== perfilFilter && "text-rose-500 underline decoration-rose-300 underline-offset-2")}>
+                                     {group.perfil_compartilhando || 'Inativo'}
+                                   </span>
+                                 </div>
+                                 <div className="flex justify-between items-center gap-1">
+                                   <span className="shrink-0">Shopee:</span>
+                                   <span className={cn("text-slate-900 font-extrabold", shopeeFilter !== 'Todos' && (group.uso_shopee || 'Inativo') !== shopeeFilter && "text-rose-500 underline decoration-rose-300 underline-offset-2")}>
+                                     {group.uso_shopee || 'Inativo'}
+                                   </span>
+                                 </div>
+                               </div>
+                               <div className="pt-1 flex gap-1.5">
+                                 <button 
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                     setNicheEditCoords(calculateDropdownPos(rect, 320, 224));
+                                     setEditingGroupNicheId(group.id);
+                                     setIsCreatingNewNiche(false);
+                                   }}
+                                   className="flex-1 py-2 bg-blue-500 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all active:scale-95 flex items-center justify-center gap-1"
+                                 >
+                                   <Edit2 className="w-2.5 h-2.5" />
+                                   Corrigir Nicho
+                                 </button>
+                                 <button 
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     setNichoFilter('Todos');
+                                     setStatusFilter('Todos');
+                                     setPerfilFilter('Todos');
+                                     setShopeeFilter('Todos');
+                                     setPriorityFilter('Todos');
+                                     setRenterFilter('Todos');
+                                   }}
+                                   className="flex-1 py-2 bg-white border border-slate-200 text-slate-500 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center gap-1"
+                                 >
+                                   <X className="w-2.5 h-2.5" />
+                                   Limpar Filtros
+                                 </button>
+                               </div>
+                             </div>
+                           )}
                         </div>
                         
                         <div className="relative">
