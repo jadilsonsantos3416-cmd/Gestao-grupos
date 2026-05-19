@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Group, QuickFilter } from '@/src/types';
 import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera, CheckCircle2, X, Users, Plus, XCircle, RotateCcw, CalendarClock, AlertCircle } from 'lucide-react';
-import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers, calcularValorSugeridoAluguel, normalizeSearchText, extractFacebookGroupId, normalizeNicho } from '@/src/lib/utils';
+import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers, calcularValorSugeridoAluguel, normalizeSearchText, extractFacebookGroupId, normalizeNicho, normalizeText } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast, addDays, isBefore, isAfter, startOfDay } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
@@ -972,12 +972,13 @@ Link: ${normalizeFacebookGroupLink(group)}`;
 
   const filteredGroups = groupsWithPriority
     .filter(g => {
-      const normalizedSearch = normalizeSearchText(searchTerm);
+      const normalizedSearch = normalizeText(searchTerm);
       const searchFBId = extractFacebookGroupId(searchTerm);
       const groupFBId = String(g.group_id || '');
       
-      const nameMatch = (g.nome_grupo || '').toLowerCase().includes(searchTerm.toLowerCase());
-      const linkMatch = normalizeSearchText(g.link_grupo || '').includes(normalizedSearch);
+      const nameMatch = normalizeText(g.nome_grupo || '').includes(normalizedSearch);
+      const nichoMatch = normalizeText(g.nicho || 'Geral').includes(normalizedSearch);
+      const linkMatch = normalizeSearchText(g.link_grupo || '').includes(normalizeSearchText(searchTerm));
       const idMatch = searchFBId && (groupFBId === searchFBId || groupFBId.includes(searchFBId));
       
       const altIdMatch = searchFBId && (
@@ -985,11 +986,14 @@ Link: ${normalizeFacebookGroupLink(group)}`;
         String((g as any).id_grupo || '').includes(searchFBId)
       );
 
-      const mainSearchMatch = !searchTerm || nameMatch || linkMatch || idMatch || altIdMatch;
+      const mainSearchMatch = !searchTerm || nameMatch || nichoMatch || linkMatch || idMatch || altIdMatch;
 
+      const normRenterSearch = normalizeText(renterSearch);
       const renterMatch = (
-        (g.locatario || '').toLowerCase().includes(renterSearch.toLowerCase()) ||
-        (g.locatarios || []).some(l => l.nome.toLowerCase().includes(renterSearch.toLowerCase()))
+        normalizeText(g.locatario || '').includes(normRenterSearch) ||
+        (g.locatarios || []).some(l => normalizeText(l.nome).includes(normRenterSearch)) ||
+        String(g.whatsapp || '').includes(normRenterSearch) ||
+        (g.locatarios || []).some(l => String(l.whatsapp || '').includes(normRenterSearch))
       );
 
       const normNichoFilter = normalizeNicho(nichoFilter);

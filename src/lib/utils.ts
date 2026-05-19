@@ -18,6 +18,17 @@ export function normalizeSearchText(text: string): string {
     .trim();
 }
 
+export function normalizeText(value: string | undefined | null): string {
+  if (!value) return '';
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+    .toLowerCase()
+    .replace(/\//g, ' ') // Replace slashes with spaces
+    .replace(/\s+/g, ' ') // Remove espaços duplicados
+    .trim();
+}
+
 export function normalizeNicho(value: string | undefined | null): string {
   if (!value) return '';
   return value
