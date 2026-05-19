@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Group, GroupStatus, Renter, Nicho } from '@/src/types';
 import { X, Search, Phone, User, Calendar, DollarSign, Users, Type, Link, FileText, AlertCircle, Tag } from 'lucide-react';
-import { cn } from '@/src/lib/utils';
+import { cn, extractFacebookGroupId, normalizeSearchText } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, addMonths, parseISO } from 'date-fns';
 import { extractGroupId } from '@/src/lib/groupParser';
@@ -12,9 +12,10 @@ interface GroupFormProps {
   onSave: (group: any) => Promise<void>;
   editingGroup?: Group | null;
   existingGroups: Group[];
+  onViewExistingGroup?: (searchTerm: string) => void;
 }
 
-export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: GroupFormProps) {
+export function GroupForm({ onClose, onSave, editingGroup, existingGroups, onViewExistingGroup }: GroupFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [nichos, setNichos] = useState<Nicho[]>([]);
@@ -54,23 +55,24 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
   });
 
   const duplicateGroup = React.useMemo(() => {
-    if (!formData.link_grupo) return null;
+    const currentLink = formData.link_grupo?.trim();
+    const currentId = formData.group_id || extractFacebookGroupId(currentLink || '');
     
-    const currentId = formData.group_id;
-    const currentLink = formData.link_grupo.trim().toLowerCase();
+    if (!currentLink && !currentId) return null;
+    
+    const currentNormalizedLink = normalizeSearchText(currentLink || '');
 
     return existingGroups.find(g => {
       // Ignorar se for o próprio grupo sendo editado
       if (editingGroup?.id && g.id === editingGroup.id) return false;
 
-      // Se ambos tiverem ID numérico do Facebook, comparar por ele
+      // Pelo ID numérico (mais preciso)
       if (currentId && g.group_id === currentId) return true;
 
-      // Caso contrário, comparar pelo link exato (removendo barras finais)
-      const gLink = (g.link_grupo || "").trim().toLowerCase().split('?')[0].replace(/\/$/, "");
-      const fLink = currentLink.split('?')[0].replace(/\/$/, "");
+      // Pelo link normalizado (remove protocolos, www e barras finais)
+      if (currentNormalizedLink && normalizeSearchText(g.link_grupo || '') === currentNormalizedLink) return true;
       
-      return gLink === fLink && fLink !== "";
+      return false;
     });
   }, [formData.group_id, formData.link_grupo, existingGroups, editingGroup]);
 
@@ -306,11 +308,53 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups }: Gro
               )}
 
               {!isSaving && duplicateGroup && (
-                <div className="px-5 py-4 bg-amber-50 border border-amber-100 rounded-[1.5rem] flex gap-4 animate-pulse">
-                  <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
-                  <div className="text-[10px] font-bold">
-                    <p className="font-black text-amber-900 uppercase tracking-widest text-[9px] mb-1">Atenção: Duplicado!</p>
-                    <p className="text-amber-700 leading-relaxed uppercase tracking-wider">Este ID já pertence ao grupo: <span className="font-black underline">{duplicateGroup.nome_grupo}</span></p>
+                <div className="p-6 bg-amber-50 border border-amber-200 rounded-[2.5rem] space-y-4 animate-in fade-in slide-in-from-top-1 scale-[0.98]">
+                  <div className="flex gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0 shadow-inner">
+                      <AlertCircle className="w-7 h-7 text-amber-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-amber-900 uppercase tracking-[0.15em] text-[10px] mb-1 opacity-80">Este grupo já existe no sistema</p>
+                      <h4 className="text-sm font-black text-slate-800 truncate">{duplicateGroup.nome_grupo}</h4>
+                      <div className="flex flex-wrap gap-1.5 mt-2.5">
+                        <span className="px-2.5 py-1 bg-white border border-amber-100 rounded-lg text-[9px] font-black text-amber-700 uppercase tracking-wider shadow-sm">
+                          {duplicateGroup.nicho || 'Geral'}
+                        </span>
+                        <span className="px-2.5 py-1 bg-white border border-amber-100 rounded-lg text-[9px] font-black text-amber-700 uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                          <Users className="w-3 h-3" />
+                          {(duplicateGroup.quantidade_membros || 0).toLocaleString('pt-BR')} MEMBROS
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="px-4 py-3 bg-white/40 rounded-2xl border border-amber-100/30 break-all">
+                    <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1.5">Link registrado:</p>
+                    <p className="text-[10px] font-mono font-bold text-slate-500 leading-relaxed">{duplicateGroup.link_grupo}</p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => onViewExistingGroup?.(duplicateGroup.link_grupo || duplicateGroup.group_id || '')}
+                      className="flex-[1.5] py-4 bg-amber-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-700 transition-all active:scale-95 flex items-center justify-center gap-2.5 shadow-lg shadow-amber-200/50"
+                    >
+                      <Search className="w-4 h-4" />
+                      Ver Grupo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (duplicateGroup.link_grupo) {
+                          navigator.clipboard.writeText(duplicateGroup.link_grupo);
+                          alert("Link copiado!");
+                        }
+                      }}
+                      className="flex-1 py-4 bg-white border-2 border-amber-100 text-amber-700 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-50 transition-all active:scale-95 flex items-center justify-center gap-2.5"
+                    >
+                      <Link className="w-4 h-4" />
+                      Copiar Link
+                    </button>
                   </div>
                 </div>
               )}

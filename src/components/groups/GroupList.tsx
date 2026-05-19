@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Group, QuickFilter } from '@/src/types';
 import { Search, ExternalLink, Edit2, Trash2, Filter, ArrowUpDown, Download, Loader2, ChevronDown, ClipboardList, Sparkles, Wand2, Trophy, UserPlus, UserMinus, PhoneCall, MoreVertical, Copy, Tag, Camera, CheckCircle2, X, Users, Plus, XCircle, RotateCcw, CalendarClock } from 'lucide-react';
-import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers, calcularValorSugeridoAluguel } from '@/src/lib/utils';
+import { cn, formatNumber, formatCurrency, ensureAbsoluteUrl, parseMembers, calcularValorSugeridoAluguel, normalizeSearchText, extractFacebookGroupId } from '@/src/lib/utils';
 import { getGroupPriority, PriorityLevel, PriorityInfo } from '@/src/lib/priorityUtils';
 import { parseISO, format, isToday, isTomorrow, isPast, addDays, isBefore, isAfter, startOfDay } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
@@ -28,6 +28,8 @@ interface GroupListProps {
   onUpdate?: (id: string, updates: Partial<Group>) => Promise<void>;
   activeQuickFilter?: QuickFilter;
   onQuickFilterChange?: (filter: QuickFilter) => void;
+  initialSearchTerm?: string;
+  onSearchChange?: (val: string) => void;
 }
 
 type SortField = 'data_vencimento' | 'quantidade_membros' | 'nome_grupo' | 'prioridade' | 'score' | 'aluguel_sugerido';
@@ -36,7 +38,7 @@ interface GroupWithPriority extends Group {
   priorityInfo: PriorityInfo;
 }
 
-export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuickFilter, onQuickFilterChange }: GroupListProps) {
+export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuickFilter, onQuickFilterChange, initialSearchTerm = '', onSearchChange }: GroupListProps) {
   const desktopFakeScrollRef = useRef<HTMLDivElement>(null);
   const desktopTableWrapperRef = useRef<HTMLDivElement>(null);
   const mobileFakeScrollRef = useRef<HTMLDivElement>(null);
@@ -52,7 +54,21 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
     }
   };
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+
+  useEffect(() => {
+    if (initialSearchTerm !== searchTerm) {
+      setSearchTerm(initialSearchTerm);
+    }
+  }, [initialSearchTerm]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onSearchChange?.(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm, onSearchChange]);
+
   const [renterSearch, setRenterSearch] = useState('');
   const [nichoFilter, setNichoFilter] = useState('Todos');
   const [statusFilter, setStatusFilter] = useState('Todos');
@@ -940,12 +956,29 @@ Link: ${normalizeFacebookGroupLink(group)}`;
   };
 
   const filteredGroups = groupsWithPriority
-    .filter(g => 
-      (g.nome_grupo || '').toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (
+    .filter(g => {
+      const normalizedSearch = normalizeSearchText(searchTerm);
+      const searchFBId = extractFacebookGroupId(searchTerm);
+      const groupFBId = String(g.group_id || '');
+      
+      const nameMatch = (g.nome_grupo || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const linkMatch = normalizeSearchText(g.link_grupo || '').includes(normalizedSearch);
+      const idMatch = searchFBId && (groupFBId === searchFBId || groupFBId.includes(searchFBId));
+      
+      const altIdMatch = searchFBId && (
+        String((g as any).facebook_id || '').includes(searchFBId) ||
+        String((g as any).id_grupo || '').includes(searchFBId)
+      );
+
+      const mainSearchMatch = !searchTerm || nameMatch || linkMatch || idMatch || altIdMatch;
+
+      const renterMatch = (
         (g.locatario || '').toLowerCase().includes(renterSearch.toLowerCase()) ||
         (g.locatarios || []).some(l => l.nome.toLowerCase().includes(renterSearch.toLowerCase()))
-      ) &&
+      );
+
+      return mainSearchMatch && 
+      renterMatch && 
       (nichoFilter === 'Todos' || (g.nicho || 'Geral') === nichoFilter) &&
       (statusFilter === 'Todos' || getEffectiveStatus(g) === statusFilter) &&
       (perfilFilter === 'Todos' || (g.perfil_compartilhando || 'Inativo') === perfilFilter) &&
@@ -964,7 +997,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
         }
         return true;
       })())
-    )
+    })
     .sort((a, b) => {
       // Handle Sorting
       if (sortField === 'nome_grupo') {
@@ -1193,8 +1226,8 @@ Link: ${normalizeFacebookGroupLink(group)}`;
             <input 
               ref={searchTermInputRef}
               type="text" 
-              placeholder="Pesquisar por nome do grupo..."
-              className="w-full bg-white border border-slate-100 pl-10 md:pl-11 pr-10 py-2 md:py-2.5 rounded-xl md:rounded-2xl shadow-sm focus:ring-4 focus:ring-green-50 focus:border-green-200 outline-none font-bold text-[10px] md:text-xs text-slate-600 placeholder:text-slate-300 transition-all"
+              placeholder="Pesquisar por nome, link ou ID do grupo..."
+              className="w-full bg-white border border-slate-100 pl-10 md:pl-11 pr-10 py-2 md:py-2.5 rounded-xl md:rounded-2xl shadow-sm focus:ring-4 focus:ring-green-50 focus:border-green-200 outline-none font-bold text-[10px] md:text-xs text-slate-600 placeholder:text-slate-300 transition-all font-mono"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />

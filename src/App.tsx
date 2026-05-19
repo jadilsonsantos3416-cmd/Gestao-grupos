@@ -28,6 +28,7 @@ export default function App() {
 
   const [activeFilter, setActiveFilter] = useState<QuickFilter>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [groupsSearchTerm, setGroupsSearchTerm] = useState('');
   const [isImporterOpen, setIsImporterOpen] = useState(false);
   const [isCleanupOpen, setIsCleanupOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
@@ -149,6 +150,8 @@ export default function App() {
                     onUpdate={updateGroup}
                     activeQuickFilter={activeFilter}
                     onQuickFilterChange={setActiveFilter}
+                    initialSearchTerm={groupsSearchTerm}
+                    onSearchChange={setGroupsSearchTerm}
                   />
                 </ErrorBoundary>
               )}
@@ -203,6 +206,11 @@ export default function App() {
                 onSave={handleSaveGroup}
                 editingGroup={editingGroup}
                 existingGroups={groups}
+                onViewExistingGroup={(searchTerm) => {
+                  setGroupsSearchTerm(searchTerm);
+                  setActiveTab('groups');
+                  setIsFormOpen(false);
+                }}
               />
             </ErrorBoundary>
           )}

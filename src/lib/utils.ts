@@ -5,6 +5,29 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function normalizeSearchText(text: string): string {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+    .replace(/^https?:\/\//i, '') // Remove http/https
+    .replace(/^www\./i, '') // Remove www
+    .replace(/\/$/, '') // Remove barra final
+    .replace(/\s+/g, ' ') // Remove espaços extras
+    .trim();
+}
+
+export function extractFacebookGroupId(text: string): string {
+  if (!text) return '';
+  const trimmed = text.trim();
+  // Se for apenas números
+  if (/^\d+$/.test(trimmed)) return trimmed;
+  // Se for link, tenta extrair o ID
+  const match = trimmed.match(/\/groups\/(\d+)/i);
+  return match ? match[1] : '';
+}
+
 export function formatNumber(num: number | null | undefined): string {
   if (num === null || num === undefined) return '-';
   return new Intl.NumberFormat('pt-BR').format(num);
