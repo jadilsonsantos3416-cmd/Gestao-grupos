@@ -232,3 +232,53 @@ export function calcularValorSugeridoAluguel(grupo: any): {
     justificativa
   };
 }
+
+export async function detectGroupPrivacy(link: string): Promise<'Público' | 'Privado' | 'Não verificado'> {
+  if (!link) return 'Não verificado';
+  
+  try {
+    const encodedUrl = encodeURIComponent(link);
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodedUrl}`;
+    
+    const response = await fetch(proxyUrl);
+    if (!response.ok) return 'Não verificado';
+    
+    const data = await response.json();
+    const html = data?.contents || '';
+    
+    if (!html) return 'Não verificado';
+    
+    // Procura padrões de grupos públicos e privados do FB
+    if (
+      html.includes('"privacy":"PUBLIC"') || 
+      html.includes('"privacyType":"PUBLIC"') || 
+      html.includes('Grupo público') || 
+      html.includes('Public group') || 
+      html.toLowerCase().includes('public_group') ||
+      html.includes('id="group_header_public"') ||
+      html.includes('property="og:description" content="Grupo público') ||
+      html.includes('property="og:description" content="Public group')
+    ) {
+      return 'Público';
+    }
+    
+    if (
+      html.includes('"privacy":"CLOSED"') || 
+      html.includes('"privacy":"SECRET"') || 
+      html.includes('Grupo privado') || 
+      html.includes('Private group') || 
+      html.toLowerCase().includes('private_group') ||
+      html.includes('id="group_header_private"') ||
+      html.includes('property="og:description" content="Grupo privado') ||
+      html.includes('property="og:description" content="Private group')
+    ) {
+      return 'Privado';
+    }
+    
+    return 'Não verificado';
+  } catch (error) {
+    console.error("Erro ao verificar privacidade do grupo:", error);
+    return 'Não verificado';
+  }
+}
+

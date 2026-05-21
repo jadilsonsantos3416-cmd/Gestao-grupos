@@ -75,6 +75,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
   const [perfilFilter, setPerfilFilter] = useState('Todos');
   const [shopeeFilter, setShopeeFilter] = useState('Todos');
   const [priorityFilter, setPriorityFilter] = useState('Todos');
+  const [privacyFilter, setPrivacyFilter] = useState('Todos');
   const [onlyReadyForShopee, setOnlyReadyForShopee] = useState(false);
   const [sortField, setSortField] = useState<SortField>('quantidade_membros');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -307,6 +308,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
           'NOME': (item.nome_grupo || item.nome || "").replace(/\n/g, ' ').trim(),
           'LINK': normalizeFacebookGroupLink(g),
           'MEMBROS': item.quantidade_membros || item.membros || 0,
+          'PRIVACIDADE': item.privacidade_grupo || 'Não verificado',
           'VALOR SUGERIDO': suggestion.valorSugeridoAluguel,
           'VALOR ATUAL': item.valor || 0
         };
@@ -322,6 +324,7 @@ export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuick
         { wch: 38 }, // NOME
         { wch: 60 }, // LINK
         { wch: 15 }, // MEMBROS
+        { wch: 22 }, // PRIVACIDADE
         { wch: 18 }, // VALOR SUGERIDO
         { wch: 15 }, // VALOR ATUAL
       ];
@@ -863,6 +866,30 @@ Link: ${normalizeFacebookGroupLink(group)}`;
     }
   };
 
+  const handleBatchPrivacy = async (value: 'Público' | 'Privado' | 'Não verificado') => {
+    if (!onUpdate || selectedGroupIds.size === 0) return;
+
+    const count = selectedGroupIds.size;
+    setProcessingAction({ id: 'batch', field: 'perfil' });
+    
+    try {
+      const promises = Array.from(selectedGroupIds).map(id => {
+        return onUpdate(id, { 
+          privacidade_grupo: value,
+          atualizado_em: new Date().toISOString()
+        });
+      });
+      await Promise.all(promises);
+      setSelectedGroupIds(new Set());
+      setToast({ message: `${count} grupos definidos como ${value}!`, type: 'success' });
+    } catch (error) {
+      console.error("Erro na atualização de privacidade em lote:", error);
+      setToast({ message: "Erro em algumas atualizações de privacidade.", type: 'error' });
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
   const getEffectiveStatus = (group: Group): string => {
     const mergedLocatarios = getMergedLocatarios(group);
     if (mergedLocatarios.length > 0) {
@@ -999,9 +1026,14 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       const normNichoFilter = normalizeNicho(nichoFilter);
       const isNichoMatch = nichoFilter === 'Todos' || normalizeNicho(g.nicho || 'Geral') === normNichoFilter;
 
+      const isPrivacyMatch = privacyFilter === 'Todos' || 
+                            (privacyFilter === 'Não verificado' && (!g.privacidade_grupo || g.privacidade_grupo === 'Não verificado')) || 
+                            g.privacidade_grupo === privacyFilter;
+
       return mainSearchMatch && 
       renterMatch && 
       isNichoMatch && 
+      isPrivacyMatch && 
       (statusFilter === 'Todos' || getEffectiveStatus(g) === statusFilter) &&
       (perfilFilter === 'Todos' || (g.perfil_compartilhando || 'Inativo') === perfilFilter) &&
       (shopeeFilter === 'Todos' || (g.uso_shopee || 'Inativo') === shopeeFilter) &&
@@ -1417,15 +1449,41 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                 onChange={v => setExpirationFilter(v)} 
                 isCapitalize
               />
+              <FilterBadge 
+                label="Privacidade" 
+                value={privacyFilter} 
+                options={['Todos', 'Público', 'Privado', 'Não verificado']} 
+                onChange={v => handleFilterChange(setPrivacyFilter, v)} 
+              />
             
             {selectedGroupIds.size > 0 && (
-              <button 
-                onClick={() => setIsRenewBatchModalOpen(true)}
-                className="h-9 md:h-10 flex items-center justify-center gap-2 px-4 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-100 text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span className="truncate">Renovar Selecionados ({selectedGroupIds.size})</span>
-              </button>
+              <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto xl:flex-1">
+                <button 
+                  onClick={() => setIsRenewBatchModalOpen(true)}
+                  className="h-9 md:h-10 flex items-center justify-center gap-2 px-4 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-100 text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 active:scale-95 transition-all w-full md:w-auto xl:flex-1 group"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span className="truncate">Renovar ({selectedGroupIds.size})</span>
+                </button>
+
+                <div className="relative w-full md:w-auto xl:flex-1">
+                  <select
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val) {
+                        handleBatchPrivacy(val as any);
+                        e.target.value = "";
+                      }
+                    }}
+                    className="h-9 md:h-10 flex items-center justify-center gap-2 px-3 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-xl text-[9px] font-black uppercase tracking-widest font-sans w-full cursor-pointer focus:outline-none"
+                  >
+                    <option value="" disabled selected>Ação Privacidade ({selectedGroupIds.size})</option>
+                    <option value="Público">Definir como Público</option>
+                    <option value="Privado">Definir como Privado</option>
+                    <option value="Não verificado">Definir como Não verificado</option>
+                  </select>
+                </div>
+              </div>
             )}
 
             <button 
@@ -1525,7 +1583,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       </div>
 
       {/* Active Filters Summary */}
-      {(nichoFilter !== 'Todos' || statusFilter !== 'Todos' || perfilFilter !== 'Todos' || shopeeFilter !== 'Todos' || priorityFilter !== 'Todos' || expirationFilter !== 'Todos' || renterFilter !== 'Todos' || searchTerm) && (
+      {(nichoFilter !== 'Todos' || statusFilter !== 'Todos' || perfilFilter !== 'Todos' || shopeeFilter !== 'Todos' || priorityFilter !== 'Todos' || privacyFilter !== 'Todos' || expirationFilter !== 'Todos' || renterFilter !== 'Todos' || searchTerm) && (
         <div className="mx-4 mb-4 p-3 bg-white border border-slate-100 rounded-2xl flex flex-wrap items-center gap-2 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-center gap-2 pr-2 border-r border-slate-100 mr-2">
             <Filter className="w-3.5 h-3.5 text-blue-500" />
@@ -1536,6 +1594,13 @@ Link: ${normalizeFacebookGroupLink(group)}`;
             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg border border-amber-100 text-[9px] font-bold">
               <span>Nicho: {nichoFilter}</span>
               <button onClick={() => setNichoFilter('Todos')} className="hover:text-amber-900 transition-colors"><X className="w-3 h-3" /></button>
+            </div>
+          )}
+
+          {privacyFilter !== 'Todos' && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-lg border border-purple-100 text-[9px] font-bold">
+              <span>Privacidade: {privacyFilter}</span>
+              <button onClick={() => setPrivacyFilter('Todos')} className="hover:text-purple-900 transition-colors"><X className="w-3 h-3" /></button>
             </div>
           )}
 
@@ -1558,6 +1623,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                    setPriorityFilter('Todos');
                    setExpirationFilter('Todos');
                    setRenterFilter('Todos');
+                   setPrivacyFilter('Todos');
                  }} 
                  className="flex items-center gap-1 hover:text-rose-600 transition-colors ml-1 border-l border-slate-200 pl-1.5"
                >
@@ -1574,6 +1640,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
               setPerfilFilter('Todos');
               setShopeeFilter('Todos');
               setPriorityFilter('Todos');
+              setPrivacyFilter('Todos');
               setExpirationFilter('Todos');
               setRenterFilter('Todos');
               setSearchTerm('');
@@ -1821,6 +1888,17 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                     {group.nicho || 'Geral'}
                                     <Edit2 className="w-2 h-2 opacity-0 group-hover/niche:opacity-100 transition-opacity" />
                                  </button>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                 <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                 <span className={cn(
+                                   "text-[7.5px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md",
+                                   group.privacidade_grupo === 'Público' && "bg-green-50 text-green-600 border border-green-100/50",
+                                   group.privacidade_grupo === 'Privado' && "bg-amber-50 text-amber-600 border border-amber-100/50",
+                                   (!group.privacidade_grupo || group.privacidade_grupo === 'Não verificado') && "bg-slate-50 text-slate-400 border border-slate-100"
+                                 )}>
+                                   {group.privacidade_grupo || 'Não verificado'}
+                                 </span>
                               </div>
                             </div>
                           </div>
@@ -2155,6 +2233,16 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                              <div className="w-1 h-1 rounded-full bg-slate-200" />
                              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
                                {formatNumber(group.quantidade_membros || 0)} MEMBROS
+                              </span>
+
+                              <div className="w-1 h-1 rounded-full bg-slate-200 animate-pulse" />
+                              <span className={cn(
+                                "text-[7.5px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md",
+                                group.privacidade_grupo === 'Público' && "bg-green-50 text-green-600 border border-green-100/50",
+                                group.privacidade_grupo === 'Privado' && "bg-amber-50 text-amber-600 border border-amber-100/50",
+                                (!group.privacidade_grupo || group.privacidade_grupo === 'Não verificado') && "bg-slate-50 text-slate-400 border border-slate-100"
+                              )}>
+                                {group.privacidade_grupo || 'Não verificado'}
                              </span>
                            </div>
 

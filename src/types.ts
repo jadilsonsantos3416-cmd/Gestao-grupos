@@ -58,6 +58,7 @@ export interface Group {
   score_postagem?: number;
   ultima_revisao_membros?: string;
   ultimo_post?: string;
+  privacidade_grupo?: 'Público' | 'Privado' | 'Não verificado';
   // Sale fields
   para_venda?: boolean;
   valor_venda?: string;

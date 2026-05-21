@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Group, GroupStatus, Renter, Nicho } from '@/src/types';
-import { X, Search, Phone, User, Calendar, DollarSign, Users, Type, Link, FileText, AlertCircle, Tag } from 'lucide-react';
-import { cn, extractFacebookGroupId, normalizeSearchText } from '@/src/lib/utils';
+import { X, Search, Phone, User, Calendar, DollarSign, Users, Type, Link, FileText, AlertCircle, Tag, Shield } from 'lucide-react';
+import { cn, extractFacebookGroupId, normalizeSearchText, detectGroupPrivacy } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, addMonths, parseISO } from 'date-fns';
 import { extractGroupId } from '@/src/lib/groupParser';
@@ -52,6 +52,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups, onVie
     status_venda: 'Disponível',
     observacoes_venda: '',
     thumbnail_grupo: '',
+    privacidade_grupo: 'Não verificado',
   });
 
   const duplicateGroup = React.useMemo(() => {
@@ -148,6 +149,7 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups, onVie
         status_venda: editingGroup.status_venda || 'Disponível',
         observacoes_venda: editingGroup.observacoes_venda || '',
         thumbnail_grupo: editingGroup.thumbnail_grupo || '',
+        privacidade_grupo: editingGroup.privacidade_grupo || 'Não verificado',
       });
       setRenterSearch(editingGroup.locatario || '');
       setNichoSearch(editingGroup.nicho || 'Geral');
@@ -183,7 +185,9 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups, onVie
         status: formData.status || 'Disponível',
         perfil_compartilhando: formData.perfil_compartilhando || 'Inativo',
         uso_shopee: formData.uso_shopee || 'Inativo',
-        quantidade_membros: Number(formData.quantidade_membros) || 0
+        quantidade_membros: Number(formData.quantidade_membros) || 0,
+        privacidade_grupo: formData.privacidade_grupo || 'Não verificado',
+        atualizado_em: new Date().toISOString()
       };
       
       await onSave(finalData);
@@ -481,7 +485,48 @@ export function GroupForm({ onClose, onSave, editingGroup, existingGroups, onVie
               </div>
             </div>
 
-            {/* Renter Info */}
+              <div className="pt-2">
+                 <FormField label="Privacidade do grupo" icon={Shield}>
+                    <div className="flex gap-3 items-center w-full">
+                      <select 
+                        value={formData.privacidade_grupo || 'Não verificado'}
+                        onChange={(e: any) => setFormData({...formData, privacidade_grupo: e.target.value as any})}
+                        className="flex-1 bg-transparent border-0 focus:ring-0 p-0 text-sm font-black text-slate-700 outline-none cursor-pointer"
+                      >
+                        <option value="Não verificado">Não verificado</option>
+                        <option value="Público">Público</option>
+                        <option value="Privado">Privado</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!formData.link_grupo) {
+                            alert("Por favor, insira o link do grupo primeiro.");
+                            return;
+                          }
+                          const btn = document.getElementById("detect-privacy-btn");
+                          if (btn) btn.innerText = "Analisando...";
+                          try {
+                            const detected = await detectGroupPrivacy(formData.link_grupo);
+                            setFormData(prev => ({ ...prev, privacidade_grupo: detected }));
+                            if (btn) btn.innerText = detected !== 'Não verificado' ? `Verificado: ${detected}!` : "Não verificado";
+                            setTimeout(() => {
+                              if (btn) btn.innerText = "Verificar privacidade";
+                            }, 3000);
+                          } catch (error) {
+                            if (btn) btn.innerText = "Verificar privacidade";
+                          }
+                        }}
+                        id="detect-privacy-btn"
+                        className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-white rounded-xl text-[8px] font-black uppercase tracking-widest transition-colors shrink-0"
+                      >
+                        Verificar privacidade
+                      </button>
+                    </div>
+                  </FormField>
+               </div>
+
+             {/* Renter Info */}
             <div className={cn("space-y-6 transition-opacity", formData.status === 'Disponível' && "opacity-30 pointer-events-none")}>
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-50 pb-3 flex items-center gap-2">
                 <DollarSign className="w-3 h-3" />
