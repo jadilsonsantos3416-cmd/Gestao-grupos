@@ -30,6 +30,8 @@ interface GroupListProps {
   onQuickFilterChange?: (filter: QuickFilter) => void;
   initialSearchTerm?: string;
   onSearchChange?: (val: string) => void;
+  onAddGroup?: () => void;
+  onImportGroups?: () => void;
 }
 
 type SortField = 'data_vencimento' | 'quantidade_membros' | 'nome_grupo' | 'prioridade' | 'score' | 'aluguel_sugerido';
@@ -38,7 +40,18 @@ interface GroupWithPriority extends Group {
   priorityInfo: PriorityInfo;
 }
 
-export function GroupList({ groups = [], onEdit, onDelete, onUpdate, activeQuickFilter, onQuickFilterChange, initialSearchTerm = '', onSearchChange }: GroupListProps) {
+export function GroupList({ 
+  groups = [], 
+  onEdit, 
+  onDelete, 
+  onUpdate, 
+  activeQuickFilter, 
+  onQuickFilterChange, 
+  initialSearchTerm = '', 
+  onSearchChange,
+  onAddGroup,
+  onImportGroups
+}: GroupListProps) {
   const desktopFakeScrollRef = useRef<HTMLDivElement>(null);
   const desktopTableWrapperRef = useRef<HTMLDivElement>(null);
   const mobileFakeScrollRef = useRef<HTMLDivElement>(null);
@@ -900,21 +913,37 @@ Link: ${normalizeFacebookGroupLink(group)}`;
   };
 
   if (!Array.isArray(groups) || groups.length === 0) {
-    if (!activeQuickFilter || activeQuickFilter === 'all') {
-      return (
-        <div className="space-y-6">
-          <div className="flex flex-col md:flex-row gap-4 opacity-50">
-            <div className="flex-1 h-16 bg-slate-100 rounded-3xl animate-pulse" />
-            <div className="flex-1 h-16 bg-slate-100 rounded-3xl animate-pulse" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="h-48 bg-slate-50 rounded-[2.5rem] border border-slate-100 animate-pulse" />
-            ))}
-          </div>
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-6 text-center max-w-lg mx-auto bg-white rounded-3xl border border-slate-100 shadow-sm p-8 my-10 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm shadow-indigo-50">
+          <ClipboardList className="w-8 h-8" />
         </div>
-      );
-    }
+        <h3 className="text-lg font-bold text-slate-900 mb-2 uppercase tracking-tight">Sua base de grupos está vazia</h3>
+        <p className="text-slate-500 text-xs font-semibold leading-relaxed mb-8 max-w-sm">
+          Nenhum grupo do Facebook foi cadastrado nesta conta ainda. Comece adicionando um grupo novo de forma rápida manualmente ou importando uma planilha do Excel.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+          {onAddGroup && (
+            <button
+              onClick={onAddGroup}
+              className="h-10 px-5 bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              Novo Grupo
+            </button>
+          )}
+          {onImportGroups && (
+            <button
+              onClick={onImportGroups}
+              className="h-10 px-5 bg-slate-50 text-slate-700 hover:bg-slate-100 active:scale-95 border border-slate-200 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              Importar Planilha
+            </button>
+          )}
+        </div>
+      </div>
+    );
   }
 
   const niches = ['Todos', ...Array.from(new Set((groups || []).map(g => g?.nicho || 'Geral')))].sort();
@@ -1018,9 +1047,9 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       const normRenterSearch = normalizeText(renterSearch);
       const renterMatch = (
         normalizeText(g.locatario || '').includes(normRenterSearch) ||
-        (g.locatarios || []).some(l => normalizeText(l.nome).includes(normRenterSearch)) ||
+        (Array.isArray(g.locatarios) ? g.locatarios : []).some(l => l && typeof l === 'object' && l.nome && normalizeText(l.nome).includes(normRenterSearch)) ||
         String(g.whatsapp || '').includes(normRenterSearch) ||
-        (g.locatarios || []).some(l => String(l.whatsapp || '').includes(normRenterSearch))
+        (Array.isArray(g.locatarios) ? g.locatarios : []).some(l => l && typeof l === 'object' && l.whatsapp && String(l.whatsapp || '').includes(normRenterSearch))
       );
 
       const normNichoFilter = normalizeNicho(nichoFilter);
@@ -1038,7 +1067,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
       (perfilFilter === 'Todos' || (g.perfil_compartilhando || 'Inativo') === perfilFilter) &&
       (shopeeFilter === 'Todos' || (g.uso_shopee || 'Inativo') === shopeeFilter) &&
       (priorityFilter === 'Todos' || g.priorityInfo.prioridade === priorityFilter) &&
-      (renterFilter === 'Todos' || (g.locatario || '') === renterFilter || (g.locatarios || []).some(l => l.nome === renterFilter)) &&
+      (renterFilter === 'Todos' || (g.locatario || '') === renterFilter || (Array.isArray(g.locatarios) ? g.locatarios : []).some(l => l && typeof l === 'object' && l.nome === renterFilter)) &&
       (!onlyReadyForShopee || ((g.perfil_compartilhando || 'Inativo') === 'Ativo' && (g.uso_shopee || 'Inativo') === 'Ativo')) &&
       (expirationFilter === 'Todos' || (() => {
         if (!g.data_vencimento || getEffectiveStatus(g) !== 'Alugado') return false;

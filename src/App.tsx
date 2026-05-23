@@ -150,6 +150,8 @@ export default function App() {
                     onQuickFilterChange={setActiveFilter}
                     initialSearchTerm={groupsSearchTerm}
                     onSearchChange={setGroupsSearchTerm}
+                    onAddGroup={openNewGroupForm}
+                    onImportGroups={() => setIsImporterOpen(true)}
                   />
                 </ErrorBoundary>
               )}
