@@ -1799,16 +1799,17 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                           }}
                         />
                       </td>
-                      <td className="px-3 py-2 relative">
+                      <td className="px-3 py-2 relative min-w-0 overflow-hidden">
                         {group.perfil_compartilhando === 'Inativo' && (
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500" />
                         )}
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-3 min-w-0 overflow-hidden">
                           {/* Thumbnail */}
                           <GroupThumbnail group={group} size="desktop" />
 
-                          <div className="flex flex-col min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
+                          <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+                            {/* Nome do Grupo Row */}
+                            <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
                               {editingGroupNameId === group.id ? (
                                 <div className="flex items-center gap-2 flex-1">
                                   <input
@@ -1840,7 +1841,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                 </div>
                               ) : (
                                 <>
-                                  <span className="font-bold text-slate-950 transition-colors text-[12px] truncate" title={group.nome_grupo}>
+                                  <span className="font-bold text-slate-950 transition-colors text-[12px] truncate max-w-full" title={group.nome_grupo}>
                                     {group.nome_grupo}
                                   </span>
                                   <button 
@@ -1849,38 +1850,17 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                       setEditingGroupNameId(group.id);
                                       setTempGroupName(group.nome_grupo || '');
                                     }}
-                                    className="p-0.5 text-slate-300 hover:text-blue-500 rounded-md transition-all opacity-0 group-hover:opacity-100"
+                                    className="p-0.5 text-slate-300 hover:text-blue-500 rounded-md transition-all opacity-0 group-hover:opacity-100 shrink-0"
                                     title="Editar Nome"
                                   >
                                     <Edit2 className="w-2.5 h-2.5" />
                                   </button>
                                 </>
                               )}
-                              {group.para_venda ? (
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                    setSaleEditCoords(calculateDropdownPos(rect, 120, 224));
-                                    setEditingSaleStatusId(group.id);
-                                  }}
-                                  className="bg-amber-50 text-amber-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-100 shrink-0 hover:bg-amber-100 transition-colors"
-                                >
-                                  À Venda
-                                </button>
-                              ) : (
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMarkForSale(group);
-                                  }}
-                                  className="text-slate-300 hover:text-amber-500 hover:border-amber-200 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-slate-100 shrink-0 transition-all opacity-0 group-hover:opacity-100"
-                                >
-                                  + Venda
-                                </button>
-                              )}
                             </div>
-                            <div className="flex items-center gap-2 mt-0.5">
+
+                            {/* Link/Nicho Row */}
+                            <div className="flex items-center gap-1.5 mt-0.5 min-w-0 overflow-hidden">
                               {editingGroupLinkId === group.id ? (
                                 <div className="flex items-center gap-1 flex-1 max-w-[120px]">
                                   <input
@@ -1897,7 +1877,7 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                   />
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 shrink-0">
                                   {group.link_grupo ? (
                                     <a 
                                       href={normalizeFacebookGroupLink(group)} 
@@ -1923,8 +1903,8 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                   </button>
                                 </div>
                               )}
-                              <div className="flex items-center gap-1.5">
-                                 <div className="w-1 h-1 rounded-full bg-slate-200" />
+                              <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                                 <div className="w-1 h-1 rounded-full bg-slate-200 shrink-0" />
                                  <button 
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1933,24 +1913,49 @@ Link: ${normalizeFacebookGroupLink(group)}`;
                                     setEditingGroupNicheId(group.id);
                                     setIsCreatingNewNiche(false);
                                   }}
-                                  className="text-slate-500 text-[8px] font-bold uppercase tracking-widest truncate max-w-[140px] hover:text-primary transition-colors flex items-center gap-1 group/niche" 
+                                  className="text-slate-500 text-[8px] font-bold uppercase tracking-widest truncate max-w-[120px] hover:text-primary transition-colors flex items-center gap-1 group/niche shrink-1" 
                                   title={group.nicho || 'Geral'}
                                  >
-                                    {group.nicho || 'Geral'}
-                                    <Edit2 className="w-2 h-2 opacity-0 group-hover/niche:opacity-100 transition-opacity" />
+                                    <span className="truncate">{group.nicho || 'Geral'}</span>
+                                    <Edit2 className="w-2  h-2 opacity-0 group-hover/niche:opacity-100 transition-opacity shrink-0" />
                                  </button>
                               </div>
-                              <div className="flex items-center gap-1.5">
-                                 <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                 <span className={cn(
-                                   "text-[7.5px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md",
-                                   group.privacidade_grupo === 'Público' && "bg-green-50 text-green-600 border border-green-100/50",
-                                   group.privacidade_grupo === 'Privado' && "bg-amber-50 text-amber-600 border border-amber-100/50",
-                                   (!group.privacidade_grupo || group.privacidade_grupo === 'Não verificado') && "bg-slate-50 text-slate-400 border border-slate-100"
-                                 )}>
-                                   {group.privacidade_grupo || 'Não verificado'}
-                                 </span>
-                              </div>
+                            </div>
+
+                            {/* Badges Row (Venda & Privacidade/Verificação) */}
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1 max-w-full overflow-hidden">
+                              {group.para_venda ? (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                    setSaleEditCoords(calculateDropdownPos(rect, 120, 224));
+                                    setEditingSaleStatusId(group.id);
+                                  }}
+                                  className="bg-amber-50 text-amber-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-100 shrink-0 hover:bg-amber-100 transition-colors"
+                                >
+                                  À Venda
+                                </button>
+                              ) : (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMarkForSale(group);
+                                  }}
+                                  className="text-slate-300 hover:text-amber-500 hover:border-amber-200 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-slate-100 shrink-0 transition-all opacity-0 group-hover:opacity-100"
+                                >
+                                  + Venda
+                                </button>
+                              )}
+
+                              <span className={cn(
+                                "inline-flex items-center max-w-[120px] whitespace-normal break-words leading-tight shrink-1 text-[7.5px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md",
+                                group.privacidade_grupo === 'Público' && "bg-green-50 text-green-600 border border-green-100/50",
+                                group.privacidade_grupo === 'Privado' && "bg-amber-50 text-amber-600 border border-amber-100/50",
+                                (!group.privacidade_grupo || group.privacidade_grupo === 'Não verificado') && "bg-slate-50 text-slate-400 border border-slate-100"
+                              )}>
+                                {group.privacidade_grupo || 'Não verificado'}
+                              </span>
                             </div>
                           </div>
                         </div>
