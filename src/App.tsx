@@ -32,7 +32,7 @@ export default function App() {
   const [isImporterOpen, setIsImporterOpen] = useState(false);
   const [isCleanupOpen, setIsCleanupOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
-  const { groups, addGroup, updateGroup, deleteGroup, isLoaded } = useGroups();
+  const { groups, addGroup, updateGroup, deleteGroup, isLoaded, error, listarGrupos } = useGroups();
 
   useEffect(() => {
     // Show splash for at least 1.5 seconds or until data is loaded
@@ -152,6 +152,7 @@ export default function App() {
                     onSearchChange={setGroupsSearchTerm}
                     onAddGroup={openNewGroupForm}
                     onImportGroups={() => setIsImporterOpen(true)}
+                    error={error}
                   />
                 </ErrorBoundary>
               )}

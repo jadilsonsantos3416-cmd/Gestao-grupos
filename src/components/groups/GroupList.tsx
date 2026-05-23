@@ -32,6 +32,7 @@ interface GroupListProps {
   onSearchChange?: (val: string) => void;
   onAddGroup?: () => void;
   onImportGroups?: () => void;
+  error?: string | null;
 }
 
 type SortField = 'data_vencimento' | 'quantidade_membros' | 'nome_grupo' | 'prioridade' | 'score' | 'aluguel_sugerido';
@@ -50,7 +51,8 @@ export function GroupList({
   initialSearchTerm = '', 
   onSearchChange,
   onAddGroup,
-  onImportGroups
+  onImportGroups,
+  error = null
 }: GroupListProps) {
   const desktopFakeScrollRef = useRef<HTMLDivElement>(null);
   const desktopTableWrapperRef = useRef<HTMLDivElement>(null);
@@ -247,6 +249,12 @@ export function GroupList({
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  useEffect(() => {
+    if (error) {
+      setToast({ message: error, type: 'error' });
+    }
+  }, [error]);
 
   const normalizeFacebookGroupLink = (group: Group) => {
     // 1. Priority: group_id
@@ -911,6 +919,20 @@ Link: ${normalizeFacebookGroupLink(group)}`;
     }
     return group.status || 'Disponível';
   };
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-6 text-center max-w-lg mx-auto bg-rose-50 rounded-3xl border border-rose-100 shadow-sm p-8 my-10 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm shadow-rose-100">
+          <XCircle className="w-8 h-8" />
+        </div>
+        <h3 className="text-lg font-bold text-rose-900 mb-2 uppercase tracking-tight">Falha na Conexão</h3>
+        <p className="text-rose-700 text-xs font-semibold leading-relaxed mb-8 max-w-sm">
+          {error}
+        </p>
+      </div>
+    );
+  }
 
   if (!Array.isArray(groups) || groups.length === 0) {
     return (
